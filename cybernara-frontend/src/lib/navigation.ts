@@ -97,6 +97,16 @@ export const operationalNavItems: NavItem[] = [
     requiredScopes: ["assessment:read", "assessment:review"]
   },
   {
+    label: "Audit Reports",
+    href: "/reports",
+    icon: "summarize",
+    roles: ["platform_admin", "compliance_manager", "auditor"],
+    savedViews: false,
+    bulkActions: false,
+    publicPreview: false,
+    requiredScopes: ["audit_report:read"]
+  },
+  {
     label: "Findings",
     href: "/findings",
     icon: "report_problem",
