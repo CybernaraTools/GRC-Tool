@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { AuditLogService } from "../../audit-security/public.js";
+import { ClosureSnapshotService } from "../../closure-snapshot/public.js";
 import { OutboxService } from "../../outbox/public.js";
 import {
   approveApplicability,
@@ -42,7 +43,8 @@ export class AssessmentService {
     @Inject(ASSESSMENT_REPOSITORY) private readonly repository: AssessmentRepository,
     @Inject(OutboxService) private readonly outbox: OutboxService,
     @Inject(AuditLogService) private readonly auditLog: AuditLogService,
-    @Inject(QuestionRepositoryService) private readonly questionRepository: QuestionRepositoryService
+    @Inject(QuestionRepositoryService) private readonly questionRepository: QuestionRepositoryService,
+    @Inject(ClosureSnapshotService) private readonly closureSnapshot: ClosureSnapshotService
   ) {}
 
   async create(input: AssessmentCreateInput): Promise<AssessmentRecord> {
@@ -357,6 +359,36 @@ export class AssessmentService {
       assessmentId: input.assessmentId,
       body: { assessmentId: input.assessmentId }
     });
+
+    // Audit Reports feature: capture an immutable closure snapshot for the
+    // AI Audit Report pipeline (src/modules/closure-snapshot). Deliberately
+    // the last statement in close(), awaited but failure-isolated — every
+    // existing validation, state transition, signoff, outbox event, audit
+    // event, and the return value above are already complete and correct by
+    // this point. A snapshot-capture failure here must never turn an
+    // otherwise-successful close() into a failed request: closed assessments
+    // without a native snapshot remain fully supported via the on-demand
+    // legacy-reconstruction path in ClosureSnapshotService, which is exactly
+    // the mechanism that makes this safe to isolate rather than propagate.
+    try {
+      await this.closureSnapshot.captureClosureSnapshot({
+        tenantId: input.tenantId,
+        actorId: input.actorId,
+        assessment: closed
+      });
+    } catch (error) {
+      await this.auditLog.append({
+        tenantId: input.tenantId,
+        eventType: "assessment.closure_snapshot_failed",
+        actorId: input.actorId,
+        targetType: "assessment",
+        targetId: input.assessmentId,
+        traceId: input.idempotencyKey,
+        classification: "confidential",
+        body: { assessmentId: input.assessmentId, error: error instanceof Error ? error.message : String(error) }
+      });
+    }
+
     return closed;
   }
 
