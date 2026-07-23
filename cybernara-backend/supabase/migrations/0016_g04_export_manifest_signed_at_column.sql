@@ -1,0 +1,12 @@
+-- Gap remediation — G-04 report immutability, second follow-up fix in the same session.
+--
+-- Same root cause as 0015: application code (PostgresReportingAnalyticsRepository.
+-- createExportManifest) references a `signed_at` column that was never actually added by
+-- 0014. Caught the same way — a real HTTP request against the live database
+-- ("column \"signed_at\" of relation \"export_manifests\" does not exist"). While tracing
+-- this, also confirmed the pre-existing 0007 NOT NULL columns (`snapshot_id`,
+-- `template_version`, `artifact_hashes`, `signing_key_ref`, `signature`) that the new
+-- insert path was about to silently omit — those are populated properly in the
+-- application-layer fix accompanying this migration (not relaxed to nullable), preserving
+-- 0007's original column intent rather than weakening it to route around the bug.
+alter table export_manifests add column if not exists signed_at timestamptz not null default now();

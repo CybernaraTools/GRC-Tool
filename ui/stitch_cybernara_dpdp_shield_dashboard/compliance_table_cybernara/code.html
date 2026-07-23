@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cybernara | DPDP Category Compliance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f3f3f3",
+                    "on-surface": "#1b1b1b",
+                    "primary-fixed-dim": "#c6c6c6",
+                    "on-surface-variant": "#4c4546",
+                    "surface-container-highest": "#e2e2e2",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "secondary-container": "#dfe0e0",
+                    "primary-container": "#1b1b1b",
+                    "secondary": "#5d5f5f",
+                    "primary": "#000000",
+                    "on-primary-fixed-variant": "#474747",
+                    "inverse-on-surface": "#f1f1f1",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#000000",
+                    "on-primary-fixed": "#1b1b1b",
+                    "tertiary-container": "#1b1b1b",
+                    "surface": "#f9f9f9",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e2e2e2",
+                    "surface-tint": "#5e5e5e",
+                    "outline-variant": "#cfc4c5",
+                    "on-primary-container": "#848484",
+                    "background": "#f9f9f9",
+                    "error": "#ba1a1a",
+                    "surface-bright": "#f9f9f9",
+                    "surface-container-high": "#e8e8e8",
+                    "on-background": "#1b1b1b",
+                    "primary-fixed": "#e2e2e2",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-container": "#848484",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed-variant": "#474747",
+                    "surface-container": "#eeeeee",
+                    "secondary-fixed": "#e2e2e2",
+                    "inverse-surface": "#303030",
+                    "surface-dim": "#dadada",
+                    "on-secondary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed": "#1b1b1b",
+                    "on-secondary-container": "#616363",
+                    "outline": "#7e7576",
+                    "tertiary-fixed-dim": "#c6c6c6",
+                    "tertiary-fixed": "#e2e2e2",
+                    "error-container": "#ffdad6",
+                    "inverse-primary": "#c6c6c6",
+                    "on-secondary-fixed-variant": "#454747"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin_container": "32px",
+                    "stack_sm": "8px",
+                    "stack_md": "16px",
+                    "gutter": "24px",
+                    "sidebar_width": "260px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-muted": ["Inter"],
+                    "display-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "500"}],
+                    "label-muted": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for a clean UI */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e2e2; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cfc4c5; }
+    </style>
+</head>
+<body class="bg-background text-on-surface overflow-hidden">
+<!-- Sidebar Wrapper -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] bg-primary-container flex flex-col py-6 border-r border-outline-variant z-50">
+<div class="px-6 mb-10">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-white flex items-center justify-center rounded-sm">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-primary leading-tight">Cybernara</h1>
+<p class="font-label-caps text-label-caps text-on-primary-container tracking-widest opacity-70">DPDP SHIELD</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col">
+<!-- Navigation Items Mapping -->
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps uppercase">Home</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps uppercase">Dashboard</span>
+</a>
+<!-- Active Tab: Assessments (Category compliance is part of assessments) -->
+<a class="border-l-2 border-primary-fixed bg-white/10 text-on-primary font-bold px-6 py-3 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-label-caps text-label-caps uppercase">Assessments</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-caps text-label-caps uppercase">Results</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="policy">policy</span>
+<span class="font-label-caps text-label-caps uppercase">Policy</span>
+</a>
+<div class="mt-auto pt-6 border-t border-white/10">
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="font-label-caps text-label-caps">Notifications</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+<span class="font-label-caps text-label-caps">Dark Mode</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[260px] h-screen flex flex-col">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center h-16 px-margin_container bg-surface border-b border-outline-variant shrink-0">
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">DPDP Compliance Overview</h2>
+<p class="font-label-muted text-label-muted text-on-surface-variant">Central Administration Console / Categories</p>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded transition-colors" data-icon="refresh">refresh</button>
+<button class="font-label-caps text-label-caps border border-primary px-4 py-2 hover:bg-surface-container-low transition-all duration-100 uppercase">Export</button>
+<button class="font-label-caps text-label-caps bg-primary text-on-primary px-4 py-2 hover:opacity-90 active:scale-95 transition-all duration-100 uppercase">New Assessment</button>
+</div>
+</header>
+<!-- Content Workspace -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Table Section -->
+<section class="flex-1 overflow-y-auto p-margin_container">
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden">
+<!-- Table Header Row -->
+<div class="grid grid-cols-12 gap-4 px-6 py-4 bg-surface-container-low border-b border-outline-variant">
+<div class="col-span-4 font-label-caps text-label-caps text-on-surface-variant uppercase">Category</div>
+<div class="col-span-1 text-center font-label-caps text-label-caps text-on-surface-variant uppercase">Yes</div>
+<div class="col-span-1 text-center font-label-caps text-label-caps text-on-surface-variant uppercase">Partial</div>
+<div class="col-span-1 text-center font-label-caps text-label-caps text-on-surface-variant uppercase">Pending</div>
+<div class="col-span-2 text-center font-label-caps text-label-caps text-on-surface-variant uppercase">Sub-Ctrls</div>
+<div class="col-span-1 text-center font-label-caps text-label-caps text-on-surface-variant uppercase">Score %</div>
+<div class="col-span-2 font-label-caps text-label-caps text-on-surface-variant uppercase">Progress</div>
+</div>
+<!-- Data Rows -->
+<div class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface-container-lowest transition-colors group cursor-default">
+<div class="col-span-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="description">description</span>
+<span class="font-body-md text-body-md text-on-surface">Data Processing Records</span>
+</div>
+<div class="col-span-1 text-center font-body-md text-body-md">12</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">2</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">0</div>
+<div class="col-span-2 text-center font-body-md text-body-md">14/14</div>
+<div class="col-span-1 text-center font-body-md text-body-md font-bold">88%</div>
+<div class="col-span-2">
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 88%"></div>
+</div>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface-container-lowest transition-colors group cursor-default">
+<div class="col-span-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="lock_open">lock_open</span>
+<span class="font-body-md text-body-md text-on-surface">Access Controls &amp; Security</span>
+</div>
+<div class="col-span-1 text-center font-body-md text-body-md">8</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">4</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">3</div>
+<div class="col-span-2 text-center font-body-md text-body-md">15/15</div>
+<div class="col-span-1 text-center font-body-md text-body-md font-bold">54%</div>
+<div class="col-span-2">
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 54%"></div>
+</div>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface-container-lowest transition-colors group cursor-default">
+<div class="col-span-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="verified_user">verified_user</span>
+<span class="font-body-md text-body-md text-on-surface">Consent Management</span>
+</div>
+<div class="col-span-1 text-center font-body-md text-body-md">20</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">0</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">0</div>
+<div class="col-span-2 text-center font-body-md text-body-md">20/20</div>
+<div class="col-span-1 text-center font-body-md text-body-md font-bold">100%</div>
+<div class="col-span-2">
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 100%"></div>
+</div>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface-container-lowest transition-colors group cursor-default">
+<div class="col-span-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="lan">lan</span>
+<span class="font-body-md text-body-md text-on-surface">Third Party Transfers</span>
+</div>
+<div class="col-span-1 text-center font-body-md text-body-md">5</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">1</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">6</div>
+<div class="col-span-2 text-center font-body-md text-body-md">12/12</div>
+<div class="col-span-1 text-center font-body-md text-body-md font-bold">41%</div>
+<div class="col-span-2">
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 41%"></div>
+</div>
+</div>
+</div>
+<!-- Row 5 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface-container-lowest transition-colors group cursor-default">
+<div class="col-span-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="policy">policy</span>
+<span class="font-body-md text-body-md text-on-surface">Data Subject Rights</span>
+</div>
+<div class="col-span-1 text-center font-body-md text-body-md">15</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">3</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">0</div>
+<div class="col-span-2 text-center font-body-md text-body-md">18/18</div>
+<div class="col-span-1 text-center font-body-md text-body-md font-bold">83%</div>
+<div class="col-span-2">
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 83%"></div>
+</div>
+</div>
+</div>
+<!-- Row 6 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface-container-lowest transition-colors group cursor-default">
+<div class="col-span-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="notification_important">notification_important</span>
+<span class="font-body-md text-body-md text-on-surface">Breach Notification</span>
+</div>
+<div class="col-span-1 text-center font-body-md text-body-md">0</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">0</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">10</div>
+<div class="col-span-2 text-center font-body-md text-body-md">10/10</div>
+<div class="col-span-1 text-center font-body-md text-body-md font-bold">0%</div>
+<div class="col-span-2">
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 0%"></div>
+</div>
+</div>
+</div>
+<!-- Row 7 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface-container-lowest transition-colors group cursor-default">
+<div class="col-span-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="storage">storage</span>
+<span class="font-body-md text-body-md text-on-surface">Retention &amp; Disposal</span>
+</div>
+<div class="col-span-1 text-center font-body-md text-body-md">6</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">2</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">0</div>
+<div class="col-span-2 text-center font-body-md text-body-md">8/8</div>
+<div class="col-span-1 text-center font-body-md text-body-md font-bold">75%</div>
+<div class="col-span-2">
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 75%"></div>
+</div>
+</div>
+</div>
+<!-- Row 8 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-surface-container-lowest transition-colors group cursor-default">
+<div class="col-span-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="school">school</span>
+<span class="font-body-md text-body-md text-on-surface">Training &amp; Awareness</span>
+</div>
+<div class="col-span-1 text-center font-body-md text-body-md">4</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">1</div>
+<div class="col-span-1 text-center font-body-md text-body-md text-on-surface-variant">1</div>
+<div class="col-span-2 text-center font-body-md text-body-md">6/6</div>
+<div class="col-span-1 text-center font-body-md text-body-md font-bold">66%</div>
+<div class="col-span-2">
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 66%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Rail -->
+<aside class="w-[320px] bg-surface border-l border-outline-variant p-gutter overflow-y-auto space-y-gutter shrink-0">
+<!-- (a) Risk Level Card -->
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden">
+<div class="px-6 h-12 flex items-center border-b border-outline-variant">
+<h3 class="font-label-caps text-label-caps uppercase text-on-surface-variant">Risk Level</h3>
+</div>
+<div class="p-6">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-3 h-3 rounded-full bg-primary animate-pulse"></div>
+<span class="font-headline-sm text-headline-sm">Moderate Risk</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-1.5 rounded-full font-label-caps text-label-caps border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all">LOW</button>
+<button class="px-4 py-1.5 rounded-full font-label-caps text-label-caps bg-primary text-on-primary">MEDIUM</button>
+<button class="px-4 py-1.5 rounded-full font-label-caps text-label-caps border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all">HIGH</button>
+</div>
+</div>
+</div>
+<!-- (b) CAC Progress Card -->
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden">
+<div class="px-6 h-12 flex items-center border-b border-outline-variant">
+<h3 class="font-label-caps text-label-caps uppercase text-on-surface-variant">CAC Progress</h3>
+</div>
+<div class="p-6">
+<div class="mb-6">
+<div class="flex justify-between items-end mb-2">
+<span class="font-display-lg text-display-lg leading-none">64%</span>
+<span class="font-label-muted text-label-muted text-on-surface-variant">72 / 113 Actions</span>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 64%"></div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
+<span class="font-body-md text-body-md">Implemented (Yes)</span>
+</div>
+<span class="font-label-caps text-label-caps font-bold">48</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></div>
+<span class="font-body-md text-body-md">In Progress (Partial)</span>
+</div>
+<span class="font-label-caps text-label-caps font-bold">24</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<span class="font-body-md text-body-md">Pending Review</span>
+</div>
+<span class="font-label-caps text-label-caps font-bold">41</span>
+</div>
+</div>
+</div>
+</div>
+<!-- (c) Recent Activity Card -->
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden">
+<div class="px-6 h-12 flex items-center border-b border-outline-variant">
+<h3 class="font-label-caps text-label-caps uppercase text-on-surface-variant">Recent Activity</h3>
+</div>
+<div class="p-6">
+<div class="relative border-l border-outline-variant pl-4 space-y-6">
+<div class="relative">
+<div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-white"></div>
+<p class="font-body-md text-body-md text-on-surface leading-tight">Evidence uploaded for <span class="font-bold">Third Party Transfers</span></p>
+<span class="font-label-muted text-label-muted text-on-surface-variant uppercase text-[10px]">14:20 • Sarah M.</span>
+</div>
+<div class="relative">
+<div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-surface-variant border border-outline-variant ring-4 ring-white"></div>
+<p class="font-body-md text-body-md text-on-surface leading-tight">Modified score for <span class="font-bold">Access Controls</span></p>
+<span class="font-label-muted text-label-muted text-on-surface-variant uppercase text-[10px]">11:05 • System</span>
+</div>
+<div class="relative">
+<div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-surface-variant border border-outline-variant ring-4 ring-white"></div>
+<p class="font-body-md text-body-md text-on-surface leading-tight">New assessment cycle <span class="font-bold">Q4 Initiated</span></p>
+<span class="font-label-muted text-label-muted text-on-surface-variant uppercase text-[10px]">Yesterday • Admin</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<script>
+        // Simple micro-interaction for chips
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if(this.classList.contains('font-label-caps') && !this.classList.contains('bg-primary')) {
+                    // Logic for chip selection
+                    this.parentElement.querySelectorAll('button').forEach(b => {
+                        b.classList.remove('bg-primary', 'text-on-primary');
+                        b.classList.add('border-outline-variant', 'text-on-surface-variant');
+                    });
+                    this.classList.remove('border-outline-variant', 'text-on-surface-variant');
+                    this.classList.add('bg-primary', 'text-on-primary');
+                }
+            });
+        });
+    </script>
+</body></html>

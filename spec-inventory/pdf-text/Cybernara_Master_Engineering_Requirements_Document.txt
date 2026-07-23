@@ -1,0 +1,368 @@
+
+
+--- PAGE 1 ---
+
+Cybernara Confidential - Internal use only
+Page 1
+DESIGN DOCUMENT
+ Cybernara Master Engineering
+ Requirements Document
+Implementation requirements derived from the Master PRD for frontend, backend, domain
+services, data, AI, integrations, security, infrastructure, testing and operations.
+Document owner
+Swapnil Khedkar
+Classification
+Cybernara confidential doc
+Version
+v1.0 - Engineering Requirements
+Date
+2 July 2026
+Deployment
+Private cloud - mid-market and enterprise
+Deliverable
+Traceable implementation requirements and quality gates for the complete product scope
+CYBERNARA CONFIDENTIAL - Do not distribute without written authorization.
+
+
+--- PAGE 2 ---
+
+Cybernara Master Engineering Requirements Document
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 2
+1. Engineering Scope and Principles
+The engineering system shall implement the Master PRD through strongly bounded domain modules, explicit contracts, immutable
+versions and secure private-cloud deployment. The initial transactional core should be a modular monolith with independently
+scalable workers and adapters; service extraction is permitted only when justified by isolation, throughput, independent lifecycle or
+team ownership.
+
+SOLID and clean architecture: domain and application code depend on ports, not provider SDKs or persistence details.
+
+Configuration over code for frameworks, scoring, questionnaires, workflows, reports and customer extensions.
+
+Server-side authorization and validation for every operation; clients are untrusted.
+
+Strong consistency for approvals and state transitions; eventual consistency only for rebuildable read models.
+
+Every asynchronous handler, webhook, import and export is idempotent, observable and replay-safe.
+2. Technology Baseline
+Area
+Standard
+Frontend
+Next.js, React, TypeScript, accessible component system, TanStack Query, React Hook Form, Zod and Playwright.
+Backend
+NestJS/TypeScript, OpenAPI 3.1, domain modules, dependency injection, class/schema validation and policy-based
+authorization.
+Persistence
+PostgreSQL HA, S3-compatible object storage, Redis, OpenSearch/pgvector and transactional outbox.
+Async
+Queue abstraction supporting BullMQ initially and Kafka-compatible event streaming where throughput requires it.
+AI
+Provider-neutral model gateway, structured output, retrieval service, evaluation harness, DLP and private/self-hosted endpoint
+support.
+Platform
+Kubernetes, Helm, Terraform/OpenTofu, GitOps, Vault/KMS, OpenTelemetry, Prometheus/Grafana and SIEM export.
+
+
+--- PAGE 3 ---
+
+Cybernara Master Engineering Requirements Document
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 3
+3. Domain Module Requirements
+ID
+Module
+Owned responsibilities
+ENG-DOM-01
+IdentityTenant
+Tenants, users, roles, grants, sessions, service accounts, workspace delegation.
+ENG-DOM-02
+FrameworkContent
+Imports, canonical requirements, citations, versions, signatures, diffs and publication.
+ENG-DOM-03
+Harmonization
+Controls, mappings, overlap, unique obligations, confidence and approval.
+ENG-DOM-04
+Assessment
+Scope, snapshots, applicability, items, answers, state, scoring and sign-off.
+ENG-DOM-05
+EvidenceAssurance
+Uploads, metadata, hashes, scans, connectors, tests, freshness and reuse.
+ENG-DOM-06
+RiskWorkflow
+Findings, risks, tasks, SLAs, exceptions, acceptance, comments and notifications.
+ENG-DOM-07
+PrivacyOperations
+Inventory, RoPA, DPIA, rights, consent, incidents, transfers and retention.
+ENG-DOM-08
+EnterpriseGRC
+Policies, access reviews, vendors, audits, questionnaires and trust center.
+ENG-DOM-09
+AIOrchestration
+Retrieval, prompts, model routing, validation, evaluation, approvals and provenance.
+ENG-DOM-10
+ReportingAnalytics
+Snapshots, PDF/Excel, dashboards, metrics, exports and subscriptions.
+ENG-DOM-11
+IntegrationPlatform
+Connector lifecycle, secrets, sync cursors, webhooks, API clients and SDK.
+ENG-DOM-12
+AuditSecurity
+Append-only events, integrity chain, security alerts and SIEM delivery.
+Module rules
+
+Each module owns its schema, repositories, application use cases and public ports. Direct access to another module table is prohibited
+outside approved read models.
+
+Cross-module changes use an application coordinator and transaction where atomic, or an outbox event and saga where
+asynchronous.
+
+Architecture tests fail builds that import infrastructure adapters into domain code or internal module code across boundaries.
+
+
+--- PAGE 4 ---
+
+Cybernara Master Engineering Requirements Document
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 4
+4. Backend and API Requirements
+ID
+Requirement
+Priority
+Acceptance outcome
+BE-01
+Expose versioned REST APIs with OpenAPI 3.1, cursor pagination,
+filtering, sorting and sparse field selection.
+P0
+Contract and backward-compatibility tests pass.
+BE-02
+Validate all DTOs and return consistent RFC 9457-style problem
+responses with correlation IDs.
+P0
+Malformed and unauthorized requests fail without information
+leakage.
+BE-03
+Use policy decision/enforcement points for tenant, role, scope,
+resource, state and classification.
+P0
+Authorization matrix and negative tests cover every endpoint.
+BE-04
+Use optimistic concurrency, idempotency keys and transaction
+boundaries for mutations.
+P0
+Duplicate/replayed requests do not create duplicate state.
+BE-05
+Implement transactional outbox, schema-versioned events, bounded
+retries, DLQ and operator replay.
+P0
+Failure-injection tests prove no lost committed event.
+BE-06
+Generate immutable assessment/report snapshots and signed
+export manifests.
+P0
+Repeated render from same snapshot/template is materially
+identical.
+BE-07
+Apply rate limits, quotas, request size limits and workload-specific
+timeouts.
+P0
+Load and abuse tests validate limits and graceful errors.
+5. Frontend Requirements
+ID
+Requirement
+Priority
+Acceptance outcome
+FE-01
+Use server-managed secure session/BFF; no provider secrets or
+privileged tokens in browser storage.
+P0
+Security review finds no browser-resident long-lived secret.
+FE-02
+Provide role-aware operational navigation, saved views, bulk
+actions, virtualized tables and accessible forms.
+P0
+Critical flows pass WCAG 2.2 AA and keyboard tests.
+FE-03
+Use generated API types, schema validation, optimistic concurrency
+handling and explicit loading/error/empty states.
+P0
+Contract changes fail compilation or tests.
+FE-04
+Use resumable direct-to-vault upload with quarantine, progress and
+scan status.
+P0
+Files cannot be accessed before clean validation.
+FE-05
+Prevent unauthorized disclosure in routing, cached data, telemetry
+and error output.
+P0
+Cross-role browser tests verify isolation and redaction.
+
+
+--- PAGE 5 ---
+
+Cybernara Master Engineering Requirements Document
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 5
+6. Data and Persistence Requirements
+Concern
+Engineering requirement
+Relational model
+Normalized core tables; tenant_id and version on mutable execution records; foreign keys and check constraints enforce
+invariants.
+Content versioning
+Published framework, mapping, prompt and question records are immutable; superseding creates a new version.
+Evidence
+Object bytes in encrypted versioned storage; relational metadata, SHA-256, classification, period and scan state in
+PostgreSQL.
+Derived stores
+Search, vector, analytics and cache contain source IDs/version/checksum and can be rebuilt; they never authorize access.
+Audit
+Append-only partitioned events with previous-hash integrity, WORM archive and verification manifests.
+Migration
+Forward-only expand/migrate/contract, online indexes, chunked backfill and rehearsal against production-scale copy.
+Backup
+Encrypted PITR, object version replication, separate backup credentials and quarterly application-consistent restore.
+7. AI Engineering Requirements
+ID
+Requirement
+Priority
+Acceptance outcome
+AI-E01
+Model gateway selects only approved deployment by tenant policy,
+region, risk and data classification.
+P0
+Routing tests prevent prohibited provider or region use.
+AI-E02
+Retrieval enforces tenant/source ACLs and stores source
+version/checksum/rank for every chunk.
+P0
+Citation can be resolved and verified after generation.
+AI-E03
+Prompts are versioned code/config artifacts with typed JSON
+schemas and injection-safe data boundaries.
+P0
+Invalid or policy-failing output is quarantined.
+AI-E04
+Persist generation provenance, safety checks, evaluations, cost,
+tokens, latency and approval.
+P0
+Every published question traces to exact generation inputs.
+AI-E05
+Golden-set and adversarial suites gate prompt/model/index
+promotion.
+P0
+Promotion fails below configured faithfulness, coverage,
+safety or consistency threshold.
+AI-E06
+Provide timeout, circuit breaker, budget, cache where safe, kill switch
+and curated fallback.
+P0
+Assessment workflow passes during simulated AI outage.
+
+
+--- PAGE 6 ---
+
+Cybernara Master Engineering Requirements Document
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 6
+8. Integration Engineering
+Area
+Requirement
+Connector runtime
+Isolated workers, vault-backed credentials, least scopes, incremental cursors, rate-limit adaptation, backoff and customer
+disable switch.
+Inbound webhooks
+HMAC/signature validation, timestamp window, replay store, schema validation and quarantine.
+Reconciliation
+Periodic full/partial reconciliation detects missed events, deleted objects and permission drift.
+Provenance
+Every imported object stores connector, external ID/version, observed_at, collected_at and integrity hash.
+SDK
+Stable connector contract, sandbox, test harness, manifest, permission declaration and signed package.
+Network
+All outbound traffic through egress proxy with DNS/IP/domain allow-list, TLS validation and telemetry.
+9. Security Engineering
+Control
+Implementation
+Identity
+OIDC/SAML, WebAuthn/passkeys, SCIM, short-lived tokens, secure cookies, step-up auth and JIT privilege.
+Authorization
+Central policy engine, deny-by-default, row/object path defense-in-depth and separation of duties.
+Cryptography
+TLS 1.3 preferred, AES-256-GCM envelope encryption, KMS/HSM signing, automated rotation and crypto agility.
+Application
+ASVS L2 baseline and L3 for identity, admin, evidence, cryptography, AI gateway and signing; SSRF/CSRF/XSS/injection controls.
+Supply chain
+Pinned dependencies, SBOM, signed provenance/images, protected branches, peer review and admission policy.
+Detection
+Redacted structured logs, anomaly alerts, canary credentials, SIEM export, incident runbooks and forensic retention.
+
+
+--- PAGE 7 ---
+
+Cybernara Master Engineering Requirements Document
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 7
+10. Infrastructure, Scalability, and SRE
+Area
+Requirement
+Kubernetes
+Separate namespaces/service accounts, Pod Security Standards, non-root/read-only workloads, quotas, disruption budgets and
+network policy.
+Scaling
+Stateless APIs scale by CPU/concurrency; workers by queue depth; reports/imports use separate pools; database uses replicas
+and partitioning.
+Resilience
+Multi-zone application/data services, circuit breakers, bulkheads, graceful shutdown, retry budgets and dependency degradation.
+SLOs
+Availability, latency, error rate, job age, connector freshness and report completion SLOs with error budgets.
+Observability
+OpenTelemetry trace propagation through API, jobs, connectors and AI; redaction at source and tenant-aware dashboards.
+DR
+Documented failover, restore and integrity verification; RPO <= 15 minutes and RTO <= 4 hours for system of record.
+Capacity
+Quarterly forecasts for DB growth, objects, audit events, search/vector size, queue throughput and model usage.
+11. Test and Release Requirements
+Layer
+Mandatory coverage
+Unit/domain
+Invariants, policies, scoring, state transitions, mapping and retention rules.
+Integration
+Database constraints, transactions, object storage, queue, search, model and connector adapters.
+Contract
+OpenAPI clients, events, webhooks, connector SDK and report schema.
+End-to-end
+Framework publish, assessment, AI questions, evidence, review, finding, remediation, PDF/Excel and audit verification.
+Security
+SAST, DAST, SCA, secrets, IaC/container scans, ASVS verification, tenant isolation, abuse and penetration tests.
+Performance/resilience
+Load, soak, spike, large import/export, queue backlog, dependency outage, failover and restore.
+Accessibility
+Automated rules plus keyboard/screen-reader review for critical workflows.
+12. Definition of Done and Traceability
+
+Every feature links Master PRD requirement ID to design decision, API/schema change, tests, telemetry, runbook and release
+evidence.
+
+No feature is complete without authorization tests, audit events, failure behavior, observability, documentation and data lifecycle
+behavior.
+
+Production release requires approved threat model, migration/rollback, capacity impact, SLO dashboard, security scans and change
+record.
+
+Critical/high exploitable findings block release; exceptions require security owner, expiry and compensating controls.
+13. Engineering Reference Baselines
+
+NIST SP 800-218 Secure Software Development Framework - https://csrc.nist.gov/pubs/sp/800/218/final
+
+NIST AI RMF and Generative AI Profile - https://www.nist.gov/itl/ai-risk-management-framework
+
+OWASP Application Security Verification Standard - https://owasp.org/www-project-application-security-verification-standard/
+
+CIS Benchmarks - https://www.cisecurity.org/cis-benchmarks

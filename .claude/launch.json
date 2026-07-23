@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cybernara-backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "cybernara-backend",
+      "port": 3000
+    },
+    {
+      "name": "cybernara-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--hostname", "127.0.0.1", "--port", "3100"],
+      "cwd": "cybernara-frontend",
+      "port": 3100
+    }
+  ]
+}

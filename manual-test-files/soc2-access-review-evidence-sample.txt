@@ -1,0 +1,29 @@
+SOC 2 Evidence Sample - Quarterly Access Review
+
+Purpose:
+This file is a safe manual-testing artifact for Cybernara evidence upload flows.
+It contains no real customer, employee, password, API key, or production system data.
+
+Control Area:
+SOC 2 Common Criteria - Logical Access
+
+Sample Evidence Summary:
+- Review period: 2026-Q2
+- System reviewed: Sample Identity Provider
+- Review owner: Compliance Test Owner
+- Review date: 2026-07-10
+- Result: No exceptions identified in this sample artifact.
+
+Reviewer Attestation:
+The sample user access listing was reviewed for appropriateness of access,
+terminated user removal, and privileged-role assignment. This file is intended
+only to test upload, scan, quarantine, commit, and evidence-linking behavior.
+
+Suggested Test Tags:
+soc2, access-review, logical-access, quarterly-review
+
+Created first tenant admin xyz_test@gmail.com. Share the temporary password through an approved channel.
+Temporary password: Cybernara-nBnZI5bLpPIB4_PBG9QUz1Zl-Aa1!
+
+
+{"idx":0,"id":"006d7274-9243-4ccc-b6a5-b8830cd2878e","tenant_id":"00000000-0000-4000-8000-000000000001","version":1,"control_id":"HARM-00002","question_set_key":"curated-baseline-v1-6a58f1fb-de77-4f6a-87a1-27bb5287273a","status":"active","source_type":"curated","classification":"confidential","created_by":"e3e608ae-af24-4634-a274-c8522c8d704e","created_at":"2026-07-10 00:35:03.89754+00","updated_by":"e3e608ae-af24-4634-a274-c8522c8d704e","updated_at":"2026-07-10 00:35:03.89754+00"}

@@ -1,0 +1,11 @@
+-- Gap remediation — G-04 report immutability, follow-up fix.
+--
+-- Real bug found and fixed the same session it was introduced: 0014's application-layer
+-- code (PostgresReportingAnalyticsRepository.createExportManifest) writes a
+-- `manifest_payload` jsonb column that 0014 itself never actually added to
+-- `export_manifests` — caught immediately via a real HTTP request against the live
+-- database ("column \"manifest_payload\" of relation \"export_manifests\" does not exist"),
+-- not silently masked by a mock. 0014 already applied, so per this campaign's migration
+-- discipline (never edit an already-applied migration; add a new additive one instead),
+-- this is a separate migration rather than a rewrite of 0014's history.
+alter table export_manifests add column if not exists manifest_payload jsonb not null default '{}'::jsonb;

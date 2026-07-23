@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cybernara DPDP Shield | Compliance Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#7e7576",
+                        "surface-dim": "#dadada",
+                        "tertiary": "#000000",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#1b1b1b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#1b1b1b",
+                        "primary": "#000000",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e2e2e2",
+                        "outline-variant": "#cfc4c5",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#5e5e5e",
+                        "on-tertiary-container": "#848484",
+                        "surface-bright": "#f9f9f9",
+                        "on-secondary": "#ffffff",
+                        "background": "#f9f9f9",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "primary-fixed": "#e2e2e2",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "tertiary-container": "#1b1b1b",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-secondary-container": "#616363",
+                        "surface-container-low": "#f3f3f3",
+                        "on-background": "#1b1b1b",
+                        "inverse-primary": "#c6c6c6",
+                        "inverse-surface": "#303030",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-container": "#dfe0e0",
+                        "surface-container": "#eeeeee",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface-container-high": "#e8e8e8",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface": "#f9f9f9",
+                        "secondary": "#5d5f5f",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#4c4546",
+                        "surface-variant": "#e2e2e2",
+                        "primary-container": "#1b1b1b",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-primary-container": "#848484"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack_sm": "8px",
+                        "stack_md": "16px",
+                        "gutter": "24px",
+                        "margin_container": "32px",
+                        "sidebar_width": "260px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-muted": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "500"}],
+                        "label-muted": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9f9; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .radar-grid { stroke: #e5e7eb; stroke-width: 1; fill: none; }
+        .radar-axis { stroke: #cfc4c5; stroke-dasharray: 4; }
+        .radar-area { fill: rgba(0,0,0,0.05); stroke: #000000; stroke-width: 2; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+<!-- SideNavBar Anchor -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] bg-primary-container flex flex-col py-6 border-r border-outline-variant z-50">
+<div class="px-6 mb-10">
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-primary">Cybernara</h1>
+<p class="font-label-caps text-label-caps text-on-primary-container opacity-60">DPDP SHIELD</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="border-l-2 border-primary-fixed bg-white/10 text-on-primary font-bold px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary hover:bg-white/5 px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary hover:bg-white/5 px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-caps text-label-caps">Assessments</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary hover:bg-white/5 px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">Results</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary hover:bg-white/5 px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">policy</span>
+<span class="font-label-caps text-label-caps">Policy</span>
+</a>
+</nav>
+<div class="px-6 mt-auto space-y-4 pt-6 border-t border-white/10">
+<div class="flex items-center gap-3 text-on-surface-variant hover:text-on-primary cursor-pointer transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-caps text-label-caps">Notifications</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:text-on-primary cursor-pointer transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+<span class="font-label-caps text-label-caps">Dark Mode</span>
+</div>
+<div class="flex items-center gap-3 text-on-primary cursor-pointer pt-2">
+<span class="material-symbols-outlined">account_circle</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps">Admin User</span>
+<span class="text-[10px] opacity-50 uppercase tracking-widest">Global Admin</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-[260px] flex flex-col">
+<!-- TopAppBar Anchor -->
+<header class="flex justify-between items-center h-16 px-margin_container bg-surface border-b border-outline-variant sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Compliance Dashboard</h2>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<div class="flex flex-col">
+<span class="font-label-muted text-label-muted text-on-surface-variant">Organization</span>
+<span class="font-body-md text-body-md font-bold">Acme Corp Global</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-low px-3 py-1.5 rounded transition-colors duration-100">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+<span class="font-label-caps text-label-caps">Refresh Data</span>
+</button>
+<button class="bg-white border border-primary px-4 py-1.5 text-primary font-bold hover:bg-surface-container-low transition-colors text-label-caps">
+                    Export
+                </button>
+<button class="bg-primary text-on-primary px-4 py-1.5 font-bold hover:opacity-90 transition-opacity text-label-caps">
+                    New Assessment
+                </button>
+</div>
+</header>
+<div class="p-margin_container max-w-[1600px] mx-auto w-full space-y-gutter">
+<!-- Org Detail Strip -->
+<div class="flex items-center justify-between p-stack_md bg-surface border border-outline-variant rounded-lg">
+<div class="flex items-center gap-8">
+<div class="flex flex-col">
+<span class="font-label-muted text-label-muted text-on-surface-variant uppercase tracking-tighter">Reporting Period</span>
+<span class="font-body-md text-body-md">FY2024 - Q3 Internal Audit</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-muted text-label-muted text-on-surface-variant uppercase tracking-tighter">Primary Region</span>
+<span class="font-body-md text-body-md">European Union (GDPR Zone)</span>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="px-2 py-1 bg-surface-container-high rounded text-label-caps text-[10px] uppercase font-bold">SOC 2 TYPE II</span>
+<span class="px-2 py-1 bg-surface-container-high rounded text-label-caps text-[10px] uppercase font-bold">ISO 27001:2022</span>
+<span class="px-2 py-1 bg-surface-container-high rounded text-label-caps text-[10px] uppercase font-bold">DPDP ACT 2023</span>
+</div>
+</div>
+<!-- Stats Pills Row -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-stack_md">
+<!-- Stat Card -->
+<div class="bg-white border border-outline-variant p-stack_md rounded-lg flex flex-col justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Total Requirements</span>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg">1,248</span>
+<span class="text-[10px] font-bold text-on-surface-variant">+12</span>
+</div>
+</div>
+<!-- Stat Card -->
+<div class="bg-white border border-outline-variant p-stack_md rounded-lg flex flex-col justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Frameworks in Scope</span>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg">08</span>
+<span class="text-[10px] font-bold text-on-surface-variant">Active</span>
+</div>
+</div>
+<!-- Stat Card (Alert State) -->
+<div class="bg-white border border-outline-variant p-stack_md rounded-lg flex flex-col justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Open Findings</span>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg">24</span>
+<span class="bg-primary text-on-primary px-1 text-[10px] font-bold rounded">HIGH</span>
+</div>
+</div>
+<!-- Stat Card -->
+<div class="bg-white border border-outline-variant p-stack_md rounded-lg flex flex-col justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Evidence Pending</span>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg">89</span>
+<span class="text-[10px] font-bold text-on-surface-variant text-error">Critical</span>
+</div>
+</div>
+<!-- Stat Card -->
+<div class="bg-white border border-outline-variant p-stack_md rounded-lg flex flex-col justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Remediation Tasks</span>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg">112</span>
+<span class="text-[10px] font-bold text-on-surface-variant">In Progress</span>
+</div>
+</div>
+<!-- Stat Card (Inverted for Risk) -->
+<div class="bg-primary text-on-primary p-stack_md rounded-lg flex flex-col justify-between">
+<span class="font-label-caps text-label-caps opacity-70">Risk Level</span>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg">MODERATE</span>
+</div>
+</div>
+</div>
+<!-- Dashboard Charts Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Panel (a): Compliance by Framework (Radar Chart Placeholder) -->
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<div class="h-12 border-b border-outline-variant px-6 flex items-center justify-between">
+<h3 class="font-label-caps text-label-caps">Compliance by Framework</h3>
+<span class="font-label-caps text-[10px] text-primary bg-surface-container-high px-2 py-0.5 rounded">Overall 82%</span>
+</div>
+<div class="p-8 flex-1 flex flex-col items-center justify-center relative min-h-[340px]">
+<svg class="w-full max-w-[240px] h-auto" viewbox="0 0 200 200">
+<!-- Radar Grid -->
+<circle class="radar-grid" cx="100" cy="100" r="80"></circle>
+<circle class="radar-grid" cx="100" cy="100" r="60"></circle>
+<circle class="radar-grid" cx="100" cy="100" r="40"></circle>
+<circle class="radar-grid" cx="100" cy="100" r="20"></circle>
+<!-- Axes -->
+<line class="radar-axis" x1="100" x2="100" y1="20" y2="180"></line>
+<line class="radar-axis" x1="20" x2="180" y1="100" y2="100"></line>
+<!-- Data Shape -->
+<polygon class="radar-area" points="100,30 160,80 140,150 60,150 40,80"></polygon>
+<!-- Labels -->
+<text class="font-label-caps text-[8px] font-bold" text-anchor="middle" x="100" y="15">GDPR</text>
+<text class="font-label-caps text-[8px] font-bold" text-anchor="middle" x="190" y="100">SOC 2</text>
+<text class="font-label-caps text-[8px] font-bold" text-anchor="middle" x="150" y="170">ISO</text>
+<text class="font-label-caps text-[8px] font-bold" text-anchor="middle" x="50" y="170">HIPAA</text>
+<text class="font-label-caps text-[8px] font-bold" text-anchor="middle" x="10" y="100">DPDP</text>
+</svg>
+<div class="mt-6 w-full space-y-2">
+<div class="flex justify-between text-[10px] font-bold uppercase border-b border-surface-container-highest pb-1">
+<span>Framework</span>
+<span>Status</span>
+</div>
+<div class="flex justify-between text-[11px]">
+<span>GDPR Assessment</span>
+<span class="font-bold">92%</span>
+</div>
+<div class="flex justify-between text-[11px]">
+<span>ISO 27001</span>
+<span class="font-bold">78%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel (b): Control Status (Stacked Bars) -->
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<div class="h-12 border-b border-outline-variant px-6 flex items-center justify-between">
+<h3 class="font-label-caps text-label-caps">Control Status</h3>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">more_horiz</span>
+</div>
+<div class="p-6 space-y-6 flex-1">
+<!-- Stacked Bar Groups -->
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-on-surface-variant">
+<span>Access Control (AC)</span>
+<span>142 Controls</span>
+</div>
+<div class="flex h-4 w-full rounded-full overflow-hidden bg-surface-container">
+<div class="bg-primary w-[70%]" title="Compliant"></div>
+<div class="bg-secondary w-[20%]" title="Non-compliant"></div>
+<div class="bg-outline-variant w-[10%]" title="N/A"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-on-surface-variant">
+<span>Encryption &amp; Data Security</span>
+<span>94 Controls</span>
+</div>
+<div class="flex h-4 w-full rounded-full overflow-hidden bg-surface-container">
+<div class="bg-primary w-[45%]" title="Compliant"></div>
+<div class="bg-secondary w-[40%]" title="Non-compliant"></div>
+<div class="bg-outline-variant w-[15%]" title="N/A"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-on-surface-variant">
+<span>Risk Management</span>
+<span>68 Controls</span>
+</div>
+<div class="flex h-4 w-full rounded-full overflow-hidden bg-surface-container">
+<div class="bg-primary w-[85%]" title="Compliant"></div>
+<div class="bg-secondary w-[10%]" title="Non-compliant"></div>
+<div class="bg-outline-variant w-[5%]" title="N/A"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-on-surface-variant">
+<span>Physical Security</span>
+<span>32 Controls</span>
+</div>
+<div class="flex h-4 w-full rounded-full overflow-hidden bg-surface-container">
+<div class="bg-primary w-[60%]" title="Compliant"></div>
+<div class="bg-secondary w-[30%]" title="Non-compliant"></div>
+<div class="bg-outline-variant w-[10%]" title="N/A"></div>
+</div>
+</div>
+<!-- Legend -->
+<div class="pt-4 border-t border-surface-container flex justify-between gap-2">
+<div class="flex items-center gap-1.5">
+<div class="w-3 h-3 bg-primary"></div>
+<span class="text-[10px] font-bold uppercase">Compliant</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="w-3 h-3 bg-secondary"></div>
+<span class="text-[10px] font-bold uppercase">Non-Comp</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="w-3 h-3 bg-outline-variant"></div>
+<span class="text-[10px] font-bold uppercase">N/A</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel (c): Evidence Status (Metrics & Rows) -->
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<div class="h-12 border-b border-outline-variant px-6 flex items-center justify-between">
+<h3 class="font-label-caps text-label-caps">Evidence Status</h3>
+<div class="flex items-center gap-2">
+<span class="text-display-lg leading-none">412</span>
+<span class="font-label-muted text-label-muted uppercase">Files</span>
+</div>
+</div>
+<div class="p-6 space-y-gutter flex-1">
+<!-- Approval Bar -->
+<div class="space-y-2">
+<div class="flex justify-between items-end">
+<span class="font-label-muted text-label-muted uppercase">Total Approval Rate</span>
+<span class="font-headline-sm text-headline-sm">62%</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 62%;"></div>
+</div>
+</div>
+<!-- Status Rows -->
+<div class="space-y-stack_md">
+<!-- Row: Approved -->
+<div class="flex items-center justify-between p-stack_md bg-surface border border-outline-variant rounded">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold">Approved</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Verified by Auditor</p>
+</div>
+</div>
+<span class="font-headline-sm text-headline-sm">256</span>
+</div>
+<!-- Row: Pending -->
+<div class="flex items-center justify-between p-stack_md border border-outline-variant rounded">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">history</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold">Pending Review</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Awaiting Action</p>
+</div>
+</div>
+<span class="font-headline-sm text-headline-sm">118</span>
+</div>
+<!-- Row: Rejected -->
+<div class="flex items-center justify-between p-stack_md bg-black text-white rounded">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-white text-black flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">error</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold text-white">Rejected</p>
+<p class="text-[10px] opacity-70 uppercase">Re-upload Required</p>
+</div>
+</div>
+<span class="font-headline-sm text-headline-sm">38</span>
+</div>
+</div>
+<button class="w-full py-2 border-t border-outline-variant mt-auto text-label-caps hover:bg-surface-container-low transition-colors">
+                            Manage Evidence Repository
+                        </button>
+</div>
+</div>
+</div>
+<!-- Bottom Table Section (Recent Tasks) -->
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden">
+<div class="h-12 border-b border-outline-variant px-6 flex items-center justify-between bg-surface">
+<h3 class="font-label-caps text-label-caps">Critical Remediation Tasks</h3>
+<div class="flex gap-4">
+<span class="font-label-muted text-label-muted cursor-pointer hover:text-primary">All Tasks</span>
+<span class="font-label-muted text-label-muted cursor-pointer hover:text-primary">My Assignments</span>
+</div>
+</div>
+<table class="w-full text-left">
+<thead class="bg-surface-container font-label-caps text-[10px] text-on-surface-variant border-b border-outline-variant">
+<tr>
+<th class="px-6 py-3 font-bold">Task Detail</th>
+<th class="px-6 py-3 font-bold">Framework</th>
+<th class="px-6 py-3 font-bold">Owner</th>
+<th class="px-6 py-3 font-bold text-center">Due</th>
+<th class="px-6 py-3 font-bold text-right">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-bright transition-colors cursor-pointer group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-bold">Rotate SSL Certificates - Production Cluster</span>
+<span class="text-[10px] text-on-surface-variant uppercase">INFRA-AC-04</span>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-body-md uppercase text-on-surface-variant">SOC 2 / ISO</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest"></div>
+<span class="font-body-md text-body-md">Sarah Chen</span>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-body-md text-center text-error font-bold">2d</td>
+<td class="px-6 py-4 text-right">
+<span class="bg-primary text-on-primary px-3 py-1 text-[10px] font-bold rounded uppercase">Overdue</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-bold">Data Retention Policy Update</span>
+<span class="text-[10px] text-on-surface-variant uppercase">GOV-DPDP-01</span>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-body-md uppercase text-on-surface-variant">DPDP ACT</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest"></div>
+<span class="font-body-md text-body-md">Marcus V.</span>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-body-md text-center">8d</td>
+<td class="px-6 py-4 text-right">
+<span class="bg-surface-container text-primary border border-outline-variant px-3 py-1 text-[10px] font-bold rounded uppercase">In Review</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<!-- Visual Interactive Element -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[28px]">support_agent</span>
+</button>
+</div>
+<script>
+        // Simple micro-interaction for cards
+        document.querySelectorAll('.bg-white.border').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.backgroundColor = '#fafafa';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.backgroundColor = '#ffffff';
+            });
+        });
+    </script>
+</body></html>

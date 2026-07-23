@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DPDP Shield | Harmonization Explorer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#7e7576",
+                        "surface-dim": "#dadada",
+                        "tertiary": "#000000",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#1b1b1b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#1b1b1b",
+                        "primary": "#000000",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e2e2e2",
+                        "outline-variant": "#cfc4c5",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#5e5e5e",
+                        "on-tertiary-container": "#848484",
+                        "surface-bright": "#f9f9f9",
+                        "on-secondary": "#ffffff",
+                        "background": "#f9f9f9",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "primary-fixed": "#e2e2e2",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "tertiary-container": "#1b1b1b",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-secondary-container": "#616363",
+                        "surface-container-low": "#f3f3f3",
+                        "on-background": "#1b1b1b",
+                        "inverse-primary": "#c6c6c6",
+                        "inverse-surface": "#303030",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-container": "#dfe0e0",
+                        "surface-container": "#eeeeee",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface-container-high": "#e8e8e8",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface": "#f9f9f9",
+                        "secondary": "#5d5f5f",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#4c4546",
+                        "surface-variant": "#e2e2e2",
+                        "primary-container": "#1b1b1b",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-primary-container": "#848484"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack_sm": "8px",
+                        "stack_md": "16px",
+                        "gutter": "24px",
+                        "margin_container": "32px",
+                        "sidebar_width": "260px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-muted": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "500"}],
+                        "label-muted": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+        .control-row {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .control-row:hover {
+            background-color: #fafafa;
+        }
+        .expanded-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .row-expanded .expanded-content {
+            max-height: 500px;
+        }
+        .row-expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-fixed">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] bg-primary-container border-r border-outline-variant flex flex-col py-6 z-50">
+<div class="px-6 mb-10">
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-primary">Cybernara</h1>
+<p class="font-label-caps text-label-caps text-on-primary-container">DPDP SHIELD</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<a class="border-l-2 border-primary-fixed bg-white/10 text-on-primary font-bold px-6 py-2 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-label-caps text-label-caps">Assessments</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-caps text-label-caps">Results</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="policy">policy</span>
+<span class="font-label-caps text-label-caps">Policy</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-white/10 pt-4 space-y-1">
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="font-label-caps text-label-caps">Notifications</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+<span class="font-label-caps text-label-caps">Dark Mode</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-6 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="ml-[260px] min-h-screen flex flex-col">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center h-16 px-margin_container bg-surface border-b border-outline-variant sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">DPDP Shield</h2>
+<div class="h-4 w-px bg-outline-variant"></div>
+<span class="font-label-muted text-label-muted text-on-surface-variant uppercase tracking-widest">Harmonization Explorer</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded transition-colors" data-icon="refresh">refresh</button>
+<button class="border border-primary text-primary px-4 py-1.5 font-label-caps text-label-caps hover:bg-surface-container-low transition-colors rounded">Export</button>
+<button class="bg-primary text-on-primary px-4 py-1.5 font-label-caps text-label-caps hover:opacity-90 transition-opacity rounded">New Assessment</button>
+</div>
+</header>
+<main class="p-margin_container flex gap-8">
+<!-- Left Filter Rail -->
+<aside class="w-64 shrink-0 flex flex-col gap-6">
+<div>
+<h3 class="font-label-caps text-label-caps mb-3">Frameworks</h3>
+<div class="relative mb-4">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]" data-icon="search">search</span>
+<input class="w-full pl-9 pr-4 py-2 bg-white border border-outline-variant rounded-lg text-body-md focus:ring-0 focus:border-primary placeholder:text-surface-dim transition-all" placeholder="Search frameworks..." type="text"/>
+</div>
+<div class="space-y-1.5">
+<!-- 13 Framework Toggle Chips -->
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white cursor-pointer hover:border-primary transition-all group">
+<span class="font-label-caps text-label-caps">GDPR</span>
+<div class="w-8 h-4 bg-primary rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white cursor-pointer hover:border-primary transition-all group">
+<span class="font-label-caps text-label-caps">DPDP Act 2023</span>
+<div class="w-8 h-4 bg-primary rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white cursor-pointer hover:border-primary transition-all group">
+<span class="font-label-caps text-label-caps">SOC2 Type II</span>
+<div class="w-8 h-4 bg-primary rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white/50 cursor-pointer hover:border-primary transition-all group opacity-60">
+<span class="font-label-caps text-label-caps">ISO 27001</span>
+<div class="w-8 h-4 bg-surface-dim rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white cursor-pointer hover:border-primary transition-all group">
+<span class="font-label-caps text-label-caps">NIST CSF</span>
+<div class="w-8 h-4 bg-primary rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white cursor-pointer hover:border-primary transition-all group">
+<span class="font-label-caps text-label-caps">HIPAA</span>
+<div class="w-8 h-4 bg-primary rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white/50 cursor-pointer hover:border-primary transition-all group opacity-60">
+<span class="font-label-caps text-label-caps">PCI DSS 4.0</span>
+<div class="w-8 h-4 bg-surface-dim rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white cursor-pointer hover:border-primary transition-all group">
+<span class="font-label-caps text-label-caps">CCPA/CPRA</span>
+<div class="w-8 h-4 bg-primary rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white cursor-pointer hover:border-primary transition-all group">
+<span class="font-label-caps text-label-caps">CMMC 2.0</span>
+<div class="w-8 h-4 bg-primary rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white cursor-pointer hover:border-primary transition-all group">
+<span class="font-label-caps text-label-caps">TISAX</span>
+<div class="w-8 h-4 bg-primary rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white/50 cursor-pointer hover:border-primary transition-all group opacity-60">
+<span class="font-label-caps text-label-caps">FEDRAMP</span>
+<div class="w-8 h-4 bg-surface-dim rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white cursor-pointer hover:border-primary transition-all group">
+<span class="font-label-caps text-label-caps">APP (AU)</span>
+<div class="w-8 h-4 bg-primary rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded border border-outline-variant bg-white/50 cursor-pointer hover:border-primary transition-all group opacity-60">
+<span class="font-label-caps text-label-caps">PIPEDA</span>
+<div class="w-8 h-4 bg-surface-dim rounded-full relative flex items-center px-0.5">
+<div class="w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant">
+<button class="w-full flex items-center justify-center gap-2 py-2 border border-outline text-on-surface hover:bg-surface-container transition-colors rounded font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[18px]" data-icon="clear_all">clear_all</span>
+                        Reset Filters
+                    </button>
+</div>
+</aside>
+<!-- Main Data Workspace -->
+<section class="flex-1 min-w-0">
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="font-headline-sm text-headline-sm">Harmonized Control Library</h3>
+<div class="flex gap-2">
+<div class="px-3 py-1 bg-primary text-on-primary rounded-full font-label-muted text-label-muted">142 Controls Total</div>
+<div class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full font-label-muted text-label-muted">7 Active Frameworks</div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant">
+<tr>
+<th class="px-6 py-4 font-bold">ID</th>
+<th class="px-6 py-4 font-bold">Control Name</th>
+<th class="px-6 py-4 font-bold">Domain</th>
+<th class="px-6 py-4 font-bold">Frameworks</th>
+<th class="px-6 py-4 font-bold">Classification</th>
+<th class="px-6 py-4 font-bold text-center">Coverage</th>
+<th class="px-6 py-4 w-10"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1: Mapped -->
+<tr class="control-row cursor-pointer" onclick="this.classList.toggle('row-expanded')">
+<td class="px-6 py-5 font-bold text-primary">HC-0104</td>
+<td class="px-6 py-5 max-w-xs truncate font-semibold">Consent Verification for Data Processing</td>
+<td class="px-6 py-5 text-on-surface-variant">Data Subject Rights</td>
+<td class="px-6 py-5">
+<div class="flex -space-x-1 overflow-hidden">
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">GDPR</span>
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">DPDP</span>
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-surface-container-highest text-on-surface-variant text-[9px] font-bold">+2</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-0.5 bg-surface-container-highest text-on-surface text-[11px] font-bold rounded uppercase">Mapped</span>
+</td>
+<td class="px-6 py-5 text-center font-bold">4/4</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined expand-icon transition-transform" data-icon="expand_more">expand_more</span>
+</td>
+</tr>
+<tr class="bg-surface-container-low expanded-content-row">
+<td class="p-0 overflow-hidden" colspan="7">
+<div class="expanded-content bg-surface-container-low px-12 py-0 border-b border-outline-variant">
+<div class="py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-4">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-2">Technical Description</h4>
+<p class="text-body-md text-on-surface">Establish procedures to verify that consent was obtained from data subjects for each specific processing activity as required by regulation. Verification must be auditable and linked to specific versions of the privacy notice.</p>
+</div>
+<div class="space-y-4">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-2">Framework Mapping Details</h4>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-body-md p-2 bg-white rounded border border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="font-bold">GDPR Art. 7(1)</span>
+<span class="text-surface-dim">|</span>
+<span>Consent Proof</span>
+</div>
+<span class="px-2 py-1 bg-primary text-on-primary text-[10px] font-bold rounded">100% CONFIDENCE</span>
+</div>
+<div class="flex justify-between items-center text-body-md p-2 bg-white rounded border border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="font-bold">DPDP Sec. 6(1)</span>
+<span class="text-surface-dim">|</span>
+<span>Notice of Processing</span>
+</div>
+<span class="px-2 py-1 bg-primary text-on-primary text-[10px] font-bold rounded">98% CONFIDENCE</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 2: Partial -->
+<tr class="control-row cursor-pointer" onclick="this.classList.toggle('row-expanded')">
+<td class="px-6 py-5 font-bold text-primary">HC-0211</td>
+<td class="px-6 py-5 max-w-xs truncate font-semibold">Incident Response Timing Thresholds</td>
+<td class="px-6 py-5 text-on-surface-variant">Security Incident Management</td>
+<td class="px-6 py-5">
+<div class="flex -space-x-1 overflow-hidden">
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">NIST</span>
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">SOC2</span>
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-surface-container-highest text-on-surface-variant text-[9px] font-bold">+1</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-0.5 bg-surface-container-highest text-on-surface text-[11px] font-bold rounded uppercase">Partial</span>
+</td>
+<td class="px-6 py-5 text-center font-bold">3/5</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined expand-icon transition-transform" data-icon="expand_more">expand_more</span>
+</td>
+</tr>
+<tr class="bg-surface-container-low expanded-content-row">
+<td class="p-0 overflow-hidden" colspan="7">
+<div class="expanded-content bg-surface-container-low px-12 py-0 border-b border-outline-variant">
+<div class="py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-4">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-2">Technical Description</h4>
+<p class="text-body-md text-on-surface">Defined timelines for notifying regulatory bodies and affected parties after confirmation of a data breach. Thresholds vary by jurisdiction (e.g., 72 hours for GDPR).</p>
+</div>
+<div class="space-y-4">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-2">Mapping Discrepancies</h4>
+<p class="text-body-md text-on-error">Critical gap identified: HIPAA requires 60 days, while CCPA requires "as soon as possible." Current implementation defaults to 72 hours.</p>
+</div>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 3: Unique -->
+<tr class="control-row cursor-pointer" onclick="this.classList.toggle('row-expanded')">
+<td class="px-6 py-5 font-bold text-primary">HC-0382</td>
+<td class="px-6 py-5 max-w-xs truncate font-semibold">Automated AI Decision Appeal Path</td>
+<td class="px-6 py-5 text-on-surface-variant">Algorithmic Transparency</td>
+<td class="px-6 py-5">
+<div class="flex -space-x-1 overflow-hidden">
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">GDPR</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-0.5 bg-primary text-on-primary text-[11px] font-bold rounded uppercase">Unique</span>
+</td>
+<td class="px-6 py-5 text-center font-bold">1/1</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined expand-icon transition-transform" data-icon="expand_more">expand_more</span>
+</td>
+</tr>
+<!-- Row 4: Mapped -->
+<tr class="control-row cursor-pointer" onclick="this.classList.toggle('row-expanded')">
+<td class="px-6 py-5 font-bold text-primary">HC-0412</td>
+<td class="px-6 py-5 max-w-xs truncate font-semibold">Data Protection Impact Assessment (DPIA)</td>
+<td class="px-6 py-5 text-on-surface-variant">Risk Management</td>
+<td class="px-6 py-5">
+<div class="flex -space-x-1 overflow-hidden">
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">GDPR</span>
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">DPDP</span>
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">ISO</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-0.5 bg-surface-container-highest text-on-surface text-[11px] font-bold rounded uppercase">Mapped</span>
+</td>
+<td class="px-6 py-5 text-center font-bold">6/6</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined expand-icon transition-transform" data-icon="expand_more">expand_more</span>
+</td>
+</tr>
+<!-- Row 5: Mapped -->
+<tr class="control-row cursor-pointer" onclick="this.classList.toggle('row-expanded')">
+<td class="px-6 py-5 font-bold text-primary">HC-0559</td>
+<td class="px-6 py-5 max-w-xs truncate font-semibold">Vendor Security Verification</td>
+<td class="px-6 py-5 text-on-surface-variant">Third-Party Risk</td>
+<td class="px-6 py-5">
+<div class="flex -space-x-1 overflow-hidden">
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">SOC2</span>
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">HIPAA</span>
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-tertiary text-on-tertiary text-[9px] font-bold">NIST</span>
+<span class="inline-flex items-center justify-center h-6 w-10 rounded border border-white bg-surface-container-highest text-on-surface-variant text-[9px] font-bold">+4</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-0.5 bg-surface-container-highest text-on-surface text-[11px] font-bold rounded uppercase">Mapped</span>
+</td>
+<td class="px-6 py-5 text-center font-bold">8/8</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined expand-icon transition-transform" data-icon="expand_more">expand_more</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between bg-surface">
+<span class="font-label-muted text-label-muted text-on-surface-variant uppercase">Showing 1 to 5 of 142 Controls</span>
+<div class="flex gap-2">
+<button class="p-2 border border-outline-variant rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="px-3 py-1 border border-primary bg-primary text-on-primary rounded font-bold text-body-md">1</button>
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors font-bold text-body-md">2</button>
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors font-bold text-body-md">3</button>
+<span class="px-2 py-1">...</span>
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors font-bold text-body-md">29</button>
+<button class="p-2 border border-outline-variant rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Harmonization Stats Cards (Bento Style) -->
+<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white border border-outline-variant p-6 rounded-xl">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="hub">hub</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Harmonization Rate</span>
+</div>
+<div class="text-display-lg font-display-lg">84.2%</div>
+<p class="text-label-muted text-label-muted mt-2 text-on-surface-variant">Average control overlap across active frameworks.</p>
+</div>
+<div class="bg-white border border-outline-variant p-6 rounded-xl">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="rule">rule</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Audit Efficiency</span>
+</div>
+<div class="text-display-lg font-display-lg">2.8x</div>
+<p class="text-label-muted text-label-muted mt-2 text-on-surface-variant">Evidence items mapped to multiple controls.</p>
+</div>
+<div class="bg-white border border-outline-variant p-6 rounded-xl overflow-hidden relative">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="emergency">emergency</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Unmapped Gaps</span>
+</div>
+<div class="text-display-lg font-display-lg">14</div>
+<p class="text-label-muted text-label-muted mt-2 text-on-surface-variant">High-priority unique controls requiring manual setup.</p>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simple toggle logic for row expansion handles
+        document.querySelectorAll('.control-row').forEach(row => {
+            row.addEventListener('click', () => {
+                // Expansion is handled via CSS toggle in HTML (onclick="this.classList.toggle('row-expanded')")
+            });
+        });
+
+        // Filter toggle visualization
+        document.querySelectorAll('aside .space-y-1\\.5 div').forEach(chip => {
+            chip.addEventListener('click', function() {
+                const dot = this.querySelector('div > div');
+                const pill = this.querySelector('div');
+                const isOff = pill.classList.contains('bg-surface-dim');
+                
+                if(isOff) {
+                    pill.classList.replace('bg-surface-dim', 'bg-primary');
+                    dot.classList.add('ml-auto');
+                    this.classList.remove('opacity-60');
+                    this.classList.replace('bg-white/50', 'bg-white');
+                } else {
+                    pill.classList.replace('bg-primary', 'bg-surface-dim');
+                    dot.classList.remove('ml-auto');
+                    this.classList.add('opacity-60');
+                    this.classList.replace('bg-white', 'bg-white/50');
+                }
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Assessment Workspace | Cybernara DPDP SHIELD</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#7e7576",
+                        "surface-dim": "#dadada",
+                        "tertiary": "#000000",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#1b1b1b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#1b1b1b",
+                        "primary": "#000000",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e2e2e2",
+                        "outline-variant": "#cfc4c5",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#5e5e5e",
+                        "on-tertiary-container": "#848484",
+                        "surface-bright": "#f9f9f9",
+                        "on-secondary": "#ffffff",
+                        "background": "#f9f9f9",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "primary-fixed": "#e2e2e2",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "tertiary-container": "#1b1b1b",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-secondary-container": "#616363",
+                        "surface-container-low": "#f3f3f3",
+                        "on-background": "#1b1b1b",
+                        "inverse-primary": "#c6c6c6",
+                        "inverse-surface": "#303030",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-container": "#dfe0e0",
+                        "surface-container": "#eeeeee",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface-container-high": "#e8e8e8",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface": "#f9f9f9",
+                        "secondary": "#5d5f5f",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#4c4546",
+                        "surface-variant": "#e2e2e2",
+                        "primary-container": "#1b1b1b",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-primary-container": "#848484"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack_sm": "8px",
+                        "stack_md": "16px",
+                        "gutter": "24px",
+                        "margin_container": "32px",
+                        "sidebar_width": "260px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-muted": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "500"}],
+                        "label-muted": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9f9;
+        }
+        /* Custom scrollbar for high-end look */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cfc4c5; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #7e7576; }
+
+        .framework-tree-item::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            width: 8px;
+            border-top: 1px solid #cfc4c5;
+        }
+        
+        .framework-tree-container {
+            position: relative;
+            padding-left: 12px;
+            border-left: 1px solid #cfc4c5;
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-item.active .accordion-content {
+            max-height: 2000px;
+        }
+        .accordion-item.active .chevron-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="text-on-surface overflow-hidden">
+<!-- Sidebar (Shared Component SideNavBar) -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] bg-primary-container flex flex-col py-6 border-r border-outline-variant z-50">
+<div class="px-6 mb-10">
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-primary">Cybernara</h1>
+<p class="font-label-caps text-label-caps text-on-primary-container">DPDP SHIELD</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-label-caps uppercase">Home</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps uppercase">Dashboard</span>
+</a>
+<a class="border-l-2 border-primary-fixed bg-white/10 text-on-primary font-bold px-4 py-2 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-caps text-label-caps uppercase">Assessments</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps uppercase">Results</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">policy</span>
+<span class="font-label-caps text-label-caps uppercase">Policy</span>
+</a>
+</nav>
+<footer class="mt-auto pt-6 border-t border-white/10">
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-caps text-label-caps uppercase">Notifications</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-2 flex items-center gap-3 hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dark_mode</span>
+<span class="font-label-caps text-label-caps uppercase">Dark Mode</span>
+</a>
+<div class="px-4 py-4 mt-2 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+</div>
+<div>
+<p class="font-label-caps text-[10px] text-on-primary font-bold">CYBER ADMIN</p>
+<p class="font-label-muted text-[10px] text-on-primary-container">Security Operations</p>
+</div>
+</div>
+</footer>
+</aside>
+<!-- Top AppBar (Shared Component TopAppBar) -->
+<header class="fixed top-0 left-0 right-0 ml-[260px] h-16 bg-surface border-b border-outline-variant flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-4">
+<nav class="flex items-center text-label-muted font-label-muted text-on-surface-variant gap-2">
+<span>Assessments</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-on-surface font-bold">DPDP Annual Audit 2024</span>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="hover:bg-surface-container-low p-2 transition-colors duration-100 rounded">
+<span class="material-symbols-outlined text-on-surface-variant">refresh</span>
+</button>
+</div>
+<div class="h-6 w-[1px] bg-outline-variant"></div>
+<button class="bg-transparent border border-primary text-primary px-4 py-1.5 font-label-caps text-label-caps rounded-sm hover:bg-surface-container-low transition-all">Export</button>
+<button class="bg-primary text-on-primary px-4 py-1.5 font-label-caps text-label-caps rounded-sm hover:opacity-90 transition-all">New Assessment</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-[260px] mt-16 h-[calc(100vh-64px)] overflow-hidden flex">
+<!-- Left Framework Tree Panel -->
+<aside class="w-80 border-r border-outline-variant bg-surface-bright p-8 overflow-y-auto shrink-0">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-6 uppercase tracking-widest">Framework Structure</h3>
+<div class="space-y-6">
+<!-- Framework Root -->
+<div>
+<div class="flex items-center gap-2 mb-3 text-primary">
+<span class="material-symbols-outlined text-sm">account_tree</span>
+<span class="font-headline-sm text-headline-sm text-[14px]">DPDP Compliance v1.0</span>
+</div>
+<!-- Domains -->
+<div class="framework-tree-container space-y-4 ml-2">
+<div class="relative framework-tree-item">
+<button class="w-full text-left font-label-caps text-[11px] text-primary flex items-center justify-between group">
+<span>DOMAIN 01: DATA COLLECTION</span>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100">info</span>
+</button>
+<div class="mt-2 pl-4 space-y-2 border-l border-outline-variant/30">
+<a class="block text-body-md text-[13px] text-on-surface-variant hover:text-primary" href="#">Legal Basis &amp; Consent</a>
+<a class="block text-body-md text-[13px] text-on-surface-variant hover:text-primary" href="#">Purpose Limitation</a>
+</div>
+</div>
+<div class="relative framework-tree-item">
+<button class="w-full text-left font-label-caps text-[11px] text-on-surface-variant hover:text-primary flex items-center justify-between group">
+<span>DOMAIN 02: DATA SECURITY</span>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100">info</span>
+</button>
+</div>
+<div class="relative framework-tree-item">
+<button class="w-full text-left font-label-caps text-[11px] text-on-surface-variant hover:text-primary flex items-center justify-between group">
+<span>DOMAIN 03: DATA RIGHTS</span>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100">info</span>
+</button>
+</div>
+<div class="relative framework-tree-item">
+<button class="w-full text-left font-label-caps text-[11px] text-on-surface-variant hover:text-primary flex items-center justify-between group">
+<span>DOMAIN 04: TRANSFERS</span>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100">info</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Filter section -->
+<div class="pt-6 border-t border-outline-variant">
+<h4 class="font-label-caps text-[10px] text-on-surface-variant mb-4 uppercase">View Filters</h4>
+<div class="space-y-3">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="form-checkbox h-3 w-3 text-primary border-outline-variant rounded-none focus:ring-0" type="checkbox"/>
+<span class="font-body-md text-[12px]">Show N/A Controls</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="form-checkbox h-3 w-3 text-primary border-outline-variant rounded-none focus:ring-0" type="checkbox"/>
+<span class="font-body-md text-[12px]">Show Only Pending</span>
+</label>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Assessment Table/List -->
+<section class="flex-1 bg-surface-container-low p-margin_container overflow-y-auto">
+<div class="max-w-5xl mx-auto space-y-gutter">
+<!-- Category Section: Accordion -->
+<div class="accordion-item active border border-outline-variant bg-white rounded-xl overflow-hidden">
+<!-- Header -->
+<div class="p-6 flex items-center justify-between cursor-pointer group hover:bg-surface-container-lowest transition-colors" onclick="this.parentElement.classList.toggle('active')">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-lg border border-outline-variant/20">
+<span class="material-symbols-outlined text-primary">security</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm">Section 1: Data Governance &amp; Protection</h2>
+<p class="font-body-md text-on-surface-variant text-[13px] mt-1">Foundational controls for establishing data lifecycle management and organizational accountability.</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<p class="font-label-caps text-[10px] text-on-surface-variant mb-1">COMPLETION</p>
+<div class="flex items-center gap-3">
+<div class="w-32 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 65%;"></div>
+</div>
+<span class="font-label-caps text-label-caps">65%</span>
+</div>
+</div>
+<div class="px-3 py-1 bg-primary text-on-primary rounded-full font-label-caps text-[10px]">IN PROGRESS</div>
+<span class="material-symbols-outlined chevron-icon transition-transform duration-300">expand_more</span>
+</div>
+</div>
+<!-- Accordion Content (Control Rows) -->
+<div class="accordion-content border-t border-outline-variant">
+<div class="bg-surface-container-lowest divide-y divide-outline-variant/30">
+<!-- Control Row Item -->
+<div class="p-4 hover:bg-surface transition-colors flex items-center gap-4">
+<div class="w-16 shrink-0 text-center">
+<span class="font-label-caps text-[11px] bg-surface-container-high px-2 py-1 border border-outline-variant rounded">DG-01</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-body-lg text-[14px] font-bold truncate">Appointment of Data Protection Officer (DPO)</h4>
+<span class="text-[10px] bg-secondary-container px-1.5 py-0.5 rounded font-label-caps text-on-secondary-container">5 Sub-controls</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-24 h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 100%;"></div>
+</div>
+<span class="material-symbols-outlined text-sm text-on-surface-variant">description</span>
+<span class="font-label-muted text-[11px]">3 Evidence Files</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<select class="border-outline-variant rounded-none font-label-caps text-[11px] px-3 py-1.5 bg-white focus:ring-1 focus:ring-primary transition-all">
+<option>Applicable</option>
+<option>N/A</option>
+</select>
+<div class="flex items-center bg-surface-container-high p-0.5 rounded-sm">
+<button class="px-3 py-1 font-label-caps text-[10px] bg-white border border-outline-variant shadow-sm">YES</button>
+<button class="px-3 py-1 font-label-caps text-[10px] text-on-surface-variant hover:text-on-surface transition-colors">NO</button>
+<button class="px-3 py-1 font-label-caps text-[10px] text-on-surface-variant hover:text-on-surface transition-colors">PARTIAL</button>
+</div>
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Control Row Item (Incomplete) -->
+<div class="p-4 hover:bg-surface transition-colors flex items-center gap-4">
+<div class="w-16 shrink-0 text-center">
+<span class="font-label-caps text-[11px] bg-surface-container-high px-2 py-1 border border-outline-variant rounded">DG-02</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-body-lg text-[14px] font-bold truncate">Data Processing Agreements (DPA) Inventory</h4>
+<span class="text-[10px] bg-secondary-container px-1.5 py-0.5 rounded font-label-caps text-on-secondary-container">12 Sub-controls</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-24 h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 25%;"></div>
+</div>
+<span class="material-symbols-outlined text-sm text-on-surface-variant">description</span>
+<span class="font-label-muted text-[11px]">0 Evidence Files</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<select class="border-outline-variant rounded-none font-label-caps text-[11px] px-3 py-1.5 bg-white focus:ring-1 focus:ring-primary transition-all">
+<option>Applicable</option>
+<option>N/A</option>
+</select>
+<div class="flex items-center bg-surface-container-high p-0.5 rounded-sm">
+<button class="px-3 py-1 font-label-caps text-[10px] text-on-surface-variant hover:text-on-surface transition-colors">YES</button>
+<button class="px-3 py-1 font-label-caps text-[10px] bg-white border border-outline-variant shadow-sm">NO</button>
+<button class="px-3 py-1 font-label-caps text-[10px] text-on-surface-variant hover:text-on-surface transition-colors">PARTIAL</button>
+</div>
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Control Row Item (Partial) -->
+<div class="p-4 hover:bg-surface transition-colors flex items-center gap-4">
+<div class="w-16 shrink-0 text-center">
+<span class="font-label-caps text-[11px] bg-surface-container-high px-2 py-1 border border-outline-variant rounded">DG-03</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-body-lg text-[14px] font-bold truncate">Employee Training &amp; Awareness Records</h4>
+<span class="text-[10px] bg-secondary-container px-1.5 py-0.5 rounded font-label-caps text-on-secondary-container">3 Sub-controls</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-24 h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 50%;"></div>
+</div>
+<span class="material-symbols-outlined text-sm text-on-surface-variant">description</span>
+<span class="font-label-muted text-[11px]">1 Evidence File</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<select class="border-outline-variant rounded-none font-label-caps text-[11px] px-3 py-1.5 bg-white focus:ring-1 focus:ring-primary transition-all">
+<option>Applicable</option>
+<option>N/A</option>
+</select>
+<div class="flex items-center bg-surface-container-high p-0.5 rounded-sm">
+<button class="px-3 py-1 font-label-caps text-[10px] text-on-surface-variant hover:text-on-surface transition-colors">YES</button>
+<button class="px-3 py-1 font-label-caps text-[10px] text-on-surface-variant hover:text-on-surface transition-colors">NO</button>
+<button class="px-3 py-1 font-label-caps text-[10px] bg-white border border-outline-variant shadow-sm">PARTIAL</button>
+</div>
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Category Section (Collapsed) -->
+<div class="accordion-item border border-outline-variant bg-white rounded-xl overflow-hidden">
+<div class="p-6 flex items-center justify-between cursor-pointer group hover:bg-surface-container-lowest transition-colors" onclick="this.parentElement.classList.toggle('active')">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-lg border border-outline-variant/20">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm">Section 2: Consent Management</h2>
+<p class="font-body-md text-on-surface-variant text-[13px] mt-1">Audit trail of individual consent acquisition, storage, and withdrawal mechanisms.</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<p class="font-label-caps text-[10px] text-on-surface-variant mb-1">COMPLETION</p>
+<div class="flex items-center gap-3">
+<div class="w-32 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 0%;"></div>
+</div>
+<span class="font-label-caps text-label-caps">0%</span>
+</div>
+</div>
+<div class="px-3 py-1 border border-outline-variant rounded-full font-label-caps text-[10px] text-on-surface-variant">PENDING</div>
+<span class="material-symbols-outlined chevron-icon transition-transform duration-300">expand_more</span>
+</div>
+</div>
+<div class="accordion-content">
+<div class="p-12 text-center bg-surface-container-lowest">
+<span class="material-symbols-outlined text-surface-dim text-4xl mb-2">lock</span>
+<p class="font-body-md text-on-surface-variant">Review Section 1 to unlock detailed control tracking for Section 2.</p>
+</div>
+</div>
+</div>
+<!-- Category Section (Collapsed) -->
+<div class="accordion-item border border-outline-variant bg-white rounded-xl overflow-hidden">
+<div class="p-6 flex items-center justify-between cursor-pointer group hover:bg-surface-container-lowest transition-colors" onclick="this.parentElement.classList.toggle('active')">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-lg border border-outline-variant/20">
+<span class="material-symbols-outlined text-primary">data_usage</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm">Section 3: Subject Access Rights</h2>
+<p class="font-body-md text-on-surface-variant text-[13px] mt-1">Verification of workflows for satisfying data portability and deletion requests.</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<p class="font-label-caps text-[10px] text-on-surface-variant mb-1">COMPLETION</p>
+<div class="flex items-center gap-3">
+<div class="w-32 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 15%;"></div>
+</div>
+<span class="font-label-caps text-label-caps">15%</span>
+</div>
+</div>
+<div class="px-3 py-1 bg-surface-container-highest rounded-full font-label-caps text-[10px]">RE-AUDIT</div>
+<span class="material-symbols-outlined chevron-icon transition-transform duration-300">expand_more</span>
+</div>
+</div>
+<div class="accordion-content">
+<div class="p-8">
+<!-- Empty state or content for Section 3 -->
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual FAB (Hidden as per requirement for "Details" or Task focused screens, but including for reference if needed for core flow) -->
+<!-- Suppressing FAB on Assessment detail view as per mandate: "suppress the FAB on Settings, Profile, Details, and Transactional screens" -->
+<script>
+        // Simple Interaction logic
+        document.addEventListener('DOMContentLoaded', () => {
+            // Dropdown/Accordion items handled via inline onclick for speed in this demo
+            
+            // Highlight sidebar active item logic (handled by static classes based on hierarchy)
+            
+            // Mock interaction for selection buttons
+            const choiceButtons = document.querySelectorAll('.flex.items-center.bg-surface-container-high button');
+            choiceButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const parent = btn.parentElement;
+                    parent.querySelectorAll('button').forEach(b => {
+                        b.classList.remove('bg-white', 'border', 'border-outline-variant', 'shadow-sm');
+                        b.classList.add('text-on-surface-variant');
+                    });
+                    btn.classList.add('bg-white', 'border', 'border-outline-variant', 'shadow-sm');
+                    btn.classList.remove('text-on-surface-variant');
+                });
+            });
+        });
+    </script>
+</body></html>

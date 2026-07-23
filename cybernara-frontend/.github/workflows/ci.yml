@@ -1,0 +1,46 @@
+name: frontend-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+      - run: npm ci
+      - name: Download backend OpenAPI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cybernara-openapi
+          path: contract-artifacts
+        continue-on-error: true
+      - name: Generate API client
+        run: npm run contract:generate
+        env:
+          BACKEND_OPENAPI_PATH: contract-artifacts/cybernara.openapi.json
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm run unit
+      - name: Architecture boundaries
+        run: npm run arch:test
+      - name: Contract currency
+        run: npm run contract:check
+        env:
+          BACKEND_OPENAPI_PATH: contract-artifacts/cybernara.openapi.json
+      - name: Traceability check
+        run: npm run traceability:check
+      - name: Build and performance budget
+        run: npm run build
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: End-to-end tests
+        run: npm run e2e

@@ -1,0 +1,39 @@
+name: backend-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+      - run: npm ci
+      - name: Schema audit
+        run: node scripts/schema-audit.mjs
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Full test suite
+        run: npm run unit
+      - name: Architecture boundaries
+        run: npm run arch:test
+      - name: Migration convention linter
+        run: npm run migration:lint
+      - name: OpenAPI contract currency
+        run: npm run openapi:check
+      - name: Source manifest
+        run: npm run sources:manifest
+      - name: Build
+        run: npm run build
+      - name: Publish OpenAPI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cybernara-openapi
+          path: dist/openapi/cybernara.openapi.json

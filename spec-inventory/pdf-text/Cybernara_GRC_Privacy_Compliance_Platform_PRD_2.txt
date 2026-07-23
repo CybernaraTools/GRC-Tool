@@ -1,0 +1,542 @@
+
+
+--- PAGE 1 ---
+
+Cybernara Confidential - Internal use only
+Page 1
+PRODUCT REQUIREMENTS DOCUMENT
+Cybernara GRC Privacy Compliance
+Platform
+A scalable multi-framework compliance platform for privacy, security, evidence
+management, gap assessment, and audit-ready reporting across GDPR, DPDP,
+CCPA, PDPL, HIPAA, SOC 2, ISO 27001, NIST SP 800-53, Essential Eight, CMMI,
+and ISO 9001.
+Document owner
+Swapnil Khedkar
+Classification
+Cybernara confidential doc
+Version
+v0.2 - PRD draft
+Date
+24 June 2026
+Source basis
+Framework workbooks from /Users/swapnil/Work/Cybernara/GRC/GRC frameworks
+ CYBERNARA CONFIDENTIAL - Do not distribute without written authorization.
+
+
+--- PAGE 2 ---
+
+Cybernara GRC Privacy Compliance Platform - PRD
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 2
+1. Executive Summary
+Cybernara will build a compliance operating platform that converts framework-heavy spreadsheet content into a guided,
+evidence-driven system of record. The platform will help organizations understand which obligations apply, assess their
+current posture, coordinate remediation, and generate audit-ready outputs across privacy and security frameworks.
+The product will separate framework-specific legal or audit requirements from reusable harmonized controls. This split is
+central to scalability: one implemented control can satisfy many mapped requirements, while framework-specific
+differences remain traceable for legal, audit, and regional interpretation.
+Dimension
+PRD Position
+Primary value
+Reduce duplicate compliance effort by mapping multiple frameworks to a shared control and evidence model.
+Initial frameworks
+GDPR, DPDP, CCPA, PDPL, HIPAA, SOC 2, ISO 27001, NIST SP 800-53, Essential Eight, CMMI, ISO 9001.
+Initial market
+Mid-market and enterprise customers with paid private-cloud deployments.
+Initial users
+GRC admins, privacy officers, security leaders, control owners, auditors, legal reviewers, executive stakeholders.
+MVP outcome
+A working multi-framework assessment, gap, evidence, PDF, and Excel reporting workflow using a harmonized
+control library.
+2. Confirmed Product Decisions
+Decision Area
+Confirmed Direction
+Customer segment
+Mid-market and enterprise customers are the first target segments.
+Deployment model
+Private cloud is the initial deployment model; architecture should preserve a path to managed SaaS later.
+Commercial model
+The product is paid-only; no free tier is assumed in the initial roadmap.
+Integrations
+All major integration categories are in product scope, with phased connector delivery by customer priority.
+Legal review ownership
+Not yet decided; product must support SME/legal review workflows, approvals, and versioned sign-off.
+Reporting outputs
+PDF and Excel are the first required reporting formats.
+3. Problem Statement
+Organizations face overlapping privacy and security obligations that are often maintained in separate spreadsheets, tools,
+policies, and audit trackers. This creates duplicate control work, inconsistent evidence, weak traceability, and slow
+response to regulatory change.
+●
+Frameworks use different terminology for similar obligations, such as access control, retention, breach response,
+consent, vendor management, encryption, and audit logging.
+●
+Compliance teams need a single way to map obligations to controls, owners, evidence, risks, findings, remediation tasks,
+and reporting outputs.
+●
+A future-ready product must support new frameworks without redesigning the core assessment, evidence, workflow, or
+reporting capabilities.
+4. Product Goals And Non-Goals
+Goals
+Description
+Unified compliance model
+Represent framework requirements, harmonized controls, evidence, tests, risks, tasks, and reports with clean
+boundaries.
+Framework extensibility
+Add or update frameworks through versioned content packs and mappings without changing core product
+code.
+Audit readiness
+Maintain traceable evidence, review history, approvals, control test results, and exportable reports.
+
+
+--- PAGE 3 ---
+
+Cybernara GRC Privacy Compliance Platform - PRD
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 3
+Goals
+Description
+Operational execution
+Assign owners, due dates, remediation tasks, exceptions, risk acceptances, and recurring review cycles.
+Decision support
+Provide gap scoring, coverage views, maturity insights, executive dashboards, and framework-specific
+readiness summaries.
+Non-Goals
+Description
+Legal advice
+The platform will support legal and privacy review but will not provide final legal determinations.
+One-off spreadsheet clone
+The product will not merely replicate Excel registers; spreadsheets are source material for a structured
+platform.
+Single-framework tool
+The system will not be optimized around one regulation at the cost of cross-framework reuse.
+Evidence storage only
+The product must connect evidence to controls, tests, obligations, risks, and reports.
+5. Target Users And Personas
+Persona
+Primary Needs
+Success Criteria
+GRC administrator
+Configure frameworks, assessments, owners, workflows,
+evidence rules.
+Faster setup, fewer duplicate controls, reliable reporting.
+Privacy officer / DPO
+Track privacy obligations, consent, data rights, retention,
+breach handling.
+Clear readiness view by regulation and jurisdiction.
+Security leader
+Align security controls to privacy obligations and audit
+criteria.
+Reusable evidence and mapped control coverage.
+Control owner
+Know assigned controls, upload evidence, close gaps.
+Simple task queue and low-friction evidence submission.
+Auditor / assessor
+Review control design, operating effectiveness, evidence,
+and history.
+Traceable, exportable, defensible audit packages.
+Executive stakeholder
+Understand risk, readiness, and remediation progress.
+Concise dashboards and board-ready summaries.
+6. Framework Support Model
+The product must distinguish three layers: framework requirements, harmonized controls, and operational
+implementation. This allows GDPR, DPDP, CCPA, PDPL, HIPAA, SOC 2, ISO 27001, NIST, Essential Eight, CMMI, and
+ISO 9001 to share reusable operational controls while preserving framework-specific citations and obligations.
+Layer
+Purpose
+Examples
+Framework requirement
+Authoritative obligation from a regulation, standard, rule,
+article, clause, or control catalog.
+GDPR Article 30, DPDP Rule 3, CCPA deletion right,
+HIPAA 164.308, SOC 2 CC6.
+Harmonized control
+Reusable control statement that can satisfy multiple
+mapped requirements.
+Data inventory, consent management, encryption, MFA,
+incident response, vendor due diligence.
+Implementation object
+Organization-specific execution detail.
+Owner, evidence, test result, policy, task, exception,
+risk, review date, system scope.
+Mapping
+Versioned relationship between requirement and
+harmonized control.
+Coverage level, confidence, rationale, applicability,
+jurisdiction, effective date.
+Assessment
+Evidence-backed evaluation of design and operating
+effectiveness.
+Not assessed, implemented, partially implemented,
+ineffective, not applicable.
+7. Core Product Requirements
+ID
+Requirement
+Priority
+PRD-01
+Import, normalize, and version framework content from curated content packs.
+P0
+
+
+--- PAGE 4 ---
+
+Cybernara GRC Privacy Compliance Platform - PRD
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 4
+ID
+Requirement
+Priority
+PRD-02
+Maintain a harmonized control library with domain, control, sub-control, description, mappings, confidence, and
+traceability.
+P0
+PRD-03
+Create assessments by organization, business unit, system, geography, framework, and scope.
+P0
+PRD-04
+Support applicability determination with reasons, exclusions, and approver history.
+P0
+PRD-05
+Assign controls and requirements to owners with due dates, status, reminders, and escalation.
+P0
+PRD-06
+Attach evidence to controls, requirements, systems, tests, and assessment periods.
+P0
+PRD-07
+Score gaps by framework, domain, control, owner, risk, maturity, and business unit.
+P0
+PRD-08
+Generate executive, audit, framework-specific, and evidence package reports.
+P0
+PRD-09
+Provide dashboards for readiness, coverage, overdue items, high-risk gaps, and evidence freshness.
+P1
+PRD-10
+Support regulatory change management with diffing between framework versions.
+P1
+PRD-11
+Expose APIs and webhooks for integrations with ticketing, identity, cloud, storage, SIEM, and document systems.
+P1
+PRD-12
+Support private-cloud deployment with enterprise security, observability, backup, recovery, and customer-controlled
+networking.
+P0
+PRD-13
+Support PDF and Excel exports for executive, auditor, framework, gap, and evidence reports.
+P0
+PRD-14
+Support AI-assisted mapping suggestions, evidence classification, questionnaire response, and gap summaries with
+human review.
+P1
+PRD-15
+Provide trust-center and customer assurance workflows as a future module fed by live compliance posture.
+P2
+8. MVP Scope
+●
+Framework library: GDPR, DPDP, CCPA, PDPL, HIPAA, SOC 2, ISO 27001, NIST SP 800-53, Essential Eight, CMMI,
+and ISO 9001 as versioned read-only content packs.
+●
+Harmonized control library: reusable control domains, control statements, sub-controls, mappings, confidence, and
+framework citations.
+●
+Assessment workspace: create scoped assessments, select frameworks, mark applicability, assign owners, track status,
+and collect evidence.
+●
+Evidence management: file uploads, links, metadata, ownership, expiry, review status, and reuse across mapped
+controls.
+●
+Gap and remediation workflow: gaps, remediation tasks, due dates, severity, risk owner, comments, and closure
+evidence.
+●
+Reports: PDF and Excel exports for framework readiness, control coverage, evidence inventory, gap register, and
+executive dashboard views.
+●
+Private-cloud foundation: customer-managed deployment boundary, configurable storage, observability, backup,
+recovery, and security controls.
+9. Key Workflows
+Workflow
+User Journey
+Framework onboarding
+Admin enables framework pack, reviews version notes, selects scope, and confirms default mappings.
+Assessment creation
+Admin selects organization, business unit, systems, jurisdictions, data categories, and frameworks.
+Applicability review
+Privacy or GRC lead reviews obligations, sets applicability, records rationale, and routes approvals.
+Control execution
+Control owner reviews assigned controls, implements actions, uploads evidence, and submits for review.
+Evidence review
+Reviewer validates evidence freshness, sufficiency, mapping, and operating period coverage.
+
+
+--- PAGE 5 ---
+
+Cybernara GRC Privacy Compliance Platform - PRD
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 5
+Workflow
+User Journey
+Gap remediation
+System creates gaps from failed controls or missing evidence; owners remediate and attach closure proof.
+Audit package
+Auditor filters by framework and period, reviews traceability, exports evidence pack and control report.
+Regulatory update
+Content owner imports new framework version, reviews diffs, updates mappings, and launches impact
+assessment.
+10. Data And Domain Model
+The platform should be designed around a clean domain model with explicit aggregates. This supports SOLID design,
+high cohesion, low coupling, independent testing, and future services such as AI mapping, continuous controls
+monitoring, and regulatory intelligence.
+Domain Object
+Description
+Framework
+Regulation, standard, or model with name, jurisdiction, owner, effective dates, version, source, and status.
+Requirement
+Atomic obligation or control item from a framework, preserving citation, text, category, applicability rules, and
+penalties.
+HarmonizedControl
+Reusable control mapped to one or more requirements with domain, objective, implementation guidance, and
+evidence expectations.
+ControlMapping
+Relationship between requirement and harmonized control with coverage, confidence, rationale, source row, and
+reviewer status.
+Assessment
+Scoped compliance evaluation across frameworks, systems, business units, regions, and time periods.
+ControlInstance
+Organization-specific implementation of a harmonized control within an assessment scope.
+Evidence
+Files, URLs, attestations, API-collected artifacts, metadata, validity period, classification, and review trail.
+Finding
+Gap, deficiency, risk, or exception linked to requirement, control, evidence, test, and remediation.
+Task
+Work item for owner execution, review, escalation, approval, or remediation.
+Report
+Generated output with selected scope, framework, evidence, findings, and approval history.
+11. Non-Functional Requirements
+Area
+Requirement
+Security
+Tenant isolation, encryption at rest and in transit, least privilege, RBAC/ABAC, secure audit logging, secrets
+management, and secure SDLC.
+Privacy
+Data minimization, retention policy, evidence classification, data residency readiness, consent-aware telemetry, and
+access reviews.
+Deployment
+Private-cloud deployment with customer-controlled networking, storage, identity, encryption keys where required,
+backup, and recovery runbooks.
+Scalability
+Support large enterprises with thousands of controls, users, evidence objects, tasks, assessments, connectors, and
+report exports.
+Reliability
+Design for high availability, idempotent background jobs, retries, observability, and disaster recovery.
+Performance
+Fast dashboards and filtered views through indexing, caching, async exports, and search-optimized stores.
+Auditability
+Immutable history for approvals, evidence review, mapping changes, status updates, and report generation.
+Maintainability
+Domain-driven modular architecture, contract tests, migration discipline, CI quality gates, and clean API boundaries.
+Accessibility
+WCAG-aligned UX for core workflows, keyboard navigation, readable contrast, and predictable forms.
+Interoperability
+API-first design with imports/exports, webhooks, and connectors for ticketing, storage, IAM, cloud, SIEM, and
+document repositories.
+
+
+--- PAGE 6 ---
+
+Cybernara GRC Privacy Compliance Platform - PRD
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 6
+12. Reporting And Analytics
+●
+Executive dashboard: readiness by framework, high-risk gaps, overdue tasks, evidence freshness, and trend over time.
+●
+Framework report: applicable requirements, mapped controls, assessment status, evidence, exceptions, and residual
+gaps.
+●
+Control report: harmonized control coverage across frameworks, control owner, test status, evidence, and historical
+changes.
+●
+Gap register: severity, affected frameworks, mapped obligations, owner, remediation plan, due date, and closure proof.
+●
+Audit evidence package: exportable index of evidence mapped to controls and framework citations for the selected
+period.
+●
+First export formats: polished PDF for leadership/audit circulation and Excel for working registers, filters, and offline
+review.
+13. Integrations
+Integrations are a core paid-product capability, not a free-tier add-on. The product should support all major integration
+categories, delivered in phases based on enterprise customer priority and implementation complexity.
+Category
+Candidate Integrations
+Purpose
+Identity
+Okta, Microsoft Entra ID, Google Workspace
+SSO, user lifecycle, role mapping, access evidence.
+Ticketing
+Jira, ServiceNow, Linear
+Remediation tasks, approvals, change workflow.
+Cloud
+AWS, Azure, Google Cloud
+Configuration evidence, asset inventory, security posture inputs.
+Storage and docs
+SharePoint, Google Drive, Confluence, S3
+Evidence ingestion and policy/document references.
+Security
+SIEM, vulnerability scanners, EDR, CSPM
+Continuous control signals and automated evidence.
+Collaboration
+Slack, Microsoft Teams, email
+Notifications, reminders, approvals, and escalations.
+14. Competitor Baseline And Market Parity
+The platform must meet the modern GRC automation baseline established by leading products such as Vanta, Drata,
+OneTrust, and AuditBoard: continuous monitoring, automated evidence collection, risk and vendor management,
+trust-center/customer assurance, control mapping, workflow automation, AI-assisted work, integrations, and exportable
+reports.
+Market Capability
+Required Cybernara Position
+Continuous control monitoring
+Monitor controls through connectors, recurring evidence checks, stale evidence detection, and risk
+signals.
+Automated evidence collection
+Collect evidence from cloud, IAM, ticketing, document, security, and storage tools with review and reuse
+logic.
+Multi-framework mapping
+Map requirements to harmonized controls with coverage, confidence, rationale, and review status.
+Risk and vendor management
+Support risk registers, vendor assessments, third-party evidence, residual risk, and remediation
+workflow.
+Access reviews
+Automate periodic access review campaigns with owner attestations, exceptions, and evidence links.
+Policy management
+Support policy inventory, ownership, review cycles, approvals, employee acknowledgement, and
+framework mapping.
+Audit management
+Support audit planning, request lists, fieldwork evidence, testing, findings, and auditor exports.
+Trust center
+Future module for sharing approved security/privacy posture, reports, certifications, and customer
+assurance responses.
+
+
+--- PAGE 7 ---
+
+Cybernara GRC Privacy Compliance Platform - PRD
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 7
+Market Capability
+Required Cybernara Position
+AI assistance
+Use AI for mapping suggestions, evidence classification, issue summaries, questionnaire drafts, and
+regulatory change impact with human approval.
+Enterprise workflow
+Provide role-based work queues, approvals, comments, escalations, SLA tracking, notifications, and
+immutable audit trail.
+15. Differentiation And Strategic Edge
+Differentiator
+Why It Matters
+Privacy-first depth
+Go deeper than security certification tools by treating GDPR, DPDP, CCPA, PDPL, consent, data rights,
+retention, transfers, and breach workflows as first-class product objects.
+Harmonized control intelligence
+Reduce repeated work by coordinating common controls across privacy, security, healthcare, quality,
+and maturity frameworks.
+Private-cloud enterprise posture
+Serve customers with strict deployment, data residency, and control requirements before broad SaaS
+expansion.
+Framework-pack architecture
+Enable future regulations, customer-specific frameworks, and version updates without rewriting core
+workflows.
+Jurisdiction-aware compliance graph
+Represent relationships among requirements, controls, systems, data categories, jurisdictions, owners,
+evidence, risks, and reports.
+Human-in-the-loop legal governance
+Support legal/SME review without pretending the product is a source of legal advice.
+Evidence reuse engine
+Recommend existing evidence across mapped controls and warn when evidence is stale, weak, out of
+scope, or period-mismatched.
+Regulatory change impact
+Compare framework versions and identify affected controls, owners, policies, evidence, gaps, and
+reports.
+Executive and auditor duality
+Produce board-ready summaries and detailed auditor workpapers from the same source of truth.
+16. Success Metrics
+Metric
+Target Direction
+Control reuse rate
+Increase percentage of framework requirements satisfied by shared harmonized controls.
+Assessment cycle time
+Reduce time from framework selection to readiness report.
+Evidence reuse
+Increase number of evidence objects reused across mapped controls and frameworks.
+Gap closure time
+Reduce median time to remediate high-risk gaps.
+Audit package completion
+Increase percentage of evidence packages generated without manual spreadsheet work.
+Mapping quality
+Increase percentage of mappings reviewed and approved by SME/legal/GRC owner.
+User adoption
+Increase active owners completing assigned control tasks on time.
+17. Risks And Assumptions
+Risk / Assumption
+Mitigation
+Regulatory interpretation varies by jurisdiction
+and organization.
+Provide source traceability, review workflows, versioning, and legal-owner approval rather than
+hard-coded legal conclusions.
+Legal review ownership is not yet finalized.
+Design legal/SME review queues, approval roles, mapping sign-off, and versioned decision
+history from the beginning.
+Framework mappings may require expert
+validation.
+Track mapping confidence, reviewer status, rationale, and change history.
+
+
+--- PAGE 8 ---
+
+Cybernara GRC Privacy Compliance Platform - PRD
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 8
+Risk / Assumption
+Mitigation
+Evidence quality may be inconsistent.
+Define evidence expectations per control, review states, expiry, and sufficiency checks.
+Enterprises need different control scoping
+models.
+Support organization, business unit, system, geography, data category, vendor, and process
+scopes.
+All integration categories are in scope but
+cannot ship at once.
+Prioritize connector delivery by customer demand, security impact, evidence value, and
+implementation cost.
+Future frameworks will differ from initial
+spreadsheets.
+Use content-pack architecture and domain abstractions independent of specific files.
+18. Release Plan
+Phase
+Scope
+Phase 0 - Foundation
+Finalize content model, import source spreadsheets, define harmonized control taxonomy, and validate
+mappings.
+Phase 1 - MVP
+Private-cloud foundation, framework library, assessments, applicability, evidence, owner workflow, gap register,
+PDF exports, and Excel exports.
+Phase 2 - Enterprise readiness
+Advanced RBAC, audit history, priority integrations, dashboards, async exports, and content version diffing.
+Phase 3 - Automation and
+assurance
+Continuous control monitoring, automated access reviews, policy workflows, vendor risk, audit management,
+and trust-center foundations.
+Phase 4 - Intelligence
+AI-assisted mapping suggestions, evidence classification, questionnaire response, regulatory change impact,
+and control recommendations.
+Phase 5 - Ecosystem
+Public APIs, marketplace-style content packs, partner integrations, custom framework builder, and optional
+managed SaaS path.
+ End of PRD - Cybernara Confidential

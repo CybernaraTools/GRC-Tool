@@ -1,0 +1,477 @@
+
+
+--- PAGE 1 ---
+
+Cybernara Confidential - Internal use only
+Page 1
+DESIGN DOCUMENT
+ Cybernara Final Detailed Architecture
+ and Diagrams
+Implementation architecture derived from the Master PRD and Engineering Requirements,
+including domains, data, AI, deployment, integrations, security, flows and operations.
+Document owner
+Swapnil Khedkar
+Classification
+Cybernara confidential doc
+Version
+v1.0 - Final Architecture
+Date
+2 July 2026
+Deployment
+Private cloud - mid-market and enterprise
+Deliverable
+HLD, ERD, ingestion, assessment, AI, integration, deployment, security, reliability and decision records
+CYBERNARA CONFIDENTIAL - Do not distribute without written authorization.
+
+
+--- PAGE 2 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 2
+1. Architecture Overview
+The reference architecture uses a modular transactional core, independently scalable worker pools, and replaceable infrastructure adapters. PostgreSQL is authoritative; object storage holds
+evidence; search/vector/cache are rebuildable. Framework content and mappings are immutable by version. Assessments pin content and question versions, and reports render from frozen
+snapshots.
+Architecture concern
+Decision
+Deployment boundary
+Single-customer private cloud, with optional internal workspaces/tenants and a future managed deployment path.
+Transactional boundary
+Modular monolith for high-integrity workflows; outbox events coordinate asynchronous work.
+Service extraction
+Extract reporting, connectors, AI or high-volume monitoring when independent scaling/isolation outweighs
+distributed-system cost.
+AI boundary
+All model access through policy gateway; no UI/provider coupling and no autonomous authoritative decisions.
+Data boundary
+Tenant-aware PostgreSQL/object prefixes; framework content versioned separately from tenant execution.
+Security boundary
+Untrusted clients, connectors and models terminate at enforcing gateways; workload identity and default-deny internal
+policy.
+
+
+--- PAGE 3 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 3
+2. High-Level Reference Architecture
+Private-Cloud Reference Architecture
+EXPERIENCE
+DOMAIN SERVICES
+PLATFORM SERVICES
+DATA PLANE
+Enterprise Users
+WAF / Ingress
+Next.js Web + BFF
+API Gateway
+SSO / IdP
+Framework
+Content
+Control
+Harmonization
+Assessment
+Workspace
+Evidence &
+Testing
+Risk / Tasks
+Reporting
+Policy / AuthZ
+Workflow + Queue
+LLM Gateway
+Connectors
+PostgreSQL HA
+System of record
+S3 Evidence Vault
+WORM + KMS
+OpenSearch / Vector
+Derived index
+Redis / Event Bus
+Cache + jobs
+Audit Vault
+Immutable
+
+
+--- PAGE 4 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 4
+3. Framework Content Pipeline
+Framework Content Ingestion, Validation, and Publication
+Source package
+XLSX / API / legal text
+Quarantine +
+checksum
+Schema adapter +
+normalization
+Staging tables
+Validation suite
+Diff + impact
+analysis
+SME / legal
+review
+Signed content
+pack
+Atomic publish +
+version pinning
+Rejected records
+error report + remediation
+Published registry
+frameworks + mappings
+Change events
+affected assessments
+
+
+--- PAGE 5 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 5
+4. Core Logical ERD
+Core Logical ERD
+Tenant
+User
+Role Grant
+Framework Version
+Requirement
+Control Mapping
+Harmonized Control
+Question Set
+Question Version
+Assessment
+Control Instance
+Assessment Item
+Answer
+Evidence Link
+Evidence Object
+Finding
+Remediation Task
+Report Export
+Audit Event
+1:N
+1:N
+1:N
+1:N
+N:1
+1:N
+1:N
+N:N
+1:N
+1:N
+1:1
+1:N
+N:1
+1:N
+1:N
+1:N
+1:N
+Every mutable business record carries tenant_id, version, created_by, created_at, updated_at, and classification where applicable. Audit events are append-only.
+
+
+--- PAGE 6 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 6
+5. AI Provenance ERD
+AI, Provenance, and Evaluation Data Model
+Model Provider
+Model Deployment
+Prompt Template
+Question Set
+Question Version
+Retrieval Run
+Retrieved Chunk
+Generation Run
+Safety Check
+Approval Event
+Evaluation Suite
+Evaluation Case
+Evaluation Result
+AI Audit Event
+Reproducibility key = framework_version + mapping_version + question_version + prompt_version + model_deployment + retrieval_chunk_ids + generation parameters.
+
+
+--- PAGE 7 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 7
+6. Governed AI Question Pipeline
+Governed Assessment Question Generation Pipeline
+1 Framework
+selection
+2 Deterministic
+harmonization
+3 Scope + tenant
+context
+4 Retrieve approved
+source passages
+5 Prompt template
++ model gateway
+6 Validate +
+policy checks
+Question set
+Draft
+Reviewer
+approval
+Published immutable
+version
+Assessment
+session
+Answer + evidence
++ score
+Evaluation suite
+faithfulness, coverage,
+consistency, safety
+Observability
+prompt/model/retrieval IDs,
+latency, cost, errors
+Audit + retention
+inputs, outputs, approvals,
+redaction, deletion
+Rule: LLM output is advisory. It cannot alter framework text, mappings, applicability, scores, or final decisions without an authorized approval event.
+
+
+--- PAGE 8 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 8
+7. Assessment Sequence
+End-to-End Assessment Sequence
+User
+Assessment
+Harmonization
+AI Gateway
+Evidence / Review
+Create scope
+Resolve pinned controls
+Control snapshot
+Generate / select questions
+Validated draft + citations
+Publish workspace
+Submit answers + evidence
+Review result / findings
+Status + report readiness
+
+
+--- PAGE 9 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 9
+8. Assessment State Model
+Assessment Item State Model
+Not Started
+In Progress
+Submitted
+Needs Changes
+Approved
+Closed
+Reopen only by authorized reviewer
+with reason and audit event
+
+
+--- PAGE 10 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 10
+9. Integration Architecture
+Integration and Continuous Assurance Architecture
+Cloud / CSPM
+Identity / HRIS
+Endpoint / EDR
+Code / CI-CD
+Ticketing / Docs
+SIEM / SOAR
+CRM / CLM
+Vendor / Audit
+Connector Gateway
+OAuth / service accounts
+scope + rate limits
+Webhook Gateway
+signature + replay
+protection
+Event Bus +
+Reconciliation
+idempotency / DLQ
+Evidence Normalizer
+provenance + hash
+Control Monitor
+tests + drift alerts
+
+
+--- PAGE 11 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 11
+10. Private-Cloud Deployment
+Kubernetes Private-Cloud Deployment and Trust Boundaries
+CUSTOMER CONTROLLED VPC / VNET
+APPLICATION SUBNETS
+Ingress / WAF
+Web pods
+API pods
+Worker pods
+Policy sidecar
+DATA SUBNETS - NO PUBLIC ROUTES
+PostgreSQL HA
+Object vault
+Search
+MANAGEMENT PLANE
+KMS / Vault
+Logs / SIEM
+Default deny network policies | mTLS workload identity | signed images | admission policy | egress allow-list | separate backup credentials
+
+
+--- PAGE 12 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 12
+11. Security Architecture
+Defense-in-Depth and Trust Boundaries
+CUSTOMER PRIVATE CLOUD
+APPLICATION TRUST ZONE
+DATA TRUST ZONE
+WAF + API Gateway
+Workload Identity
+Policy Enforcement
+Workers +
+Connector Proxy
+PostgreSQL HA
+Evidence Vault
+Audit Vault
+TLS + mTLS | customer-managed KMS | default-deny network policy | signed workloads | egress allow-list | immutable audit
+External model and integration endpoints are untrusted; all traffic passes through policy-enforcing gateways with least-data routing.
+
+
+--- PAGE 13 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 13
+12. Data Architecture
+Store
+Authoritative data and design
+PostgreSQL
+Identity, content registry, mappings, assessment, privacy, risk, workflow, connector state, AI provenance, reports and audit
+metadata. Multi-zone HA, PITR, encryption and partitioning.
+Object vault
+Evidence, source packages, generated reports, evaluation artifacts and signed manifests. Versioning, KMS, retention lock,
+quarantine and lifecycle tiers.
+Search/vector
+Requirement/control search, approved knowledge chunks and analytics indexes. Documents include tenant ACL, source
+ID/version/checksum. Fully rebuildable.
+Redis/event infrastructure
+Short-lived cache, locks, rate limits and job coordination. No irreplaceable business state.
+Audit archive
+Append-only integrity-chained event partitions and periodic signed verification manifests in WORM-capable storage.
+Analytics read models
+Materialized/projected metrics for dashboards and warehouse delivery; metric definitions versioned and lineage-preserving.
+13. Consistency and Failure Model
+Flow
+Consistency and recovery
+Framework publish
+Validate in staging, sign pack, publish registry and emit change event atomically; rollback activates prior pack.
+Assessment creation
+One transaction pins scope, content/mapping/question versions and creates control instances.
+Evidence upload
+Pending metadata -> quarantined object -> scan/hash -> committed; reconciler repairs orphaned states.
+Connector sync
+At-least-once collection with external ID/version idempotency and periodic reconciliation.
+AI generation
+Generation is non-authoritative; failures return curated approved baseline; provenance persists before publication.
+Report export
+Worker renders frozen snapshot; retries are idempotent by snapshot/template/format key; completed artifact is immutable.
+Audit
+Business transaction writes outbox/audit intent; integrity writer chains and archives with monitored delivery.
+
+
+--- PAGE 14 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 14
+14. Scalability and Availability
+Component
+Scale strategy
+Web/API
+Stateless replicas, connection pooling, request quotas, cursor pagination and read-model caching.
+Assessment workers
+Partition queues by tenant/work type; autoscale by age/depth; protect database with concurrency budgets.
+Connectors
+Per-connector/tenant rate limits, sharded schedules, incremental cursors and isolated failure pools.
+Reporting/imports
+Dedicated resource pools, streaming I/O, checkpoints and temporary object storage.
+PostgreSQL
+HA primary, read replicas, partition audit/large execution tables, online indexes and archival.
+Search/vector
+Shard by deployment/tenant scale, alias-based reindexing and source-checksum reconciliation.
+AI
+Per-tenant budgets, concurrency limits, batching where safe, model circuit breakers and private endpoint pools.
+15. Architecture Decision Records
+ADR
+Decision
+ADR-001
+Start with modular monolith plus workers; preserve ports/events for extraction.
+ADR-002
+PostgreSQL is the system of record; JSONB only for typed extensibility, not core relationships.
+ADR-003
+Frameworks and mappings are signed immutable content packs.
+ADR-004
+Assessment and report reproducibility requires pinned snapshots and version IDs.
+ADR-005
+AI is advisory and provider-neutral with human publication/decision gates.
+ADR-006
+Private-cloud and customer-controlled encryption are first-class deployment requirements.
+ADR-007
+Search, vector, cache and analytics are derived and cannot grant authorization.
+ADR-008
+Transactional outbox is mandatory for committed state followed by asynchronous effects.
+16. Operational Readiness
+
+Runbooks cover database failover, queue backlog, connector compromise, evidence malware event, AI provider incident, key rotation, restore and integrity verification.
+
+Dashboards expose SLOs, dependency health, job age, connector freshness, evidence scan backlog, audit delivery and AI quality/cost.
+
+Quarterly restore and incident exercises; annual independent penetration testing and after material architecture change.
+
+Capacity, threat model, privacy impact and model risk reviews are required before major release.
+17. Architecture References
+
+NIST SP 800-218 SSDF - https://csrc.nist.gov/pubs/sp/800/218/final
+
+
+--- PAGE 15 ---
+
+Cybernara Final Detailed Architecture and Diagrams
+Cybernara Confidential
+Cybernara Confidential - Internal use only
+Page 15
+
+NIST AI RMF - https://www.nist.gov/itl/ai-risk-management-framework
+
+OWASP ASVS - https://owasp.org/www-project-application-security-verification-standard/
+
+PostgreSQL row security - https://www.postgresql.org/docs/current/ddl-rowsecurity.html
+
+Kubernetes security concepts - https://kubernetes.io/docs/concepts/security/

@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Builds & Outputs
+.next/
+dist/
+out/
+coverage/
+*.tsbuildinfo
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Temp files
+tmp/
+.tmp/
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,17 @@
+services:
+  api:
+    build: .
+    command: node dist/main.js
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+
+  outbox-worker:
+    build: .
+    command: node dist/modules/outbox/worker/outbox-worker.js
+    env_file:
+      - .env
+    depends_on:
+      - api
+

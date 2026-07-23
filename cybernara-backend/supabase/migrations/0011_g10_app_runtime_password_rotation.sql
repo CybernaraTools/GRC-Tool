@@ -1,0 +1,21 @@
+-- Gap remediation Phase 1/G-10 — rotate app_runtime's password ahead of connection cutover.
+--
+-- Migration 0008 created the `app_runtime` role with a literal placeholder password
+-- ('change-me-before-production-cutover'), explicitly flagged in that migration's own
+-- comments as needing rotation before the application ever connects as this role. This
+-- migration is that rotation, done as its own step (not folded into the cutover commit)
+-- so the password change is independently auditable in migration history.
+--
+-- The real password is never committed to version control: `%%APP_RUNTIME_DB_PASSWORD%%`
+-- below is a placeholder token that scripts/migrate.mjs substitutes from the
+-- APP_RUNTIME_DB_PASSWORD environment variable at apply time (see migrate.mjs's
+-- `substituteSecrets` function) — this migration file itself never contains the secret.
+-- migrate.mjs refuses to apply this migration if that environment variable is unset, so
+-- the rotation cannot silently set an empty/placeholder password by accident.
+--
+-- This is purely a role-administration step, not a schema change: no table, policy, or
+-- grant is touched. It has zero effect on the running application until
+-- database.module.ts is changed to actually connect as app_runtime (a separate, later
+-- step in this same remediation pass) — until then the app keeps connecting as
+-- `postgres` and this rotation is inert from its perspective.
+alter role app_runtime with password '%%APP_RUNTIME_DB_PASSWORD%%';

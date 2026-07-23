@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cybernara | DPDP Shield Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9f9;
+            color: #1b1b1b;
+        }
+        .radar-grid {
+            background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f3f3f3",
+                        "on-surface": "#1b1b1b",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "on-surface-variant": "#4c4546",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "secondary-container": "#dfe0e0",
+                        "primary-container": "#1b1b1b",
+                        "secondary": "#5d5f5f",
+                        "primary": "#000000",
+                        "on-primary-fixed-variant": "#474747",
+                        "inverse-on-surface": "#f1f1f1",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#000000",
+                        "on-primary-fixed": "#1b1b1b",
+                        "tertiary-container": "#1b1b1b",
+                        "surface": "#f9f9f9",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "surface-tint": "#5e5e5e",
+                        "outline-variant": "#cfc4c5",
+                        "on-primary-container": "#848484",
+                        "background": "#f9f9f9",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f9f9f9",
+                        "surface-container-high": "#e8e8e8",
+                        "on-background": "#1b1b1b",
+                        "primary-fixed": "#e2e2e2",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#848484",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-container": "#eeeeee",
+                        "secondary-fixed": "#e2e2e2",
+                        "inverse-surface": "#303030",
+                        "surface-dim": "#dadada",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "on-secondary-container": "#616363",
+                        "outline": "#7e7576",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "tertiary-fixed": "#e2e2e2",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#c6c6c6",
+                        "on-secondary-fixed-variant": "#454747"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin_container": "32px",
+                        "stack_sm": "8px",
+                        "stack_md": "16px",
+                        "gutter": "24px",
+                        "sidebar_width": "260px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-muted": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "500"}],
+                        "label-muted": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface antialiased overflow-hidden">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] bg-primary-container dark:bg-primary-container border-r border-outline-variant flex flex-col h-full py-6 z-50">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-white rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-primary">Cybernara</h1>
+<p class="font-label-caps text-label-caps text-on-primary-container">DPDP SHIELD</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<!-- Active State Navigation -->
+<a class="border-l-2 border-primary-fixed bg-white/10 text-on-primary font-bold px-4 py-3 flex items-center gap-3 opacity-90 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-caps text-label-caps">Assessments</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">Results</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-3 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">policy</span>
+<span class="font-label-caps text-label-caps">Policy</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-white/10">
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-2 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-caps text-label-caps">Notifications</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-primary px-4 py-2 flex items-center gap-3 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dark_mode</span>
+<span class="font-label-caps text-label-caps">Dark Mode</span>
+</a>
+<div class="mt-4 px-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-on-primary-container/20 overflow-hidden border border-white/20">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a corporate compliance officer in a minimalist dark suit against a high-contrast monochromatic background. The lighting is dramatic and precise, emphasizing professional authority and clarity. The aesthetic is extremely clean and modern with no distracting elements." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDH2VYBvvEo3C3WESnXwBBKIC2WsWng8LzgzzbU4lXX9AYeqXzXjSUA1XHqGbE-zpcD1kcybBs3pCv4d9NCnd3enqQ0azUnj_DKuIoltpgOj3Ebx2rEuv5A1Q3ScJ6WSvt4ZisGFNx-I55FpPhO2boohU-f3pDWo8s8duo4K6MK-ts96YkfYeZ7DZmnE863F3i4CD4l09ExjCBruq6gj1Je8jG7pUjOoPoSOE7jP2HDmf4-9rUEkwlsuX_E7vfhvTOfwumHUQ0reHUy"/>
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="text-on-primary text-sm font-bold truncate">Alex Rivest</p>
+<p class="text-on-primary-container text-[10px] truncate">Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[260px] h-screen flex flex-col overflow-y-auto bg-surface custom-scrollbar">
+<!-- TopAppBar (Authority: JSON) -->
+<header class="sticky top-0 z-40 bg-surface flex justify-between items-center h-16 px-margin_container border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 bg-black rounded flex items-center justify-center">
+<span class="text-white text-[10px] font-bold">CN</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">DPDP Shield</span>
+<span class="font-label-muted text-label-muted text-on-surface-variant">Annual Compliance Review • Dec 2023</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded transition-colors scale-95 duration-100">refresh</button>
+<div class="h-6 w-[1px] bg-outline-variant"></div>
+<button class="font-label-muted text-label-muted px-4 py-2 border border-primary text-primary rounded-lg hover:bg-surface-container-low transition-colors duration-100">Export</button>
+<button class="font-label-muted text-label-muted px-4 py-2 bg-primary text-on-primary rounded-lg hover:opacity-90 transition-opacity">New Assessment</button>
+</div>
+</header>
+<!-- Canvas -->
+<div class="p-margin_container space-y-gutter pb-20">
+<!-- Info Bar Section -->
+<div class="flex items-end justify-between border-b border-outline-variant pb-6">
+<div class="flex items-center gap-8">
+<div>
+<p class="font-label-muted text-label-muted mb-1 uppercase tracking-widest">Compliance Score</p>
+<div class="flex items-center gap-3">
+<span class="font-display-lg text-display-lg text-primary">74%</span>
+<div class="flex flex-col">
+<span class="bg-primary text-on-primary text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tight">Medium Risk</span>
+<span class="font-label-muted text-[10px] text-on-surface-variant mt-1">+2.4% from last scan</span>
+</div>
+</div>
+</div>
+<div class="h-10 w-[1px] bg-outline-variant"></div>
+<div>
+<p class="font-label-muted text-label-muted mb-1 uppercase tracking-widest">Status</p>
+<span class="bg-surface-container-highest text-on-surface-variant font-label-caps text-[10px] px-3 py-1.5 rounded-full border border-outline-variant">IN PROGRESS</span>
+</div>
+</div>
+<div class="flex gap-2">
+<div class="h-2 w-24 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-3/4"></div>
+</div>
+<span class="text-[10px] font-bold text-on-surface-variant">75% Complete</span>
+</div>
+</div>
+<!-- Compact Stat Pills -->
+<div class="grid grid-cols-6 gap-stack_md">
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl">
+<p class="font-label-muted text-label-muted text-[10px] uppercase mb-1">Total Controls</p>
+<p class="text-headline-md font-bold text-primary">148</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl">
+<p class="font-label-muted text-label-muted text-[10px] uppercase mb-1">Data Assets</p>
+<p class="text-headline-md font-bold text-primary">32</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl">
+<p class="font-label-muted text-label-muted text-[10px] uppercase mb-1">Critical Gaps</p>
+<p class="text-headline-md font-bold text-primary">09</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl">
+<p class="font-label-muted text-label-muted text-[10px] uppercase mb-1">Incidents</p>
+<p class="text-headline-md font-bold text-primary">02</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl">
+<p class="font-label-muted text-label-muted text-[10px] uppercase mb-1">Third Parties</p>
+<p class="text-headline-md font-bold text-primary">11</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl">
+<p class="font-label-muted text-label-muted text-[10px] uppercase mb-1">Days Left</p>
+<p class="text-headline-md font-bold text-primary">14</p>
+</div>
+</div>
+<!-- KPI Cards -->
+<div class="grid grid-cols-4 gap-gutter">
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl hover:bg-surface-container-low transition-colors duration-200">
+<p class="text-on-surface-variant text-xs mb-4 flex items-center justify-between">
+                        Operational Efficiency <span class="material-symbols-outlined text-sm">trending_up</span>
+</p>
+<p class="text-[32px] font-extrabold text-primary mb-1">89.4</p>
+<p class="text-label-muted text-on-surface-variant">Benchmark exceeded by 12%</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl hover:bg-surface-container-low transition-colors duration-200">
+<p class="text-on-surface-variant text-xs mb-4 flex items-center justify-between">
+                        Risk Mitigation <span class="material-symbols-outlined text-sm">security</span>
+</p>
+<p class="text-[32px] font-extrabold text-primary mb-1">62.1</p>
+<p class="text-label-muted text-on-surface-variant">Active monitoring in 4 zones</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl hover:bg-surface-container-low transition-colors duration-200">
+<p class="text-on-surface-variant text-xs mb-4 flex items-center justify-between">
+                        Privacy Score <span class="material-symbols-outlined text-sm">visibility_off</span>
+</p>
+<p class="text-[32px] font-extrabold text-primary mb-1">94.8</p>
+<p class="text-label-muted text-on-surface-variant">Top decile performance</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl hover:bg-surface-container-low transition-colors duration-200">
+<p class="text-on-surface-variant text-xs mb-4 flex items-center justify-between">
+                        Response Time <span class="material-symbols-outlined text-sm">bolt</span>
+</p>
+<p class="text-[32px] font-extrabold text-primary mb-1">02.4<span class="text-sm font-normal ml-1">hrs</span></p>
+<p class="text-label-muted text-on-surface-variant">Real-time incident response</p>
+</div>
+</div>
+<!-- Three Column Panel Row -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- (a) Compliance Radar -->
+<div class="col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<div class="h-12 border-b border-outline-variant px-6 flex items-center justify-between">
+<span class="font-label-caps text-label-caps">COMPLIANCE RADAR</span>
+<span class="font-bold text-primary">92% Target</span>
+</div>
+<div class="flex-1 p-6 flex flex-col items-center justify-center relative min-h-[300px]">
+<!-- Abstract Radar Representation -->
+<div class="absolute inset-0 radar-grid opacity-30"></div>
+<div class="relative w-48 h-48 border border-outline rounded-full flex items-center justify-center">
+<div class="w-32 h-32 border border-outline rounded-full"></div>
+<div class="w-16 h-16 border border-outline rounded-full"></div>
+<svg class="absolute inset-0 w-full h-full -rotate-90">
+<polygon fill="black" fill-opacity="0.1" points="96,20 160,80 130,160 50,140 30,70" stroke="black" stroke-width="2"></polygon>
+<circle cx="96" cy="20" fill="black" r="4"></circle>
+<circle cx="160" cy="80" fill="black" r="4"></circle>
+<circle cx="130" cy="160" fill="black" r="4"></circle>
+<circle cx="50" cy="140" fill="black" r="4"></circle>
+<circle cx="30" cy="70" fill="black" r="4"></circle>
+</svg>
+</div>
+<div class="mt-8 grid grid-cols-2 gap-x-8 gap-y-2 w-full">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-primary rounded-full"></div>
+<span class="text-[10px] font-medium">Data Protection</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-on-surface-variant rounded-full"></div>
+<span class="text-[10px] font-medium">Asset Mgmt</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-primary-fixed-dim rounded-full"></div>
+<span class="text-[10px] font-medium">Access Control</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-outline rounded-full"></div>
+<span class="text-[10px] font-medium">Incident Resp</span>
+</div>
+</div>
+</div>
+</div>
+<!-- (b) Control Status -->
+<div class="col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<div class="h-12 border-b border-outline-variant px-6 flex items-center justify-between">
+<span class="font-label-caps text-label-caps">CONTROL STATUS</span>
+<span class="text-[10px] text-on-surface-variant">Last updated: 2h ago</span>
+</div>
+<div class="flex-1 p-8">
+<div class="text-center mb-10">
+<p class="text-[48px] font-extrabold leading-none">68<span class="text-xl font-normal">%</span></p>
+<p class="text-label-muted text-on-surface-variant mt-2">Overall Control Health</p>
+</div>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-[11px] mb-2">
+<span class="font-bold">Compliant</span>
+<span class="text-on-surface-variant">101 / 148 (68%)</span>
+</div>
+<div class="h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[68%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[11px] mb-2">
+<span class="font-bold">Non-compliant</span>
+<span class="text-on-surface-variant">32 / 148 (22%)</span>
+</div>
+<div class="h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-on-surface-variant w-[22%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[11px] mb-2">
+<span class="font-bold">N/A</span>
+<span class="text-on-surface-variant">15 / 148 (10%)</span>
+</div>
+<div class="h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-outline-variant w-[10%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- (c) Evidence Status -->
+<div class="col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<div class="h-12 border-b border-outline-variant px-6 flex items-center justify-between">
+<span class="font-label-caps text-label-caps">EVIDENCE STATUS</span>
+<div class="flex items-center gap-2">
+<span class="bg-primary text-on-primary text-[10px] font-bold px-2 py-0.5 rounded">412 UPLOADED</span>
+</div>
+</div>
+<div class="flex-1 p-8">
+<div class="mb-10">
+<p class="font-label-muted text-label-muted text-[10px] uppercase mb-4">Approval Rate</p>
+<div class="flex items-center gap-4">
+<div class="flex-1 h-3 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[82%]"></div>
+</div>
+<span class="font-bold text-xl">82%</span>
+</div>
+</div>
+<div class="divide-y divide-outline-variant">
+<div class="py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+</div>
+<div>
+<p class="text-sm font-bold">Approved</p>
+<p class="text-[10px] text-on-surface-variant">Verified by auditors</p>
+</div>
+</div>
+<p class="text-lg font-bold">338</p>
+</div>
+<div class="py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">pending</span>
+</div>
+<div>
+<p class="text-sm font-bold">Pending</p>
+<p class="text-[10px] text-on-surface-variant">Awaiting review</p>
+</div>
+</div>
+<p class="text-lg font-bold">54</p>
+</div>
+<div class="py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg">cancel</span>
+</div>
+<div>
+<p class="text-sm font-bold">Rejected</p>
+<p class="text-[10px] text-on-surface-variant">Requires re-upload</p>
+</div>
+</div>
+<p class="text-lg font-bold">20</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Grid Section (Audit Trail & Asset Map) -->
+<div class="grid grid-cols-12 gap-gutter">
+<div class="col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline-sm text-headline-sm">Audit Activity</h3>
+<button class="text-on-surface-variant text-[11px] font-bold border-b border-transparent hover:border-primary transition-all">View Full Logs</button>
+</div>
+<div class="space-y-4">
+<div class="flex gap-4 items-start">
+<div class="w-2 h-2 rounded-full bg-primary mt-1.5"></div>
+<div class="flex-1">
+<p class="text-sm font-bold">Policy Updated: Data Retention v4.2</p>
+<p class="text-[11px] text-on-surface-variant">Modified by J. Doe • Today, 10:42 AM</p>
+</div>
+<span class="text-[11px] text-on-surface-variant font-medium">Just now</span>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-2 h-2 rounded-full bg-primary-fixed-dim mt-1.5"></div>
+<div class="flex-1">
+<p class="text-sm font-bold">Evidence Upload: Firewall Configuration Log</p>
+<p class="text-[11px] text-on-surface-variant">Automatic ingestion via AWS CloudWatch</p>
+</div>
+<span class="text-[11px] text-on-surface-variant font-medium">2h ago</span>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-2 h-2 rounded-full bg-primary-fixed-dim mt-1.5"></div>
+<div class="flex-1">
+<p class="text-sm font-bold">Control Verified: ID-02 Access Reviews</p>
+<p class="text-[11px] text-on-surface-variant">Verified by Internal Auditor</p>
+</div>
+<span class="text-[11px] text-on-surface-variant font-medium">5h ago</span>
+</div>
+</div>
+</div>
+<div class="col-span-4 bg-primary text-on-primary rounded-xl p-6 flex flex-col justify-between overflow-hidden relative">
+<div class="relative z-10">
+<p class="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-2">Quick Action</p>
+<h3 class="text-xl font-bold leading-tight">Start Compliance Gap Analysis</h3>
+<p class="text-xs mt-2 opacity-80 leading-relaxed">Let Cybernara AI identify missing controls and auto-map your current evidence to DPDP requirements.</p>
+</div>
+<button class="relative z-10 w-full bg-white text-black font-bold py-3 rounded-lg text-sm hover:bg-opacity-90 transition-all mt-6">Launch AI Shield</button>
+<!-- Abstract Background Pattern -->
+<div class="absolute right-[-20%] bottom-[-20%] w-64 h-64 border-4 border-white/10 rounded-full"></div>
+<div class="absolute right-[-10%] bottom-[-10%] w-48 h-48 border border-white/10 rounded-full"></div>
+</div>
+</div>
+</div>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        document.querySelectorAll('button, a').forEach(elem => {
+            elem.addEventListener('mousedown', () => {
+                elem.classList.add('scale-95');
+            });
+            elem.addEventListener('mouseup', () => {
+                elem.classList.remove('scale-95');
+            });
+            elem.addEventListener('mouseleave', () => {
+                elem.classList.remove('scale-95');
+            });
+        });
+    </script>
+</body></html>

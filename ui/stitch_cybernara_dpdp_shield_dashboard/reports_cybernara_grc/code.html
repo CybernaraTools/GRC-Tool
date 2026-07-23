@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reports | Cybernara GRC</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#7e7576",
+                        "surface-dim": "#dadada",
+                        "tertiary": "#000000",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#1b1b1b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#1b1b1b",
+                        "primary": "#000000",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e2e2e2",
+                        "outline-variant": "#cfc4c5",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#5e5e5e",
+                        "on-tertiary-container": "#848484",
+                        "surface-bright": "#f9f9f9",
+                        "on-secondary": "#ffffff",
+                        "background": "#f9f9f9",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "primary-fixed": "#e2e2e2",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "tertiary-container": "#1b1b1b",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-secondary-container": "#616363",
+                        "surface-container-low": "#f3f3f3",
+                        "on-background": "#1b1b1b",
+                        "inverse-primary": "#c6c6c6",
+                        "inverse-surface": "#303030",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-container": "#dfe0e0",
+                        "surface-container": "#eeeeee",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface-container-high": "#e8e8e8",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface": "#f9f9f9",
+                        "secondary": "#5d5f5f",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#4c4546",
+                        "surface-variant": "#e2e2e2",
+                        "primary-container": "#1b1b1b",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-primary-container": "#848484"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack_sm": "8px",
+                        "stack_md": "16px",
+                        "gutter": "24px",
+                        "margin_container": "32px",
+                        "sidebar_width": "260px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-muted": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "500"}],
+                        "label-muted": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-active {
+            border-left: 2px solid #ffffff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        /* Custom scrollbar for technical look */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            background-color: rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease;
+        }
+        
+        .drawer {
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .drawer.active {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex overflow-hidden">
+<!-- SideNavBar (from JSON) -->
+<aside class="fixed left-0 top-0 h-screen w-sidebar_width bg-tertiary text-on-tertiary border-r border-outline-variant z-50 flex flex-col h-full overflow-y-auto">
+<div class="px-6 py-8">
+<h1 class="font-display-lg text-display-lg font-bold text-on-tertiary">Cybernara</h1>
+<p class="text-[10px] tracking-widest font-bold opacity-60 mt-1 uppercase">GRC PLATFORM</p>
+</div>
+<nav class="flex-1 mt-4 space-y-1">
+<a class="flex items-center px-6 py-3 text-secondary-fixed-dim hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<a class="flex items-center px-6 py-3 text-secondary-fixed-dim hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">verified_user</span>
+<span class="font-body-md text-body-md">Compliance</span>
+</a>
+<a class="flex items-center px-6 py-3 bg-white/10 border-l-2 border-white text-on-tertiary" href="#">
+<span class="material-symbols-outlined mr-3">insights</span>
+<span class="font-body-md text-body-md">Intelligence</span>
+</a>
+<a class="flex items-center px-6 py-3 text-secondary-fixed-dim hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">settings_applications</span>
+<span class="font-body-md text-body-md">Operations</span>
+</a>
+<a class="flex items-center px-6 py-3 text-secondary-fixed-dim hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">admin_panel_settings</span>
+<span class="font-body-md text-body-md">Admin</span>
+</a>
+</nav>
+<div class="mt-auto p-4 space-y-1 border-t border-white/10">
+<a class="flex items-center px-4 py-3 text-secondary-fixed-dim hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">help_outline</span>
+<span class="font-body-md text-body-md">Help Center</span>
+</a>
+<a class="flex items-center px-4 py-3 text-secondary-fixed-dim hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">account_circle</span>
+<span class="font-body-md text-body-md">Account</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar_width flex-1 flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar (from JSON) -->
+<header class="flex justify-between items-center h-16 px-gutter border-b border-outline-variant bg-surface shrink-0">
+<h2 class="font-headline-md text-headline-md font-bold text-primary">Intelligence &amp; Reports</h2>
+<div class="flex items-center space-x-6">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-lg text-body-md focus:ring-0 focus:border-primary w-64 transition-all" placeholder="Search reports..." type="text"/>
+</div>
+<div class="flex items-center space-x-4">
+<button class="material-symbols-outlined text-secondary hover:text-primary transition-colors">notifications</button>
+<button class="material-symbols-outlined text-secondary hover:text-primary transition-colors">history</button>
+<div class="h-6 w-[1px] bg-outline-variant mx-2"></div>
+<button class="px-4 py-2 bg-secondary border border-primary text-primary font-bold text-body-md hover:bg-surface-container-low transition-colors transition-all active:opacity-90">Export Report</button>
+<button class="px-4 py-2 bg-primary text-on-primary font-bold text-body-md hover:opacity-90 transition-all active:opacity-90" onclick="toggleDrawer(true)">Create Audit</button>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<section class="flex-1 overflow-y-auto p-margin_container">
+<!-- Dashboard Stats Bar -->
+<div class="grid grid-cols-4 gap-gutter mb-8">
+<div class="bg-surface border border-outline-variant rounded-xl p-6">
+<p class="text-label-muted text-secondary uppercase tracking-wider mb-2">Total Reports</p>
+<h3 class="text-display-lg font-display-lg text-primary">124</h3>
+<div class="mt-4 flex items-center text-xs font-bold text-primary">
+<span class="material-symbols-outlined text-xs mr-1">trending_up</span> 12% vs last month
+                    </div>
+</div>
+<div class="bg-surface border border-outline-variant rounded-xl p-6">
+<p class="text-label-muted text-secondary uppercase tracking-wider mb-2">Frameworks Tracked</p>
+<h3 class="text-display-lg font-display-lg text-primary">08</h3>
+<div class="mt-4 flex items-center text-xs font-bold text-primary">
+                        SOC2, ISO27001, GDPR
+                    </div>
+</div>
+<div class="bg-surface border border-outline-variant rounded-xl p-6">
+<p class="text-label-muted text-secondary uppercase tracking-wider mb-2">Pending Audits</p>
+<h3 class="text-display-lg font-display-lg text-primary">03</h3>
+<div class="mt-4 flex items-center text-xs font-bold text-primary">
+<span class="material-symbols-outlined text-xs mr-1">schedule</span> Next due in 4 days
+                    </div>
+</div>
+<div class="bg-surface border border-outline-variant rounded-xl p-6">
+<p class="text-label-muted text-secondary uppercase tracking-wider mb-2">Storage Used</p>
+<h3 class="text-display-lg font-display-lg text-primary">2.4<span class="text-headline-sm ml-1">GB</span></h3>
+<div class="w-full bg-surface-container h-1 mt-4">
+<div class="bg-primary h-full w-[45%]"></div>
+</div>
+</div>
+</div>
+<!-- Table Container -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<div class="flex items-center space-x-4">
+<h4 class="font-headline-sm text-headline-sm text-primary">Generated Report Exports</h4>
+<span class="px-2 py-0.5 bg-surface-container rounded-full text-[10px] font-bold text-secondary uppercase">Live Data</span>
+</div>
+<div class="flex items-center space-x-2">
+<button class="p-2 hover:bg-surface-container-low rounded transition-colors">
+<span class="material-symbols-outlined text-secondary">filter_list</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded transition-colors">
+<span class="material-symbols-outlined text-secondary">sort</span>
+</button>
+</div>
+</div>
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-6 py-4 text-label-caps text-secondary uppercase">Report Name</th>
+<th class="px-6 py-4 text-label-caps text-secondary uppercase">Framework/Scope</th>
+<th class="px-6 py-4 text-label-caps text-secondary uppercase">Format</th>
+<th class="px-6 py-4 text-label-caps text-secondary uppercase">Generated Date</th>
+<th class="px-6 py-4 text-label-caps text-secondary uppercase">Status</th>
+<th class="px-6 py-4 text-label-caps text-secondary uppercase text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-body-md font-bold text-primary">Q3 SOC2 Compliance Snapshot</span>
+<span class="text-label-muted text-secondary">ID: REP-2023-094-A</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold">SOC2 TYPE II</span>
+</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined text-primary" title="PDF Format">picture_as_pdf</span>
+</td>
+<td class="px-6 py-5">
+<span class="text-body-md text-secondary">Oct 24, 2023</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center">
+<span class="w-2 h-2 rounded-full bg-primary mr-2"></span>
+<span class="text-xs font-bold uppercase tracking-tight">Completed</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 hover:bg-primary hover:text-white rounded transition-all">
+<span class="material-symbols-outlined">download</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-body-md font-bold text-primary">GDPR Data Processing Audit</span>
+<span class="text-label-muted text-secondary">ID: REP-2023-093-X</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold">GDPR / DPA</span>
+</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined text-primary" title="XLSX Format">table_chart</span>
+</td>
+<td class="px-6 py-5">
+<span class="text-body-md text-secondary">Oct 22, 2023</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center">
+<span class="w-2 h-2 rounded-full bg-primary mr-2"></span>
+<span class="text-xs font-bold uppercase tracking-tight">Completed</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 hover:bg-primary hover:text-white rounded transition-all">
+<span class="material-symbols-outlined">download</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 - Pending State -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-body-md font-bold text-primary">ISO27001 Internal Review</span>
+<span class="text-label-muted text-secondary">ID: REP-2023-095-B</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold">ISO27001:2022</span>
+</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined text-primary opacity-30">picture_as_pdf</span>
+</td>
+<td class="px-6 py-5">
+<span class="text-body-md text-secondary">Oct 26, 2023</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center animate-pulse">
+<span class="w-2 h-2 rounded-full bg-outline mr-2"></span>
+<span class="text-xs font-bold uppercase tracking-tight text-outline">Processing</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-outline-variant cursor-not-allowed">
+<span class="material-symbols-outlined">sync</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-body-md font-bold text-primary">Annual Security Training Logs</span>
+<span class="text-label-muted text-secondary">ID: REP-2023-088-L</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold">STAFF COMPLIANCE</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex space-x-1">
+<span class="material-symbols-outlined text-primary">picture_as_pdf</span>
+<span class="material-symbols-outlined text-primary">table_chart</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-body-md text-secondary">Oct 15, 2023</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center">
+<span class="w-2 h-2 rounded-full bg-primary mr-2"></span>
+<span class="text-xs font-bold uppercase tracking-tight">Completed</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 hover:bg-primary hover:text-white rounded transition-all">
+<span class="material-symbols-outlined">download</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 border-t border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<span class="text-label-muted text-secondary">Showing 4 of 124 reports</span>
+<div class="flex space-x-2">
+<button class="p-1 px-3 border border-outline-variant text-xs font-bold hover:bg-surface-container transition-colors disabled:opacity-30" disabled="">PREVIOUS</button>
+<button class="p-1 px-3 border border-primary bg-primary text-white text-xs font-bold hover:opacity-90 transition-colors">1</button>
+<button class="p-1 px-3 border border-outline-variant text-xs font-bold hover:bg-surface-container transition-colors">2</button>
+<button class="p-1 px-3 border border-outline-variant text-xs font-bold hover:bg-surface-container transition-colors">3</button>
+<button class="p-1 px-3 border border-outline-variant text-xs font-bold hover:bg-surface-container transition-colors">NEXT</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Overlay & Config Drawer (Hidden by default) -->
+<div class="fixed inset-0 bg-black/40 z-[60] opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm" id="drawerOverlay" onclick="toggleDrawer(false)"></div>
+<div class="drawer fixed top-0 right-0 h-screen w-[420px] bg-white z-[70] shadow-2xl flex flex-col border-l border-outline-variant" id="configDrawer">
+<div class="p-gutter border-b border-outline-variant flex justify-between items-center bg-surface">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Configure New Export</h3>
+<p class="text-label-muted text-secondary mt-1">Select parameters for your audit generation.</p>
+</div>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors" onclick="toggleDrawer(false)">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-gutter space-y-8">
+<!-- Snapshot Selection -->
+<div>
+<label class="block text-label-caps text-primary uppercase font-bold mb-4">Assessment Snapshot</label>
+<div class="space-y-3">
+<button class="w-full text-left p-4 border border-primary bg-surface-container-lowest rounded-lg flex justify-between items-center group ring-1 ring-primary">
+<div>
+<p class="text-body-md font-bold text-primary">Live Workspace State</p>
+<p class="text-label-muted text-secondary">Real-time data synchronization</p>
+</div>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</button>
+<button class="w-full text-left p-4 border border-outline-variant hover:border-primary transition-colors rounded-lg flex justify-between items-center group">
+<div>
+<p class="text-body-md font-bold text-primary">Q3 Quarter-End Snapshot</p>
+<p class="text-label-muted text-secondary">Fixed data from Sep 30, 2023</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">radio_button_unchecked</span>
+</button>
+<button class="w-full text-left p-4 border border-outline-variant hover:border-primary transition-colors rounded-lg flex justify-between items-center group">
+<div>
+<p class="text-body-md font-bold text-primary">Pre-Audit internal Review</p>
+<p class="text-label-muted text-secondary">Snapshot from Oct 12, 2023</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">radio_button_unchecked</span>
+</button>
+</div>
+</div>
+<!-- Format Selection -->
+<div>
+<label class="block text-label-caps text-primary uppercase font-bold mb-4">Export Format</label>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex flex-col items-center justify-center p-6 border border-primary bg-surface-container-lowest rounded-lg group">
+<span class="material-symbols-outlined text-3xl text-primary mb-2">picture_as_pdf</span>
+<span class="text-xs font-bold uppercase tracking-widest text-primary">Adobe PDF</span>
+</button>
+<button class="flex flex-col items-center justify-center p-6 border border-outline-variant hover:border-primary transition-colors rounded-lg group">
+<span class="material-symbols-outlined text-3xl text-secondary group-hover:text-primary mb-2">table_chart</span>
+<span class="text-xs font-bold uppercase tracking-widest text-secondary group-hover:text-primary">Excel XLSX</span>
+</button>
+</div>
+</div>
+<!-- Template Selection -->
+<div>
+<label class="block text-label-caps text-primary uppercase font-bold mb-4">Report Template</label>
+<select class="w-full p-4 bg-surface-container-low border border-outline-variant rounded-lg text-body-md focus:ring-0 focus:border-primary">
+<option>Executive Summary (Comprehensive)</option>
+<option>Technical Gap Analysis</option>
+<option>Board-Level Risk Overview</option>
+<option>Evidence Control Mapping</option>
+</select>
+</div>
+<!-- Advanced Config -->
+<div class="pt-4 border-t border-outline-variant">
+<div class="flex items-center justify-between py-2">
+<span class="text-body-md font-medium text-primary">Include Audit Trail</span>
+<button class="w-10 h-5 bg-primary rounded-full relative flex items-center px-1">
+<span class="w-3 h-3 bg-white rounded-full translate-x-5 transition-transform"></span>
+</button>
+</div>
+<div class="flex items-center justify-between py-2">
+<span class="text-body-md font-medium text-primary">Attach Supporting Evidence</span>
+<button class="w-10 h-5 bg-surface-dim rounded-full relative flex items-center px-1">
+<span class="w-3 h-3 bg-white rounded-full transition-transform"></span>
+</button>
+</div>
+</div>
+</div>
+<div class="p-gutter border-t border-outline-variant bg-surface grid grid-cols-2 gap-4">
+<button class="w-full py-4 border border-primary text-primary font-bold text-xs uppercase tracking-widest hover:bg-surface-container-low transition-colors" onclick="toggleDrawer(false)">Cancel</button>
+<button class="w-full py-4 bg-primary text-white font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity" id="genBtn" onclick="generateReport()">Generate Export</button>
+</div>
+</div>
+<!-- Notification Toast (Hidden) -->
+<div class="fixed bottom-gutter right-gutter bg-primary text-white px-6 py-4 rounded shadow-2xl flex items-center space-x-4 translate-y-20 opacity-0 transition-all duration-500 z-[100]" id="toast">
+<span class="material-symbols-outlined">check_circle</span>
+<span class="text-body-md font-bold">Report generation started successfully.</span>
+</div>
+<script>
+        function toggleDrawer(isOpen) {
+            const drawer = document.getElementById('configDrawer');
+            const overlay = document.getElementById('drawerOverlay');
+            
+            if (isOpen) {
+                drawer.classList.add('active');
+                overlay.classList.remove('pointer-events-none');
+                overlay.classList.add('opacity-100');
+            } else {
+                drawer.classList.remove('active');
+                overlay.classList.add('pointer-events-none');
+                overlay.classList.remove('opacity-100');
+            }
+        }
+
+        function generateReport() {
+            const btn = document.getElementById('genBtn');
+            const toast = document.getElementById('toast');
+            
+            btn.innerHTML = '<span class="flex items-center justify-center"><span class="material-symbols-outlined animate-spin mr-2">sync</span> Processing...</span>';
+            btn.classList.add('pointer-events-none');
+
+            setTimeout(() => {
+                toggleDrawer(false);
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                
+                // Reset button for next time
+                setTimeout(() => {
+                    btn.innerHTML = 'Generate Export';
+                    btn.classList.remove('pointer-events-none');
+                }, 500);
+
+                // Auto hide toast
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 4000);
+            }, 1200);
+        }
+
+        // Close drawer on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') toggleDrawer(false);
+        });
+    </script>
+</body></html>
