@@ -146,7 +146,11 @@ const resourceTypeClassification: Record<string, Classification> = {
   deletion_item: "restricted",
   universal_task: "confidential",
   framework_diff: "restricted",
-  framework_update_impact: "restricted"
+  framework_update_impact: "restricted",
+  // Closed Assessment AI Audit Reports feature — matches
+  // `classification cybernara_classification not null default 'confidential'`
+  // on ai_audit_reports (0051_g15_ai_audit_reports.sql).
+  audit_report: "confidential"
 };
 
 export function classificationForResourceType(resourceType: string): Classification {

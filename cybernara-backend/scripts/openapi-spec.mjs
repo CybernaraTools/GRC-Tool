@@ -2004,6 +2004,91 @@ export function buildOpenApiSpec() {
           }
         }
       },
+      "/v1/audit-reports/closed-assessments": {
+        get: {
+          operationId: "listClosedAssessmentsForAudit",
+          tags: ["AuditReports"],
+          parameters: [...paginationParameters(), ...requestContextHeaders()],
+          responses: {
+            "200": jsonArrayResponse("Closed assessments with report status.", "ClosedAssessmentSummary"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/audit-reports/assessments/{assessmentId}": {
+        get: {
+          operationId: "listAuditReportsForAssessment",
+          tags: ["AuditReports"],
+          parameters: [pathParameter("assessmentId", "uuid"), ...requestContextHeaders()],
+          responses: {
+            "200": jsonArrayResponse("Audit reports for this assessment.", "AuditReport"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/audit-reports/assessments/{assessmentId}/generate": {
+        post: {
+          operationId: "generateAuditReport",
+          tags: ["AuditReports"],
+          parameters: [pathParameter("assessmentId", "uuid"), idempotencyHeader(), ...requestContextHeaders()],
+          responses: {
+            "201": jsonResponse("Audit report generated.", "AuditReport"),
+            "400": { $ref: "#/components/responses/Problem" },
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" },
+            "404": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/audit-reports/{reportId}": {
+        get: {
+          operationId: "getAuditReport",
+          tags: ["AuditReports"],
+          parameters: [pathParameter("reportId", "uuid"), ...requestContextHeaders()],
+          responses: {
+            "200": jsonResponse("Audit report.", "AuditReport"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" },
+            "404": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/audit-reports/{reportId}/download": {
+        get: {
+          operationId: "downloadAuditReport",
+          tags: ["AuditReports"],
+          parameters: [pathParameter("reportId", "uuid"), ...requestContextHeaders()],
+          responses: {
+            "200": {
+              description: "Audit report PDF artifact.",
+              content: {
+                "application/pdf": {
+                  schema: { type: "string", format: "binary" }
+                }
+              }
+            },
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" },
+            "404": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/audit-reports/{reportId}/publish": {
+        post: {
+          operationId: "publishAuditReport",
+          tags: ["AuditReports"],
+          parameters: [pathParameter("reportId", "uuid"), ...requestContextHeaders()],
+          responses: {
+            "201": jsonResponse("Audit report published.", "AuditReport"),
+            "400": { $ref: "#/components/responses/Problem" },
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" },
+            "404": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
       "/v1/ai-orchestration/question-generations": {
         post: {
           operationId: "requestAiQuestionGeneration",
@@ -4063,6 +4148,9 @@ export function buildOpenApiSpec() {
           properties: {
             fileName: { type: "string" },
             relevance: { enum: ["not_relevant", "low", "medium", "high"] },
+            evidenceType: { enum: ["policy_or_design", "implementation", "operating", "effectiveness", "sample_or_template"] },
+            proves: { type: "string" },
+            contextMismatches: { type: "array", items: { type: "string" } },
             documentPurpose: { type: "string" },
             summary: { type: "string" },
             supports: { type: "array", items: { type: "string" } },
@@ -4074,6 +4162,17 @@ export function buildOpenApiSpec() {
             gaps: { type: "array", items: { type: "string" } },
             reliabilityAssessment: { type: "string" },
             recommendedFollowUp: { type: "array", items: { type: "string" } }
+          }
+        },
+        FindingAssistMaterialObligation: {
+          type: "object",
+          required: ["obligation", "stage", "status", "supportingEvidence", "missingProof"],
+          properties: {
+            obligation: { type: "string" },
+            stage: { enum: ["documented", "approved", "implemented", "operating", "effective"] },
+            status: { enum: ["proven", "partially_proven", "not_proven", "contradicted", "not_applicable"] },
+            supportingEvidence: { type: "array", items: { type: "string" } },
+            missingProof: { type: "string" }
           }
         },
         FindingAssistRecommendation: {
@@ -4118,6 +4217,9 @@ export function buildOpenApiSpec() {
             evidenceCoverage: { enum: ["none", "limited", "partial", "substantial", "complete"] },
             evidenceCoverageRationale: { type: "string" },
             evidenceSummary: { type: "string" },
+            materialObligations: { type: "array", items: { $ref: "#/components/schemas/FindingAssistMaterialObligation" } },
+            evidenceContextMismatches: { type: "array", items: { type: "string" } },
+            suggestedAdditionalEvidence: { type: "array", items: { type: "string" } },
             evidenceAnalyses: { type: "array", items: { $ref: "#/components/schemas/FindingAssistEvidenceAnalysis" } },
             missingEvidence: { type: "array", items: { type: "string" } },
             recommendedReviewerActions: { type: "array", items: { type: "string" } },
@@ -4873,6 +4975,94 @@ export function buildOpenApiSpec() {
             idempotencyKey: { type: "string" },
             sha256: { type: "string" },
             storageUri: { type: "string" },
+            classification: { $ref: "#/components/schemas/Classification" },
+            createdBy: { type: "string", format: "uuid" },
+            createdAt: { type: "string", format: "date-time" },
+            updatedBy: { type: "string", format: "uuid" },
+            updatedAt: { type: "string", format: "date-time" }
+          }
+        },
+        AuditReportLifecycleStatus: {
+          enum: ["draft", "published"]
+        },
+        ClosedAssessmentSummary: {
+          type: "object",
+          required: ["assessmentId", "scopeName", "frameworks", "periodStart", "periodEnd", "itemCount", "findingCount"],
+          properties: {
+            assessmentId: { type: "string", format: "uuid" },
+            scopeName: { type: "string" },
+            frameworks: { type: "array", items: { type: "string" } },
+            periodStart: { type: "string", format: "date-time" },
+            periodEnd: { type: "string", format: "date-time" },
+            closedAt: { type: "string", format: "date-time", nullable: true },
+            closedBy: { type: "string", format: "uuid", nullable: true },
+            itemCount: { type: "integer" },
+            findingCount: { type: "integer" },
+            latestReport: {
+              type: "object",
+              nullable: true,
+              properties: {
+                reportId: { type: "string", format: "uuid" },
+                lifecycleStatus: { $ref: "#/components/schemas/AuditReportLifecycleStatus" },
+                generatedAt: { type: "string", format: "date-time" },
+                groundednessScore: { type: "number" }
+              }
+            }
+          }
+        },
+        AuditReport: {
+          type: "object",
+          required: [
+            "id",
+            "tenantId",
+            "version",
+            "assessmentId",
+            "snapshotId",
+            "reportType",
+            "lifecycleStatus",
+            "reportSchemaVersion",
+            "complianceMethodologyVersion",
+            "aiPromptVersion",
+            "generatedBy",
+            "generatedAt",
+            "reportHash",
+            "snapshotHash",
+            "artifactMimeType",
+            "structuredReportJson",
+            "provenance",
+            "citationManifest",
+            "groundednessScore",
+            "groundednessValidationLog",
+            "narrativeAvailable",
+            "classification",
+            "createdBy",
+            "createdAt",
+            "updatedBy",
+            "updatedAt"
+          ],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            tenantId: { type: "string", format: "uuid" },
+            version: { type: "integer" },
+            assessmentId: { type: "string", format: "uuid" },
+            snapshotId: { type: "string", format: "uuid" },
+            reportType: { enum: ["closure_audit"] },
+            lifecycleStatus: { $ref: "#/components/schemas/AuditReportLifecycleStatus" },
+            reportSchemaVersion: { type: "string" },
+            complianceMethodologyVersion: { type: "string" },
+            aiPromptVersion: { type: "string" },
+            aiModelMetadata: { type: "object", additionalProperties: true },
+            generatedBy: { type: "string", format: "uuid" },
+            generatedAt: { type: "string", format: "date-time" },
+            reportHash: { type: "string" },
+            snapshotHash: { type: "string" },
+            artifactMimeType: { type: "string" },
+            structuredReportJson: { type: "object", additionalProperties: true },
+            provenance: { type: "object", additionalProperties: true },
+            citationManifest: { type: "object", additionalProperties: true },
+            groundednessScore: { type: "number" },
+            groundednessValidationLog: { type: "array", items: { type: "object", additionalProperties: true } },
+            narrativeAvailable: { type: "boolean" },
             classification: { $ref: "#/components/schemas/Classification" },
             createdBy: { type: "string", format: "uuid" },
             createdAt: { type: "string", format: "date-time" },

@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { DiscoveryModule } from "@nestjs/core";
 import { AiOrchestrationModule } from "./modules/ai-orchestration/ai-orchestration.module.js";
 import { AssessmentModule } from "./modules/assessment/assessment.module.js";
+import { AuditReportsModule } from "./modules/audit-reports/audit-reports.module.js";
 import { AuditSecurityModule } from "./modules/audit-security/audit-security.module.js";
 import { EnterpriseGrcModule } from "./modules/enterprise-grc/enterprise-grc.module.js";
 import { EvidenceAssuranceModule } from "./modules/evidence-assurance/evidence-assurance.module.js";
@@ -38,7 +39,8 @@ import { RootStatusService } from "./root-status.service.js";
     RiskWorkflowModule,
     TasksModule,
     FrameworkUpdateModule,
-    ReportingAnalyticsModule
+    ReportingAnalyticsModule,
+    AuditReportsModule
   ],
   controllers: [RootController, HealthController],
   providers: [RootStatusService]

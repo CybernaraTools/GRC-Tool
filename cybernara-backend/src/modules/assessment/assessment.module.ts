@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { DatabaseModule } from "../../platform/database/database.module.js";
 import { AuditSecurityModule } from "../audit-security/public.js";
+import { ClosureSnapshotModule } from "../closure-snapshot/public.js";
 import { IdentityTenantModule } from "../identity-tenant/public.js";
 import { OutboxModule } from "../outbox/public.js";
 import { PlatformHardeningModule } from "../platform-hardening/public.js";
@@ -13,7 +14,14 @@ import { AssessmentController } from "./presentation/assessment.controller.js";
 import { QuestionRepositoryController } from "./presentation/question-repository.controller.js";
 
 @Module({
-  imports: [DatabaseModule, AuditSecurityModule, OutboxModule, PlatformHardeningModule, IdentityTenantModule],
+  imports: [
+    DatabaseModule,
+    AuditSecurityModule,
+    ClosureSnapshotModule,
+    OutboxModule,
+    PlatformHardeningModule,
+    IdentityTenantModule
+  ],
   controllers: [AssessmentController, QuestionRepositoryController],
   providers: [
     AssessmentService,
