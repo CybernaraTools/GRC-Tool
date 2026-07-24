@@ -10,7 +10,7 @@ import { AppModule } from "../../src/app.module.js";
 import { DATABASE_POOL } from "../../src/platform/database/tokens.js";
 import { ProblemDetailsFilter } from "../../src/shared/problem-details.filter.js";
 import { approvedControlSelectionForTenant } from "../helpers/question-repository-fixture.js";
-import { emptyNarrativePayload, NARRATIVE_SECTION_KEYS } from "../../src/modules/audit-reports/public.js";
+import { emptyNarrativePayload, NARRATIVE_SECTION_KEYS, validateNarrativeGroundedness, runComplianceEngine } from "../../src/modules/audit-reports/public.js";
 
 let app: INestApplication;
 let baseUrl: string;
@@ -389,6 +389,477 @@ describe("Regression: existing findings/risk workflows still function after this
     void assessmentId;
   }, 120_000);
 });
+
+describe("Task 5 AI Grounding & Precedence Regression Tests", () => {
+  it("Task 5.1 & 5.8: Fully grounded narrative reaches 100% and retry feedback corrects bad citations without weakening validation", async () => {
+    const tenantId = randomUUID();
+    const actorId = randomUUID();
+    const { assessmentId } = await createClosedAssessment(tenantId, actorId);
+
+    let attempts = 0;
+    interceptOpenAiFetch(() => {
+      attempts += 1;
+      const narrative = emptyNarrativePayload();
+      if (attempts === 1) {
+        narrative.executiveSummary = [
+          { text: "Contains bad citation.", citations: ["CONTROL:INVALID:999"], claimType: "fact", numericClaims: [] }
+        ];
+      } else {
+        narrative.executiveSummary = [
+          { text: "Commentary statement.", citations: [], claimType: "commentary", numericClaims: [] }
+        ];
+      }
+      return new Response(JSON.stringify({ output_text: JSON.stringify(narrative) }), { status: 200 });
+    });
+
+    const generated = await postJson(tenantId, `/v1/audit-reports/assessments/${assessmentId}/generate`, {}, "audit_report:write", `ar-t51-${randomUUID()}`);
+    expect(generated.status).toBe(201);
+    const report = (await generated.json()) as { groundednessScore: number; narrativeAvailable: boolean };
+    expect(report.groundednessScore).toBe(100);
+    expect(report.narrativeAvailable).toBe(true);
+  }, 120_000);
+
+  it("Task 5.2 & 5.3: Unsupported claims and missing citations remain rejected", async () => {
+    const tenantId = randomUUID();
+    const actorId = randomUUID();
+    const { assessmentId } = await createClosedAssessment(tenantId, actorId);
+
+    mockHallucinatingFetch();
+    const generated = await postJson(tenantId, `/v1/audit-reports/assessments/${assessmentId}/generate`, {}, "audit_report:write", `ar-t52-${randomUUID()}`);
+    const report = (await generated.json()) as { groundednessScore: number; narrativeAvailable: boolean };
+    expect(report.groundednessScore).toBeLessThan(100);
+    expect(report.narrativeAvailable).toBe(false);
+  }, 120_000);
+
+  it("Task 5.4: Incorrect numeric compliance claim remains rejected", async () => {
+    const tenantId = randomUUID();
+    const actorId = randomUUID();
+    const { assessmentId } = await createClosedAssessment(tenantId, actorId);
+
+    interceptOpenAiFetch(() => {
+      const narrative = emptyNarrativePayload();
+      narrative.executiveSummary = [
+        { text: "Wrong metric claim.", citations: ["FRAMEWORK_COMPLIANCE:SOC2"], claimType: "fact", numericClaims: [{ metric: "finding_count", frameworkKey: null, statedValue: 999 }] }
+      ];
+      return new Response(JSON.stringify({ output_text: JSON.stringify(narrative) }), { status: 200 });
+    });
+
+    const generated = await postJson(tenantId, `/v1/audit-reports/assessments/${assessmentId}/generate`, {}, "audit_report:write", `ar-t54-${randomUUID()}`);
+    const report = (await generated.json()) as { groundednessScore: number; narrativeAvailable: boolean };
+    expect(report.groundednessScore).toBeLessThan(100);
+    expect(report.narrativeAvailable).toBe(false);
+  }, 120_000);
+
+  it("Task 5.5, 5.6, 5.7: N/A control with contradictory finding/remediation history is surfaced as a legacy reconstruction limitation and cannot become compliant", async () => {
+    const tenantId = randomUUID();
+    const actorId = randomUUID();
+    const evidenceId = randomUUID();
+    const created = await postJson(
+      tenantId,
+      "/v1/assessments",
+      {
+        scopeName: `N/A Precedence Test ${randomUUID()}`,
+        ownerId: actorId,
+        periodStart: "2026-01-01",
+        periodEnd: "2026-12-31",
+        controls: [await approvedControlSelectionForTenant({ pool: repositoryPool, tenantId, actorId })]
+      },
+      "assessment:write",
+      `ar-na-create-${randomUUID()}`
+    );
+    const assessment = (await created.json()) as { id: string; items: Array<{ id: string }> };
+    const itemId = assessment.items[0].id;
+
+    await postJson(tenantId, `/v1/assessments/${assessment.id}/items/${itemId}/applicability`, { applicable: false, rationale: "Not applicable rationale." }, "assessment:write", `ar-na-app-${randomUUID()}`);
+    await postJson(tenantId, `/v1/assessments/${assessment.id}/items/${itemId}/answers`, { answerText: "Not applicable answer", evidenceIds: [evidenceId] }, "assessment:write", `ar-na-ans-${randomUUID()}`);
+    await postJson(tenantId, `/v1/assessments/${assessment.id}/items/${itemId}/reviews`, { approved: true }, "assessment:review", `ar-na-rev-${randomUUID()}`);
+
+    const findingCreate = await postJson(tenantId, "/v1/risk-workflow/findings", { assessmentItemId: itemId, severity: "high", description: "Finding on N/A control" }, "finding:write", `ar-na-find-${randomUUID()}`);
+    const finding = (await findingCreate.json()) as { id: string };
+    const taskCreate = await postJson(tenantId, "/v1/risk-workflow/remediation-tasks", { findingId: finding.id, dueAt: "2026-12-31" }, "remediation:write", `ar-na-task-${randomUUID()}`);
+    const task = (await taskCreate.json()) as { id: string };
+    await postJson(tenantId, `/v1/risk-workflow/remediation-tasks/${task.id}/reviews`, { decision: "approved", rationale: "Verified mitigation" }, "remediation:write", `ar-na-revtask-${randomUUID()}`);
+
+    await repositoryPool.query(`update assessments set status = 'closed' where tenant_id = $1 and id = $2`, [tenantId, assessment.id]);
+
+    mockGroundedNarrativeFetch();
+    const generated = await postJson(tenantId, `/v1/audit-reports/assessments/${assessment.id}/generate`, {}, "audit_report:write", `ar-gen-na-${randomUUID()}`);
+    expect(generated.status).toBe(201);
+    const report = (await generated.json()) as {
+      structuredReportJson: {
+        engineResult: {
+          frameworks: Array<{ displayPercentage: string; satisfiedCount: number; remediatedCount: number; applicableCount: number }>;
+          dispositions: Array<{ disposition: string; reason: string }>;
+        };
+        evidenceLimitations: string[];
+      };
+    };
+
+    const fw = report.structuredReportJson.engineResult.frameworks[0];
+    expect(fw.applicableCount).toBe(0);
+    expect(fw.displayPercentage).toContain("N/A");
+    expect(fw.remediatedCount).toBe(0);
+
+    const disp = report.structuredReportJson.engineResult.dispositions[0];
+    expect(disp.disposition).toBe("not_applicable");
+    expect(report.structuredReportJson.evidenceLimitations.some((lim) => lim.includes("marked Not Applicable"))).toBe(true);
+  }, 120_000);
+});
+
+describe("Semantic Audit Hardening Tests (Final Pass)", () => {
+  it("Semantic 1, 2, 3: Active risk acceptance cannot assert proactive, effective management, strategic choice, or abandoned remediation without explicit support", () => {
+    const manifest = new Map();
+    manifest.set("RISK_ACCEPTANCE:ra-1", {
+      id: "RISK_ACCEPTANCE:ra-1",
+      type: "risk_acceptance",
+      summary: "Risk acceptance ra-1",
+      data: { rationale: "Standard corporate risk acceptance approved for period." },
+      integrityVerified: true
+    });
+
+    const result1 = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        riskAnalysis: [
+          { text: "The organization adopted a proactive approach to risk management.", citations: ["RISK_ACCEPTANCE:ra-1"], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+    expect(result1.passed).toBe(false);
+    expect(result1.issues.some((i) => i.detail.includes("unsupported speculation"))).toBe(true);
+
+    const result2 = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        riskAnalysis: [
+          { text: "Management opted to accept the residual risk instead of pursuing remediation.", citations: ["RISK_ACCEPTANCE:ra-1"], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+    expect(result2.passed).toBe(false);
+    expect(result2.issues.some((i) => i.detail.includes("unsupported speculation"))).toBe(true);
+  });
+
+  it("Semantic 4 & 5: Evidence metadata alone cannot support evidence-content conclusions, while extracted content can", () => {
+    const manifestMetadataOnly = new Map();
+    manifestMetadataOnly.set("EVIDENCE:ev-1", {
+      id: "EVIDENCE:ev-1",
+      type: "evidence",
+      summary: "Evidence metadata only",
+      data: { fileName: "policy.pdf" },
+      integrityVerified: true
+    });
+
+    const result1 = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        evidenceAnalysis: [
+          { text: "The evidence did not demonstrate compliance with CCPA.", citations: ["EVIDENCE:ev-1"], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifestMetadataOnly,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+    expect(result1.passed).toBe(false);
+    expect(result1.issues.some((i) => i.detail.includes("metadata/linkage only"))).toBe(true);
+
+    const manifestWithContent = new Map();
+    manifestWithContent.set("EVIDENCE:ev-1", {
+      id: "EVIDENCE:ev-1",
+      type: "evidence",
+      summary: "Evidence with text",
+      data: { fileName: "policy.pdf", extractedText: "The evidence did not demonstrate compliance with CCPA." },
+      integrityVerified: true
+    });
+
+    const result2 = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        evidenceAnalysis: [
+          { text: "The evidence did not demonstrate compliance with CCPA.", citations: ["EVIDENCE:ev-1"], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifestWithContent,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+    expect(result2.passed).toBe(true);
+  });
+
+  it("Semantic 6 & 7: Accepted residual risk remains excluded from compliant numerator and included in applicable denominator", () => {
+    const payload = dummySnapshotPayload([
+      { disposition: "accepted_residual_risk" },
+      { disposition: "satisfied" }
+    ]);
+    const engine = runComplianceEngine(payload);
+    expect(engine.frameworks[0].applicableCount).toBe(2); // included in applicable denominator
+    expect(engine.frameworks[0].satisfiedCount).toBe(1);
+    expect(engine.frameworks[0].acceptedRiskCount).toBe(1);
+    expect(engine.frameworks[0].remediatedCount).toBe(0);
+    expect(engine.frameworks[0].rawPercentage).toBe(50); // (1 satisfied + 0 remediated) / 2 = 50%
+  });
+
+  it("Semantic 8: Advisory management commentary is clearly distinguished and omits citations cleanly", () => {
+    const manifest = new Map();
+    const result = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        managementAttentionAreas: [
+          { text: "The team should consider quarterly access reviews.", citations: [], claimType: "commentary", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+    expect(result.passed).toBe(true);
+    expect(result.groundednessScore).toBe(100);
+  });
+
+  it("Semantic 9: Conclusions cannot introduce un-cited factual claims", () => {
+    const manifest = new Map();
+    const result = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        conclusion: [
+          { text: "Uncited factual claim in conclusion.", citations: [], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+    expect(result.passed).toBe(false);
+  });
+
+  it("Report 19ab418c-e3af-4c7d-8b5f-90bf89a2e311 Regression: N/A framework percentage claims in executiveSummary are rejected with explicit remedy guidance", () => {
+    const manifest = new Map();
+    manifest.set("FRAMEWORK_COMPLIANCE:E8", {
+      id: "FRAMEWORK_COMPLIANCE:E8",
+      type: "framework_compliance",
+      summary: "E8 compliance",
+      data: { frameworkKey: "E8", rawPercentage: null },
+      integrityVerified: true
+    });
+
+    const result = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        executiveSummary: [
+          { text: "E8 achieved 0% compliance.", citations: ["FRAMEWORK_COMPLIANCE:E8"], claimType: "fact", numericClaims: [{ metric: "framework_compliance_percentage", frameworkKey: "E8", statedValue: 0 }] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: {
+        dispositions: [],
+        frameworks: [
+          { frameworkKey: "E8", frameworkVersion: "1", rawPercentage: null, displayPercentage: "N/A (no applicable controls)", satisfiedCount: 0, remediatedCount: 0, applicableCount: 0, notApplicableCount: 1, acceptedRiskCount: 0, unresolvedCount: 0, citationId: "FRAMEWORK_COMPLIANCE:E8", formula: "N/A" }
+        ]
+      }
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.issues[0].detail).toContain("REMEDY: Remove the framework_compliance_percentage numericClaim for 'E8' completely");
+  });
+
+  it("Report 2201c134-d58b-49c6-b81a-a2b134523303 Regression 1: accepted_residual_risk cannot simultaneously be narrated as unresolved", () => {
+    const manifest = new Map();
+    manifest.set("FINDING:f-1", {
+      id: "FINDING:f-1",
+      type: "finding",
+      summary: "Finding f-1",
+      data: { severity: "medium", disposition: "accepted_residual_risk" },
+      integrityVerified: true
+    });
+
+    const result = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        materialFindings: [
+          { text: "Finding f-1 was identified. This finding remains the sole unresolved issue.", citations: ["FINDING:f-1"], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.issues.some((i) => i.detail.includes("accepted risk items MUST NOT be described as unresolved"))).toBe(true);
+  });
+
+  it("Report 2201c134-d58b-49c6-b81a-a2b134523303 Regression 2: risk acceptance cannot imply remediation abandonment without citation support", () => {
+    const manifest = new Map();
+    manifest.set("RISK_ACCEPTANCE:ra-1", {
+      id: "RISK_ACCEPTANCE:ra-1",
+      type: "risk_acceptance",
+      summary: "Risk acceptance ra-1",
+      data: { rationale: "Formal risk acceptance rationale." },
+      integrityVerified: true
+    });
+
+    const result = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        riskAnalysis: [
+          { text: "The organization acknowledged the risk while opting not to remediate it at this time.", citations: ["RISK_ACCEPTANCE:ra-1"], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.issues.some((i) => i.detail.includes("speculative"))).toBe(true);
+  });
+
+  it("Report 2201c134-d58b-49c6-b81a-a2b134523303 Regression 3: evidence metadata cannot support evidence-content conclusions like 'did not contribute to compliance'", () => {
+    const manifest = new Map();
+    manifest.set("EVIDENCE:ev-1", {
+      id: "EVIDENCE:ev-1",
+      type: "evidence",
+      summary: "Evidence file without extracted text",
+      data: { fileName: "test.pdf" },
+      integrityVerified: true
+    });
+
+    const result = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        evidenceAnalysis: [
+          { text: "The artifacts did not contribute to compliance under CCPA.", citations: ["EVIDENCE:ev-1"], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.issues.some((i) => i.detail.includes("metadata/linkage only"))).toBe(true);
+  });
+
+  it("Report 2201c134-d58b-49c6-b81a-a2b134523303 Regression 4: subjective wording like 'concerning' or 'significant gap in efforts' cannot masquerade as grounded fact", () => {
+    const manifest = new Map();
+    manifest.set("FRAMEWORK_COMPLIANCE:CCPA", {
+      id: "FRAMEWORK_COMPLIANCE:CCPA",
+      type: "framework_compliance",
+      summary: "CCPA compliance: 0%",
+      data: { frameworkKey: "CCPA", rawPercentage: 0 },
+      integrityVerified: true
+    });
+
+    const result = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        overallAssessmentAnalysis: [
+          { text: "The overall compliance status under CCPA is concerning.", citations: ["FRAMEWORK_COMPLIANCE:CCPA"], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.issues.some((i) => i.detail.includes("speculative"))).toBe(true);
+  });
+
+  it("Report 2201c134-d58b-49c6-b81a-a2b134523303 Regression 5: commentary cannot bypass grounding for organization-specific factual assertions", () => {
+    const manifest = new Map();
+    const result = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        remediationAnalysis: [
+          { text: "The organization has opted to accept the residual risk instead of pursuing remediation.", citations: [], claimType: "commentary", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.issues.some((i) => i.detail.includes("asserts organizational facts"))).toBe(true);
+  });
+
+  it("Report 2201c134-d58b-49c6-b81a-a2b134523303 Regression 6: conclusions cannot introduce recommendations as factual conclusions", () => {
+    const manifest = new Map();
+    manifest.set("FRAMEWORK_COMPLIANCE:CCPA", {
+      id: "FRAMEWORK_COMPLIANCE:CCPA",
+      type: "framework_compliance",
+      summary: "CCPA compliance: 0%",
+      data: { frameworkKey: "CCPA", rawPercentage: 0 },
+      integrityVerified: true
+    });
+
+    const result = validateNarrativeGroundedness({
+      rawPayload: {
+        ...emptyNarrativePayload(),
+        conclusion: [
+          { text: "The organization must address the identified compliance gaps to enhance posture.", citations: ["FRAMEWORK_COMPLIANCE:CCPA"], claimType: "fact", numericClaims: [] }
+        ]
+      },
+      snapshot: dummySnapshot(),
+      citationManifest: manifest,
+      engineResult: { dispositions: [], frameworks: [] }
+    });
+
+    expect(result.passed).toBe(false);
+  });
+
+  it("Report 2201c134-d58b-49c6-b81a-a2b134523303 Regression 7 & 8: deterministic compliance numbers and accepted residual risk numerator exclusion remain unchanged", () => {
+    const payload = dummySnapshotPayload([
+      { disposition: "accepted_residual_risk" }
+    ]);
+    const engine = runComplianceEngine(payload);
+    expect(engine.frameworks[0].rawPercentage).toBe(0);
+    expect(engine.frameworks[0].satisfiedCount).toBe(0);
+    expect(engine.frameworks[0].acceptedRiskCount).toBe(1);
+  });
+});
+
+function dummySnapshotPayload(itemsDisposition: Array<{ disposition: string }>): ClosureSnapshotPayload {
+  return {
+    schemaVersion: "1.0.0",
+    assessment: { id: "a-test", scopeName: "Test", status: "closed", controlSnapshotVersion: "1", periodStart: "2026-01-01", periodEnd: "2026-12-31", createdBy: "user", createdAt: "2026-01-01" },
+    items: itemsDisposition.map((item, idx) => ({
+      itemId: `item-${idx}`,
+      controlRef: { controlId: `C-${idx}`, frameworkKey: "TEST", frameworkVersion: "1", mappingVersion: "1", questionVersion: "1", questionVersionId: "q1", harmonizedControlId: "H1" },
+      status: "approved",
+      ownerId: "user",
+      answerText: "Answer",
+      evidenceIds: [],
+      applicability: { applicable: true, rationale: "Applies", approvedBy: "user", approvedAt: "2026-01-01" }
+    })),
+    findings: itemsDisposition
+      .map((item, idx) => (item.disposition === "accepted_residual_risk" ? { id: `f-${idx}`, assessmentItemId: `item-${idx}`, testResultId: null, severity: "high", impact: "high", likelihood: "high", ownerId: "user", dueAt: "2026-12-31", description: "Finding", createdAt: "2026-01-01" } : null))
+      .filter((f): f is NonNullable<typeof f> => Boolean(f)),
+    remediationTasks: [],
+    risks: [],
+    riskAcceptances: itemsDisposition
+      .map((item, idx) => (item.disposition === "accepted_residual_risk" ? { id: `ra-${idx}`, remediationTaskId: `task-${idx}`, findingId: `f-${idx}`, riskId: null, rationale: "Accept rationale", approverId: "user", approvedAt: "2026-01-01", expiresAt: "2027-01-01", nextReviewDueAt: "2026-06-01", compensatingControls: null, supersededAt: null, supersededById: null, isActiveAtCapture: true } : null))
+      .filter((ra): ra is NonNullable<typeof ra> => Boolean(ra)),
+    evidence: [],
+    signoffs: [],
+    capturedAt: "2026-01-01",
+    reconstructed: false,
+    historicalAssuranceLevel: "native"
+  };
+}
+
+function dummySnapshot(): ClosureSnapshotPayload {
+  return dummySnapshotPayload([]);
+}
 
 function headers(tenantId: string, scopes: string): Record<string, string> {
   return {

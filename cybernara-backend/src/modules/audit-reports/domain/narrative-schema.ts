@@ -31,7 +31,7 @@ export type NarrativeSectionKey = (typeof NARRATIVE_SECTION_KEYS)[number];
 // out of prose — this is what makes the validator's numeric cross-check
 // (Rule #2 check 3) exact rather than a fragile regex match.
 export const NumericClaimSchema = z.object({
-  metric: z.enum(["framework_compliance_percentage", "finding_count", "risk_count", "control_count", "evidence_count"]),
+  metric: z.enum(["framework_compliance_percentage", "finding_count", "risk_count", "control_count", "applicable_control_count", "evidence_count"]),
   frameworkKey: z.string().nullable().optional(),
   statedValue: z.number()
 });
@@ -111,7 +111,7 @@ export function narrativeJsonSchema(): Record<string, unknown> {
           properties: {
             metric: {
               type: "string",
-              enum: ["framework_compliance_percentage", "finding_count", "risk_count", "control_count", "evidence_count"]
+              enum: ["framework_compliance_percentage", "finding_count", "risk_count", "control_count", "applicable_control_count", "evidence_count"]
             },
             // OpenAI strict structured-output mode requires every key in
             // `properties` to also appear in `required` — there is no true

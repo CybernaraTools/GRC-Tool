@@ -4405,6 +4405,17 @@ export function createCybernaraClient(baseUrl: string, fetcher: typeof fetch = f
       }
       return FrameworkEnablementSchema.parse(await response.json());
     },
+    async disableFramework(body: z.infer<typeof EnableFrameworkRequestSchema>) {
+      const response = await fetcher(`${baseUrl}/v1/framework-content/enabled-frameworks/disable`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body)
+      })
+      if (!response.ok) {
+        throw await buildApiError("disableFramework", response);
+      }
+      return response.json();
+    },
     async listAssessmentQuestionOptions(query?: {
         "limit"?: number;
         "offset"?: number

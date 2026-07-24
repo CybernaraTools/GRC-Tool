@@ -76,9 +76,9 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
             <p className="eyebrow">PrivacyOperations</p>
             <h2 id="privacy-heading">Inventory, RoPA, DPIA, rights, consent, incidents, and retention</h2>
           </div>
-          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <div>
             <span>Create and workflow actions only</span>
-            <Link href="/privacy/retention" className="badge restricted" style={{ textDecoration: "none" }}>
+            <Link href="/privacy/retention" className="badge restricted">
               Manage Retention & Deletions
             </Link>
           </div>
@@ -178,7 +178,7 @@ function InventoryAndRopaPanel({
                   <td>{activity.purpose}<small>{activity.jurisdiction}</small></td>
                   <td>{activity.lawfulBasis}</td>
                   <td>{activity.retentionMonths} months</td>
-                  <td><Link href={`/privacy?processingId=${activity.id}`}>Use for linked actions</Link></td>
+                  <td><Link className="reviewLink" href={`/privacy?processingId=${activity.id}`}>Use for linked actions</Link></td>
                 </tr>
               ))}
             </tbody>
@@ -246,7 +246,7 @@ function RightsAndConsentPanel({
                   <td>{request.subjectId}</td>
                   <td>{request.requestType}</td>
                   <td><span className="badge internal">{request.status}</span></td>
-                  <td><Link href={`/privacy?rightsId=${request.id}`}>Select</Link></td>
+                  <td><Link className="reviewLink" href={`/privacy?rightsId=${request.id}`}>Select</Link></td>
                 </tr>
               ))}
             </tbody>

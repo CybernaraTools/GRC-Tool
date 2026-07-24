@@ -14,7 +14,7 @@ export function AiComposerTabs({ actionPath, frameworkKeys }: AiComposerTabsProp
           <input className="aiModeInput" type="radio" id="ai-mode-fallback" name="aiComposerMode" aria-label="Fallback" />
           <span className="aiModeSlider" aria-hidden="true" />
           <label htmlFor="ai-mode-prompt">
-            <span className="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
+            <span className="material-symbols-outlined" aria-hidden="true">psychology</span>
             <span>Prompt Workspace</span>
           </label>
           <label htmlFor="ai-mode-fallback">
@@ -70,7 +70,7 @@ function PromptWorkspaceForm({ actionPath, frameworkKeys }: AiComposerTabsProps)
       </div>
       <div className="composerFooter">
         <span>Selected enabled frameworks and harmonized controls drive evidence and citations.</span>
-        <AiSubmitButton icon="auto_awesome" pendingLabel="Generating question set" disabled={!canGenerate}>
+        <AiSubmitButton icon="psychology" pendingLabel="Generating question set" disabled={!canGenerate}>
           Generate with OpenAI
         </AiSubmitButton>
       </div>

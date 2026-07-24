@@ -80,7 +80,7 @@ export function FindingAiAssistForm({
         <input type="hidden" name="ownerId" value={finding?.ownerId ?? ownerId} />
         <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
         {finding ? <input type="hidden" name="findingId" value={finding.id} /> : null}
-        <strong>{title}</strong>
+        <h2>{title}</h2>
         <div className="constraintNote">
           Review manually, or use AI to analyze the answer, frameworks, harmonized control, citations, and submitted evidence files.
         </div>
@@ -140,7 +140,7 @@ function FindingAiReport({
 }) {
   return (
     <aside className="miniForm" aria-label="AI finding recommendation">
-      <strong>AI finding report</strong>
+      <h2>AI finding report</h2>
       {loading ? <div className="constraintNote">Reading submitted evidence and assessment context.</div> : null}
       {!recommendation && !loading ? (
         <div className="constraintNote">

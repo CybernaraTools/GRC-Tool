@@ -23,6 +23,7 @@ const realFrontendRoutes = [
   "/harmonization",
   "/assessments",
   "/assessments/review",
+  "/reports",
   "/findings",
   "/risks",
   "/ai",

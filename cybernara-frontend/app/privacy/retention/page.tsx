@@ -190,8 +190,7 @@ export default async function PrivacyRetentionPage({ searchParams }: RetentionPa
                           <td>
                             <small>{j.startedAt ? new Date(j.startedAt).toLocaleDateString() : "Not started"}</small>
                           </td>
-                          <td>
-                            <Link href={`/privacy/retention?jobId=${j.id}`} className="badge internal" style={{ textDecoration: "none" }}>
+                          <td><Link className="reviewLink" href={`/privacy/retention?jobId=${j.id}`}>
                               View proofs
                             </Link>
                           </td>

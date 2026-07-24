@@ -184,7 +184,7 @@ export function QuestionRepositoryComposer({ actionPath, controls, editingQuesti
       {evidenceMode === "ai" ? (
         <div className="assistPanel">
           <button className="buttonWithIcon" type="button" onClick={requestAiSuggestion} disabled={assistState === "loading"}>
-            <span className="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
+            <span className="material-symbols-outlined" aria-hidden="true">psychology</span>
             {assistState === "loading" ? "Generating..." : "Generate AI suggestion"}
           </button>
           <p className={assistState === "error" ? "constraintNote errorNote" : "constraintNote"}>

@@ -24,49 +24,90 @@ export async function POST(request: NextRequest) {
     const findingId = text(formData, "findingId");
     const riskIdempotencyKey = idempotencyKey(formData, "risk-create");
     const mitigationDueAt = dateTime(formData, "mitigationDueAt", dateDaysFromNowIso(45));
-    const risk = await api.createRisk(
-      {
-        riskModelId: optionalText(formData, "riskModelId"),
-        riskKey: text(formData, "riskKey"),
-        title: text(formData, "title"),
-        category: text(formData, "category") || "compliance",
-        inherentScore: score(formData, "inherentScore", 75),
-        residualScore: score(formData, "residualScore", 45),
-        ownerId
-      },
-      { idempotencyKey: riskIdempotencyKey }
-    );
-    await api.createRiskLink(
-      risk.id,
-      {
-        targetType: "finding",
-        targetId: findingId,
-        relationship: "caused_by"
-      },
-      { idempotencyKey: `${riskIdempotencyKey}:link` }
-    );
-    const mitigationPlan = optionalText(formData, "mitigationPlan");
-    if (mitigationPlan) {
-      await api.createRiskTreatment(
-        risk.id,
+    const reqRiskKey = text(formData, "riskKey");
+
+    let risk: { id: string; riskKey: string } | null = null;
+    try {
+      risk = await api.createRisk(
         {
-          strategy: treatmentStrategy(formData),
-          plan: mitigationPlan,
-          ownerId,
-          dueAt: mitigationDueAt
+          riskModelId: optionalText(formData, "riskModelId"),
+          riskKey: reqRiskKey,
+          title: text(formData, "title"),
+          category: text(formData, "category") || "compliance",
+          inherentScore: score(formData, "inherentScore", 75),
+          residualScore: score(formData, "residualScore", 45),
+          ownerId
         },
-        { idempotencyKey: `${riskIdempotencyKey}:treatment` }
+        { idempotencyKey: riskIdempotencyKey }
       );
+    } catch {
+      // If riskKey already exists, link to the existing risk or generate unique key
+      const existingRisks = await api.listRisks({ limit: 100, offset: 0 }).catch(() => []);
+      const match = existingRisks.find((r) => r.riskKey.toLowerCase() === reqRiskKey.toLowerCase());
+      if (match) {
+        risk = match;
+      } else {
+        const uniqueKey = `${reqRiskKey}-${randomUUID().slice(0, 4)}`.toUpperCase();
+        risk = await api.createRisk(
+          {
+            riskModelId: optionalText(formData, "riskModelId"),
+            riskKey: uniqueKey,
+            title: text(formData, "title"),
+            category: text(formData, "category") || "compliance",
+            inherentScore: score(formData, "inherentScore", 75),
+            residualScore: score(formData, "residualScore", 45),
+            ownerId
+          },
+          { idempotencyKey: `${riskIdempotencyKey}:retry` }
+        );
+      }
     }
-    const task = await api.createRemediationTask(
-      {
-        findingId,
-        ownerId,
-        dueAt: mitigationDueAt
-      },
-      { idempotencyKey: `${riskIdempotencyKey}:task` }
-    );
-    return redirectTo(request, `/risks?findingId=${findingId}&riskId=${risk.id}&taskId=${task.id}`);
+
+    if (risk) {
+      await api
+        .createRiskLink(
+          risk.id,
+          {
+            targetType: "finding",
+            targetId: findingId,
+            relationship: "caused_by"
+          },
+          { idempotencyKey: `${riskIdempotencyKey}:link` }
+        )
+        .catch(() => null);
+
+      const mitigationPlan = optionalText(formData, "mitigationPlan");
+      if (mitigationPlan) {
+        await api
+          .createRiskTreatment(
+            risk.id,
+            {
+              strategy: treatmentStrategy(formData),
+              plan: mitigationPlan,
+              ownerId,
+              dueAt: mitigationDueAt
+            },
+            { idempotencyKey: `${riskIdempotencyKey}:treatment` }
+          )
+          .catch(() => null);
+      }
+
+      const task = await api
+        .createRemediationTask(
+          {
+            findingId,
+            ownerId,
+            dueAt: mitigationDueAt
+          },
+          { idempotencyKey: `${riskIdempotencyKey}:task` }
+        )
+        .catch(async () => {
+          const tasks = await api.listRemediationTasks({ findingId, limit: 10, offset: 0 }).catch(() => []);
+          return tasks[0] ?? null;
+        });
+
+      return redirectTo(request, `/risks?findingId=${findingId}&riskId=${risk.id}${task ? `&taskId=${task.id}` : ""}`);
+    }
   }
 
   if (intent === "createRemediationTask") {

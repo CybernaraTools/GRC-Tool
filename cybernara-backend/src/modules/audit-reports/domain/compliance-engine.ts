@@ -83,6 +83,7 @@ export function runComplianceEngine(snapshot: ClosureSnapshotPayload): Complianc
     const citationId = `CONTROL:${item.controlRef.frameworkKey}:${item.controlRef.controlId}`;
 
     if (item.applicability && item.applicability.applicable === false) {
+      const itemFindings = findingsByItem.get(item.itemId) ?? [];
       return {
         itemId: item.itemId,
         controlId: item.controlRef.controlId,
@@ -90,8 +91,11 @@ export function runComplianceEngine(snapshot: ClosureSnapshotPayload): Complianc
         frameworkKey: item.controlRef.frameworkKey,
         frameworkVersion: item.controlRef.frameworkVersion,
         disposition: "not_applicable",
-        reason: "Control was formally marked not applicable.",
-        findingIds: [],
+        reason:
+          itemFindings.length > 0
+            ? `Control was formally marked not applicable, but has ${itemFindings.length} associated finding(s) in historical records.`
+            : "Control was formally marked not applicable.",
+        findingIds: itemFindings.map((finding) => finding.id),
         citationId
       };
     }

@@ -46,6 +46,78 @@ const REMEDIATION_STATUS_KEYWORDS = ["open", "in_progress", "in progress", "veri
 const RISK_STATUS_KEYWORDS = ["identified", "assessed", "treatment_planned", "treatment planned", "monitoring", "closed"] as const;
 const DISPOSITION_KEYWORDS = ["satisfied", "remediation_verified", "remediation verified", "accepted_residual_risk", "accepted residual risk", "unresolved", "not_applicable", "not applicable"] as const;
 
+const SPECULATIVE_RISK_TERMS = [
+  "proactive approach",
+  "proactive risk",
+  "proactive",
+  "managed effectively",
+  "effectively managed",
+  "strategic decision",
+  "opted to accept",
+  "opted not to",
+  "opting not to",
+  "accepted instead of",
+  "instead of pursuing",
+  "instead of remediating",
+  "remediation was abandoned",
+  "abandoned remediation",
+  "without immediate remediation",
+  "decision to manage",
+  "acknowledged the potential impact",
+  "is concerning",
+  "concerning",
+  "significant gap in compliance efforts",
+  "has not yet implemented",
+  "need for immediate attention",
+  "must address",
+  "should address",
+  "must implement",
+  "should implement"
+];
+
+const EVIDENCE_CONTENT_CONCLUSION_TERMS = [
+  "did not demonstrate compliance",
+  "failed to demonstrate compliance",
+  "did not contribute to compliance",
+  "proved compliance",
+  "demonstrated compliance",
+  "evidence showed",
+  "evidence proves",
+  "evidence confirms",
+  "evidence was insufficient"
+];
+
+const COMMENTARY_ORGANIZATIONAL_FACT_TERMS = [
+  "the organization opted",
+  "the organization has not",
+  "the organization decided",
+  "opted to accept",
+  "opted not to",
+  "instead of pursuing remediation",
+  "instead of remediating",
+  "abandoned remediation",
+  "was not remediated",
+  "were not remediated",
+  "failed to implement",
+  "did not implement",
+  "was not implemented",
+  "were not implemented",
+  "did not contribute to compliance",
+  "did not demonstrate compliance",
+  "unresolved issue",
+  "unresolved finding"
+];
+
+function detectCommentaryBypass(text: string): string | null {
+  const lowerText = text.toLowerCase();
+  for (const term of COMMENTARY_ORGANIZATIONAL_FACT_TERMS) {
+    if (lowerText.includes(term)) {
+      return `Statement classified as 'commentary' asserts organizational facts or past actions/decisions ('${term}'). Factual assertions must be classified as 'fact' or 'inference' and cite a valid grounded source.`;
+    }
+  }
+  return null;
+}
+
 export function validateNarrativeGroundedness(input: {
   rawPayload: unknown;
   snapshot: ClosureSnapshotPayload;
@@ -75,12 +147,23 @@ export function validateNarrativeGroundedness(input: {
     finding_count: input.snapshot.findings.length,
     risk_count: input.snapshot.risks.length,
     evidence_count: input.snapshot.evidence.length,
-    control_count: input.engineResult.frameworks.reduce((sum, framework) => sum + framework.applicableCount, 0)
+    control_count: input.snapshot.items.length,
+    applicable_control_count: input.engineResult.frameworks.reduce((sum, framework) => sum + framework.applicableCount, 0)
   };
 
   for (const [section, statements] of Object.entries(payload) as Array<[string, NarrativeStatement[]]>) {
     statements.forEach((statement, index) => {
       if (statement.claimType === "commentary") {
+        const commentaryBypass = detectCommentaryBypass(statement.text);
+        if (commentaryBypass) {
+          totalFactInference += 1;
+          issues.push({
+            section,
+            index,
+            check: "citation_consistency",
+            detail: commentaryBypass
+          });
+        }
         return;
       }
       totalFactInference += 1;
@@ -113,6 +196,26 @@ export function validateNarrativeGroundedness(input: {
             check: "citation_consistency",
             detail: `Statement asserts '${mismatch.assertedValue}' but citation ${citation.id} actually has ${mismatch.field}='${mismatch.actualValue}'.`
           });
+        }
+      }
+
+      // Check 3b: Global speculative / subjective language check
+      const lowerText = statement.text.toLowerCase();
+      for (const term of SPECULATIVE_RISK_TERMS) {
+        if (lowerText.includes(term)) {
+          const supportedInRationale = resolvedCitations.some(
+            (c) => typeof c.data?.rationale === "string" && c.data.rationale.toLowerCase().includes(term)
+          );
+          if (!supportedInRationale) {
+            statementValid = false;
+            issues.push({
+              section,
+              index,
+              check: "citation_consistency",
+              detail: `Statement asserts speculative, subjective, or unsupported interpretation ('${term}'). Statements must state objective audit facts without speculative characterization.`
+            });
+            break;
+          }
         }
       }
 
@@ -183,6 +286,49 @@ function detectDeterministicContradiction(
 ): { field: string; assertedValue: string; actualValue: string } | null {
   const lowerText = text.toLowerCase();
 
+  if (citationType === "risk_acceptance" || citationType === "risk" || citationType === "control_disposition") {
+    const storedRationale = typeof data.rationale === "string" ? data.rationale.toLowerCase() : "";
+    for (const term of SPECULATIVE_RISK_TERMS) {
+      if (lowerText.includes(term) && !storedRationale.includes(term)) {
+        return {
+          field: "risk_acceptance_interpretation",
+          assertedValue: term,
+          actualValue: "unsupported speculation (acceptance record establishes only recorded rationale, dates, and approver)"
+        };
+      }
+    }
+  }
+
+  if (citationType === "finding" || citationType === "control_disposition" || citationType === "risk_acceptance") {
+    if (data.disposition === "accepted_residual_risk" || data.status === "risk_accepted" || citationType === "risk_acceptance") {
+      const UNRESOLVED_TERMS = ["unresolved issue", "unresolved finding", "unresolved gap", "remains unresolved", "unresolved"];
+      for (const term of UNRESOLVED_TERMS) {
+        if (containsKeyword(lowerText, term)) {
+          return {
+            field: "disposition_contradiction",
+            assertedValue: term,
+            actualValue: "accepted_residual_risk (accepted risk items MUST NOT be described as unresolved)"
+          };
+        }
+      }
+    }
+  }
+
+  if (citationType === "evidence") {
+    const hasExtractedText = typeof data.extractedText === "string" && data.extractedText.length > 0;
+    if (!hasExtractedText) {
+      for (const term of EVIDENCE_CONTENT_CONCLUSION_TERMS) {
+        if (lowerText.includes(term)) {
+          return {
+            field: "evidence_content_conclusion",
+            assertedValue: term,
+            actualValue: "unsupported conclusion (evidence citation contains metadata/linkage only, not extracted content)"
+          };
+        }
+      }
+    }
+  }
+
   if ((citationType === "finding" || citationType === "control_disposition") && typeof data.severity === "string") {
     const asserted = SEVERITY_KEYWORDS.find((keyword) => containsKeyword(lowerText, `${keyword} severity`) || containsKeyword(lowerText, `severity: ${keyword}`) || containsKeyword(lowerText, `severity of ${keyword}`));
     if (asserted && asserted !== data.severity) {
@@ -244,7 +390,7 @@ function detectNumericMismatch(
       return `Numeric claim references unknown framework '${claim.frameworkKey}'.`;
     }
     if (framework.rawPercentage === null) {
-      return `Numeric claim states ${claim.statedValue}% for '${claim.frameworkKey}' but the engine has no applicable controls (N/A) for that framework.`;
+      return `Numeric claim states ${claim.statedValue}% for '${claim.frameworkKey}' but the engine has no applicable controls (N/A) for that framework. REMEDY: Remove the framework_compliance_percentage numericClaim for '${claim.frameworkKey}' completely from this statement and state in prose that '${claim.frameworkKey}' has zero applicable controls.`;
     }
     const rounded = Math.round(framework.rawPercentage * 100) / 100;
     if (Math.abs(rounded - claim.statedValue) > 0.001) {

@@ -124,40 +124,48 @@ export class PostgresAssessmentRepository implements AssessmentRepository {
         }
       }
 
+      const controlInstanceMap = new Map<string, string>();
+
       for (const [sequence, item] of input.assessment.items.entries()) {
-        const controlInstance = createControlInstance({
-          tenantId: input.assessment.tenantId,
-          assessmentId: input.assessment.id,
-          controlId: item.controlRef.harmonizedControlId,
-          frameworkKey: item.controlRef.frameworkKey,
-          frameworkVersion: item.controlRef.frameworkVersion,
-          mappingVersion: item.controlRef.mappingVersion,
-          ownerId: item.ownerId
-        });
-        await client.query(
-          `
-            insert into control_instances (
-              id, tenant_id, assessment_id, control_id, framework_key, framework_version,
-              mapping_version, owner_id, applicability_status, status,
-              created_by, created_at, updated_by, updated_at
-            )
-            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $11, $12)
-          `,
-          [
-            controlInstance.id,
-            controlInstance.tenantId,
-            controlInstance.assessmentId,
-            controlInstance.controlId,
-            controlInstance.frameworkKey,
-            controlInstance.frameworkVersion,
-            controlInstance.mappingVersion,
-            controlInstance.ownerId,
-            controlInstance.applicabilityStatus,
-            controlInstance.status,
-            input.assessment.createdBy,
-            input.assessment.createdAt
-          ]
-        );
+        let controlInstanceId = controlInstanceMap.get(item.controlRef.harmonizedControlId);
+        if (!controlInstanceId) {
+          const controlInstance = createControlInstance({
+            tenantId: input.assessment.tenantId,
+            assessmentId: input.assessment.id,
+            controlId: item.controlRef.harmonizedControlId,
+            frameworkKey: item.controlRef.frameworkKey,
+            frameworkVersion: item.controlRef.frameworkVersion,
+            mappingVersion: item.controlRef.mappingVersion,
+            ownerId: item.ownerId
+          });
+          await client.query(
+            `
+              insert into control_instances (
+                id, tenant_id, assessment_id, control_id, framework_key, framework_version,
+                mapping_version, owner_id, applicability_status, status,
+                created_by, created_at, updated_by, updated_at
+              )
+              values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $11, $12)
+              on conflict (tenant_id, assessment_id, control_id) do nothing
+            `,
+            [
+              controlInstance.id,
+              controlInstance.tenantId,
+              controlInstance.assessmentId,
+              controlInstance.controlId,
+              controlInstance.frameworkKey,
+              controlInstance.frameworkVersion,
+              controlInstance.mappingVersion,
+              controlInstance.ownerId,
+              controlInstance.applicabilityStatus,
+              controlInstance.status,
+              input.assessment.createdBy,
+              input.assessment.createdAt
+            ]
+          );
+          controlInstanceId = controlInstance.id;
+          controlInstanceMap.set(item.controlRef.harmonizedControlId, controlInstanceId);
+        }
         // Assessment creation consumes the governed question repository only.
         // It must never fabricate question_sets/question_versions on this path.
         if (!item.controlRef.questionVersionId) {
@@ -168,7 +176,7 @@ export class PostgresAssessmentRepository implements AssessmentRepository {
           client,
           input.assessment,
           item,
-          controlInstance.id,
+          controlInstanceId,
           item.controlRef.questionVersionId,
           sequence + 1
         );

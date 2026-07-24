@@ -188,7 +188,7 @@ function FindingsDashboard({
                     <td>{formatDateTime(assessment.periodStart)} to {formatDateTime(assessment.periodEnd)}</td>
                     <td>{assessment.items.length}</td>
                     <td>{assessmentFindings.length}</td>
-                    <td><Link href={`/findings?assessmentId=${assessment.id}`}>Open findings</Link></td>
+                    <td><Link className="reviewLink" href={`/findings?assessmentId=${assessment.id}`}>Open findings</Link></td>
                   </tr>
                 );
               })
@@ -311,8 +311,7 @@ function AssessmentItemExplorer({
                   <td>{item.answerText ? "Submitted" : "No answer"}</td>
                   <td>{item.evidenceIds.length} file{item.evidenceIds.length === 1 ? "" : "s"}</td>
                   <td>{findingsByItem.get(item.id)?.length ?? 0}</td>
-                  <td>
-                    <Link href={`/findings?assessmentId=${assessment.id}&itemId=${item.id}`}>
+                  <td><Link className="reviewLink" href={`/findings?assessmentId=${assessment.id}&itemId=${item.id}`}>
                       {selectedItem.id === item.id ? "Selected" : "Inspect"}
                     </Link>
                   </td>
@@ -567,9 +566,7 @@ function FindingTable({
               <td>{finding.dueAt ? formatDateTime(finding.dueAt) : "Not set"}</td>
               <td>{finding.description}</td>
               <td>{formatDateTime(finding.updatedAt)}</td>
-              <td>
-                <Link
-                  className="reviewLink"
+              <td><Link className="reviewLink"
                   href={`/findings?assessmentId=${assessment.id}&itemId=${finding.assessmentItemId ?? item.id}&findingId=${finding.id}`}
                 >
                   {selectedFinding?.id === finding.id ? "Editing" : "Edit finding"}

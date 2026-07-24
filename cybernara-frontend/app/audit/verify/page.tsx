@@ -74,13 +74,13 @@ export default async function AuditVerifyPage() {
                     checkpoints.map((c) => (
                       <tr key={c.id}>
                         <td>
-                          <small style={{ fontFamily: "monospace" }}>{c.id.slice(0, 8)}</small>
+                          <small>{c.id.slice(0, 8)}</small>
                         </td>
                         <td>
                           <code>{c.startSequence} - {c.endSequence}</code>
                         </td>
                         <td>
-                          <small style={{ fontFamily: "monospace", overflowWrap: "anywhere", fontSize: "0.85em" }}>
+                          <small style={{ overflowWrap: "anywhere", fontSize: "0.85em" }}>
                             {c.rootHash}
                           </small>
                         </td>
@@ -141,10 +141,10 @@ export default async function AuditVerifyPage() {
                       return (
                         <tr key={v.id}>
                           <td>
-                            <small style={{ fontFamily: "monospace" }}>{v.id.slice(0, 8)}</small>
+                            <small>{v.id.slice(0, 8)}</small>
                           </td>
                           <td>
-                            <small style={{ fontFamily: "monospace" }}>{v.checkpointId.slice(0, 8)}</small>
+                            <small>{v.checkpointId.slice(0, 8)}</small>
                           </td>
                           <td>
                             <span className={`badge ${failed ? "restricted" : "internal"}`}>
@@ -153,12 +153,12 @@ export default async function AuditVerifyPage() {
                           </td>
                           <td>
                             {failed ? (
-                              <div style={{ color: "red" }}>
+                              <div className="badge restricted">
                                 <span>• Hash chain or signature check failed</span>
                                 {v.mismatchSequence && <span>• Mismatch sequence: {v.mismatchSequence}</span>}
                               </div>
                             ) : (
-                              <span style={{ color: "green" }}>Chain integrity intact</span>
+                              <span className="badge internal">Chain integrity intact</span>
                             )}
                           </td>
                           <td>

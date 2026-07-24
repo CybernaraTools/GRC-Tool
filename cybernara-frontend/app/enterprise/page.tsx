@@ -73,9 +73,9 @@ export default async function EnterprisePage({ searchParams }: EnterprisePagePro
             <p className="eyebrow">EnterpriseGRC</p>
             <h2 id="enterprise-heading">Policies, vendors, access reviews, audits, trust, workspaces, and custom objects</h2>
           </div>
-          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <div>
             <span>Domain-modeled actions only</span>
-            <Link href="/enterprise/custom-objects" className="badge restricted" style={{ textDecoration: "none" }}>
+            <Link href="/enterprise/custom-objects" className="badge restricted">
               Custom Object Builder
             </Link>
           </div>
@@ -168,7 +168,7 @@ function PolicyPanel({ policies, selectedPolicy, session }: { policies: PolicyVe
                   <td>{policy.title}<small>{policy.templateKey}</small></td>
                   <td>{policy.version}</td>
                   <td><span className="badge internal">{policy.status}</span></td>
-                  <td><Link href={`/enterprise?policyId=${policy.id}`}>Select</Link></td>
+                  <td><Link className="reviewLink" href={`/enterprise?policyId=${policy.id}`}>Select</Link></td>
                 </tr>
               ))}
             </tbody>

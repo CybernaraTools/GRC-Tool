@@ -329,8 +329,7 @@ function QuestionVersionTable({
                       limit={5}
                     />
                   </td>
-                  <td>
-                    <Link href={reviewHref(params, question)}>Review</Link>
+                  <td><Link className="reviewLink" href={reviewHref(params, question)}>Review</Link>
                   </td>
                 </tr>
               ))}

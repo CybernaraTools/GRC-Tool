@@ -5,6 +5,7 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
   Inject,
   NotFoundException,
   Param,
@@ -121,6 +122,21 @@ export class FrameworkContentController {
   async enableFramework(@Req() request: Request, @Body() body: EnableFrameworkDto) {
     const context = readRequestContext(request);
     return this.questionRepository.enableFramework({
+      tenantId: context.tenantId,
+      actorId: context.userId,
+      frameworkVersionId: body.frameworkVersionId
+    });
+  }
+
+  @Post("enabled-frameworks/disable")
+  @HttpCode(200)
+  @RequirePolicy({ resourceType: "framework-content", action: "write" })
+  @ApiOperation({ summary: "Disable an enabled framework version for the current tenant." })
+  @ApiOkResponse({ description: "Framework version disabled." })
+  @ApiBadRequestResponse({ description: "Invalid framework disablement request." })
+  async disableFramework(@Req() request: Request, @Body() body: EnableFrameworkDto) {
+    const context = readRequestContext(request);
+    return this.questionRepository.disableFramework({
       tenantId: context.tenantId,
       actorId: context.userId,
       frameworkVersionId: body.frameworkVersionId

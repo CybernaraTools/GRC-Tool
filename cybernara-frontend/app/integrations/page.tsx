@@ -161,7 +161,7 @@ function ConnectorPanel({
                   <td><span className="badge internal">{connector.health}</span></td>
                   <td><code>{String(connector.syncCursor ?? "none")}</code></td>
                   <td><code>{connector.secretRef}</code></td>
-                  <td><Link href={`/integrations?connectorId=${connector.id}`}>Select</Link></td>
+                  <td><Link className="reviewLink" href={`/integrations?connectorId=${connector.id}`}>Select</Link></td>
                 </tr>
               ))}
             </tbody>
