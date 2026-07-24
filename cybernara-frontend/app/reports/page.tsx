@@ -50,17 +50,48 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     return true;
   });
 
+  const totalClosed = assessments.length;
+  const totalGenerated = assessments.filter((a) => a.latestReport).length;
+  const totalDraft = assessments.filter((a) => a.latestReport?.lifecycleStatus === "draft").length;
+  const totalPublished = assessments.filter((a) => a.latestReport?.lifecycleStatus === "published").length;
+
   return (
     <AppShell session={session} title="Assessment Audit Reports">
-      <section className="workspace" aria-labelledby="reports-heading">
-        <div className="sectionHeader">
-          <div>
-            <p className="eyebrow">Audit Reports</p>
-            <h2 id="reports-heading">Closed Assessments</h2>
+      <div className="reportDocContainer">
+        {/* SUMMARY STATS BAR */}
+        <div className="reportsSummaryGrid">
+          <div className="reportsSummaryCard">
+            <span className="label">Closed Assessments</span>
+            <strong>{totalClosed}</strong>
+            <small>Eligible for report generation</small>
           </div>
-          <span>{filtered.length} of {assessments.length} closed assessment(s)</span>
+          <div className="reportsSummaryCard">
+            <span className="label">Reports Generated</span>
+            <strong>{totalGenerated}</strong>
+            <small>Immutable snapshot reports</small>
+          </div>
+          <div className="reportsSummaryCard">
+            <span className="label">Draft Status</span>
+            <strong>{totalDraft}</strong>
+            <small>Pending final publication</small>
+          </div>
+          <div className="reportsSummaryCard">
+            <span className="label">Published</span>
+            <strong>{totalPublished}</strong>
+            <small>Official audit reports</small>
+          </div>
         </div>
 
+        {/* SECTION HEADER */}
+        <div className="sectionHeader" style={{ paddingBottom: "12px", borderBottom: "1px solid var(--border)" }}>
+          <div>
+            <span className="eyebrow">Audit & Assurance</span>
+            <h2 id="reports-heading" style={{ fontSize: "20px", fontWeight: 800 }}>Closed Assessment Audit Reports</h2>
+          </div>
+          <span>Showing {filtered.length} of {totalClosed} assessment(s)</span>
+        </div>
+
+        {/* FILTERS FORM */}
         <ReportFiltersForm defaults={resolvedSearchParams} />
 
         {actionError ? <ErrorState title="Action failed" detail={actionError} /> : null}
@@ -80,7 +111,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             ))}
           </div>
         ) : null}
-      </section>
+      </div>
     </AppShell>
   );
 }
@@ -90,24 +121,29 @@ function ReportFiltersForm({ defaults }: { defaults: Record<string, string | str
     <form className="filterForm" method="get" aria-label="Audit report filters">
       <label>
         Search
-        <input name="q" defaultValue={value(defaults.q)} placeholder="Assessment name" />
+        <input name="q" defaultValue={value(defaults.q)} placeholder="Assessment scope name" />
       </label>
       <label>
         Framework
-        <input name="framework" defaultValue={value(defaults.framework)} placeholder="SOC 2" />
+        <input name="framework" defaultValue={value(defaults.framework)} placeholder="SOC 2, CCPA, E8..." />
       </label>
       <label>
         Report status
         <select name="reportStatus" defaultValue={value(defaults.reportStatus)}>
-          <option value="">Any</option>
+          <option value="">All statuses</option>
           <option value="not_generated">Not generated</option>
           <option value="draft">Draft</option>
           <option value="published">Published</option>
         </select>
       </label>
       <div className="formActions">
-        <button type="submit">Apply filters</button>
-        <Link href="/reports">Reset</Link>
+        <button type="submit" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>filter_list</span>
+          Apply Filters
+        </button>
+        <Link href="/reports" style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "10px 14px", textDecoration: "none", fontSize: "13px", color: "var(--ink-muted)" }}>
+          Reset
+        </Link>
       </div>
     </form>
   );
@@ -115,36 +151,71 @@ function ReportFiltersForm({ defaults }: { defaults: Record<string, string | str
 
 function ClosedAssessmentCard({ assessment }: { assessment: ClosedAssessmentSummary }) {
   const report = assessment.latestReport;
+  const isPublished = report?.lifecycleStatus === "published";
+  const hasReport = Boolean(report);
+
   return (
-    <article>
-      <span className="label">{assessment.scopeName}</span>
-      <p>
-        Frameworks: <strong>{assessment.frameworks.length > 0 ? assessment.frameworks.join(" · ") : "None"}</strong>
-      </p>
-      <small>
-        Closed: {assessment.closedAt ? new Date(assessment.closedAt).toLocaleDateString() : "Not available"}
-        {assessment.closedBy ? ` by ${assessment.closedBy}` : ""}
-      </small>
-      <small>
-        {assessment.itemCount} item(s) &middot; {assessment.findingCount} finding(s)
-      </small>
-      <p>
-        Report:{" "}
-        {report ? (
-          <span className={`badge ${report.lifecycleStatus === "published" ? "confidential" : "internal"}`}>
-            {report.lifecycleStatus} &middot; generated {report.generatedAt ? new Date(report.generatedAt).toLocaleDateString() : "unknown"} &middot;{" "}
-            groundedness {report.groundednessScore}%
+    <article style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "20px", borderRadius: "var(--radius-card)", background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+        <div>
+          <span className="eyebrow" style={{ fontSize: "10px" }}>Assessment Scope</span>
+          <h3 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>{assessment.scopeName}</h3>
+        </div>
+        {hasReport ? (
+          <span className={`dispBadge ${isPublished ? "dispSatisfied" : "dispNotApplicable"}`}>
+            {report?.lifecycleStatus ? report.lifecycleStatus.toUpperCase() : "DRAFT"}
           </span>
         ) : (
-          <span className="badge public">Not generated</span>
+          <span className="dispBadge" style={{ background: "var(--surface-muted)", color: "var(--ink-muted)", border: "1px solid var(--border)" }}>
+            NOT GENERATED
+          </span>
         )}
-      </p>
-      <div className="formActions">
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", fontSize: "12px", color: "var(--ink-muted)" }}>
+        <span style={{ fontWeight: 600 }}>Frameworks:</span>
+        {assessment.frameworks.length > 0 ? (
+          assessment.frameworks.map((fw) => (
+            <span key={fw} className="reportIdChip" style={{ textTransform: "uppercase" }}>{fw}</span>
+          ))
+        ) : (
+          <span>None</span>
+        )}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "12px", color: "var(--ink-muted)", paddingTop: "10px", borderTop: "1px solid var(--border)" }}>
+        <div>
+          Closed: <strong>{assessment.closedAt ? new Date(assessment.closedAt).toLocaleDateString() : "Unknown"}</strong>
+        </div>
+        <div>
+          Items / Findings: <strong>{assessment.itemCount} / {assessment.findingCount}</strong>
+        </div>
         {report ? (
+          <div style={{ gridColumn: "span 2", display: "flex", alignItems: "center", gap: "8px" }}>
+            <span>Groundedness Score:</span>
+            <strong style={{ color: report.groundednessScore === 100 ? "#16a34a" : "#d97706" }}>
+              {report.groundednessScore}%
+            </strong>
+          </div>
+        ) : null}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginTop: "auto", paddingTop: "8px" }}>
+        {hasReport ? (
           <>
-            <Link href={`/reports/${report.reportId}`}>View Report</Link>
-            <a href={`/reports/${report.reportId}/download`}>Download PDF</a>
-            <GenerateReportForm assessmentId={assessment.assessmentId} label="Regenerate Report" />
+            <Link href={`/reports/${report!.reportId}`} style={{ textDecoration: "none" }}>
+              <button type="button">
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>visibility</span>
+                View Report
+              </button>
+            </Link>
+            <a href={`/reports/${report!.reportId}/download`} style={{ textDecoration: "none" }}>
+              <button type="button">
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>download</span>
+                PDF
+              </button>
+            </a>
+            <GenerateReportForm assessmentId={assessment.assessmentId} label="Regenerate" isSecondary />
           </>
         ) : (
           <GenerateReportForm assessmentId={assessment.assessmentId} label="Generate Report" />
@@ -154,12 +225,15 @@ function ClosedAssessmentCard({ assessment }: { assessment: ClosedAssessmentSumm
   );
 }
 
-function GenerateReportForm({ assessmentId, label }: { assessmentId: string; label: string }) {
+function GenerateReportForm({ assessmentId, label, isSecondary }: { assessmentId: string; label: string; isSecondary?: boolean }) {
   return (
-    <form action="/reports/actions" method="post">
+    <form action="/reports/actions" method="post" style={{ margin: 0 }}>
       <input type="hidden" name="intent" value="generateReport" />
       <input type="hidden" name="assessmentId" value={assessmentId} />
-      <button type="submit">{label}</button>
+      <button type="submit">
+        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>summarize</span>
+        {label}
+      </button>
     </form>
   );
 }

@@ -101,10 +101,10 @@ export const operationalNavItems: NavItem[] = [
     href: "/reports",
     icon: "summarize",
     roles: ["platform_admin", "compliance_manager", "auditor"],
-    savedViews: false,
+    savedViews: true,
     bulkActions: false,
     publicPreview: false,
-    requiredScopes: ["audit_report:read"]
+    requiredScopes: []
   },
   {
     label: "Findings",

@@ -212,6 +212,34 @@ export class QuestionRepositoryService {
     return match;
   }
 
+  async disableFramework(input: {
+    tenantId: string;
+    actorId: string;
+    frameworkVersionId: string;
+  }): Promise<boolean> {
+    const version = await this.findCanonicalFrameworkVersion(input.frameworkVersionId);
+    if (!version.sourcePackageId) {
+      throw new BadRequestException("Published framework version does not have a source package.");
+    }
+
+    await this.db.withTenant(input.tenantId, input.actorId, async (client) => {
+      await client.query(
+        `
+          update tenant_catalog_subscriptions
+             set status = 'revoked'::catalog_subscription_status,
+                 updated_by = $4,
+                 updated_at = now()
+           where tenant_id = $1
+             and framework_id = $2
+             and source_package_id = $3
+             and status = 'active'
+        `,
+        [input.tenantId, version.frameworkId, version.sourcePackageId, input.actorId]
+      );
+    });
+    return true;
+  }
+
   async listEnabledFrameworks(tenantId: string): Promise<FrameworkEnablementRecord[]> {
     const subscriptions = await this.activeSubscriptions(tenantId);
     if (subscriptions.length === 0) {
@@ -272,17 +300,25 @@ export class QuestionRepositoryService {
     }
 
     const refs: PinnedControlRef[] = [];
+    const seenKeys = new Set<string>();
+
     for (const selection of input.selections) {
-      const option = await this.resolveAssessmentQuestionOption(input.tenantId, selection);
-      refs.push({
-        frameworkKey: option.frameworkKey,
-        frameworkVersion: option.frameworkVersion,
-        mappingVersion: option.mappingVersion,
-        controlId: option.controlId,
-        harmonizedControlId: option.harmonizedControlId,
-        questionVersion: String(option.questionVersion),
-        questionVersionId: option.questionVersionId
-      });
+      const options = await this.resolveAllAssessmentQuestionOptions(input.tenantId, selection);
+      for (const option of options) {
+        const key = `${option.frameworkKey}:${option.controlId}:${option.harmonizedControlId}:${option.questionVersionId}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          refs.push({
+            frameworkKey: option.frameworkKey,
+            frameworkVersion: option.frameworkVersion,
+            mappingVersion: option.mappingVersion,
+            controlId: option.controlId,
+            harmonizedControlId: option.harmonizedControlId,
+            questionVersion: String(option.questionVersion),
+            questionVersionId: option.questionVersionId
+          });
+        }
+      }
     }
     return refs;
   }
@@ -865,20 +901,29 @@ export class QuestionRepositoryService {
     tenantId: string,
     selection: AssessmentControlSelection
   ): Promise<AssessmentQuestionOption> {
+    const options = await this.resolveAllAssessmentQuestionOptions(tenantId, selection);
+    return options[0];
+  }
+
+  private async resolveAllAssessmentQuestionOptions(
+    tenantId: string,
+    selection: AssessmentControlSelection
+  ): Promise<AssessmentQuestionOption[]> {
     const questionVersionId = selection.questionVersionId || (isUuid(selection.questionVersion) ? selection.questionVersion : undefined);
     const options = await this.queryAssessmentQuestionOptions({
       tenantId,
-      pagination: { limit: 2, offset: 0 },
+      pagination: { limit: 500, offset: 0 },
       questionVersionId,
       frameworkVersionId: selection.frameworkVersionId,
       controlId: selection.controlId,
       harmonizedControlId: selection.harmonizedControlId,
-      frameworkKey: selection.frameworkKey
+      frameworkKey: selection.frameworkKey,
+      includeAllFrameworkMappings: !selection.frameworkKey
     });
     if (options.length === 0) {
       throw new BadRequestException("Selected control does not resolve to an active, approved question for an enabled framework.");
     }
-    return options[0];
+    return options;
   }
 
   private async queryAssessmentQuestionOptions(input: {
@@ -889,6 +934,7 @@ export class QuestionRepositoryService {
     controlId?: string;
     harmonizedControlId?: string;
     frameworkKey?: string;
+    includeAllFrameworkMappings?: boolean;
   }): Promise<AssessmentQuestionOption[]> {
     const subscriptions = await this.activeSubscriptions(input.tenantId);
     if (subscriptions.length === 0) {
@@ -986,7 +1032,7 @@ export class QuestionRepositoryService {
              and qv.status = 'approved'
             where ($3::uuid is null or qv.id = $3)
               and ($4::uuid is null or ev.framework_version_id = $4)
-              and ($5::text is null or c.control_key = $5)
+              and ($5::text is null or $8::boolean is true or c.control_key = $5)
               and ($6::text is null or cm.harmonized_control_id = $6)
               and ($7::text is null or ev.framework_key = $7)
             order by ev.framework_version_id, c.control_key, cm.harmonized_control_id,
@@ -1002,7 +1048,11 @@ export class QuestionRepositoryService {
             group by harmonized_control_id, question_semantic_key, question_response_key
           ),
           option_rows as (
-            select distinct on (mr.harmonized_control_id, mr.question_semantic_key, mr.question_response_key)
+            select distinct on (${
+              input.includeAllFrameworkMappings
+                ? "mr.framework_key, mr.harmonized_control_id, mr.question_semantic_key, mr.question_response_key"
+                : "mr.harmonized_control_id, mr.question_semantic_key, mr.question_response_key"
+            })
               mr.*,
               qf.framework_keys
             from mapping_rows mr
@@ -1010,18 +1060,16 @@ export class QuestionRepositoryService {
               on qf.harmonized_control_id = mr.harmonized_control_id
              and qf.question_semantic_key = mr.question_semantic_key
              and qf.question_response_key = mr.question_response_key
-            order by mr.harmonized_control_id,
-                     mr.question_semantic_key,
-                     mr.question_response_key,
-                     mr.approved_at desc nulls last,
-                     mr.created_at desc,
-                     mr.framework_key,
-                     mr.control_id
+            order by ${
+              input.includeAllFrameworkMappings
+                ? "mr.framework_key, mr.harmonized_control_id, mr.question_semantic_key, mr.question_response_key, mr.approved_at desc nulls last, mr.created_at desc, mr.control_id"
+                : "mr.harmonized_control_id, mr.question_semantic_key, mr.question_response_key, mr.approved_at desc nulls last, mr.created_at desc, mr.framework_key, mr.control_id"
+            }
           )
           select *
           from option_rows
           order by harmonized_control_id, question_version_id
-          limit $8 offset $9
+          limit $9 offset $10
         `,
         [
           CANONICAL_CONTENT_TENANT_ID,
@@ -1034,6 +1082,7 @@ export class QuestionRepositoryService {
           input.controlId ?? null,
           input.harmonizedControlId ?? null,
           input.frameworkKey ?? null,
+          Boolean(input.includeAllFrameworkMappings),
           input.pagination.limit,
           input.pagination.offset
         ]

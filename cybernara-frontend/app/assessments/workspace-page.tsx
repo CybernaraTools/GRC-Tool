@@ -1596,7 +1596,7 @@ function ReportTable({ exports, selectedExport }: { exports: ReportExport[]; sel
               <td>{entry.format}</td>
               <td>{entry.snapshotId}</td>
               <td><code>{entry.sha256.slice(0, 24)}</code></td>
-              <td><a href={`/api/backend/v1/report-exports/${entry.id}/download`}>{selectedExport?.id === entry.id ? "Download selected export" : "Download"}</a></td>
+              <td><a className="reviewLink" href={`/api/backend/v1/report-exports/${entry.id}/download`}>{selectedExport?.id === entry.id ? "Download selected export" : "Download"}</a></td>
             </tr>
           ))}
         </tbody>

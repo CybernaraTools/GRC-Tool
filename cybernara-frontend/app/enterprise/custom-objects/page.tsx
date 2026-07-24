@@ -139,8 +139,7 @@ export default async function CustomObjectsPage({ searchParams }: CustomObjectsP
                               {d.connectorSdkEnabled ? "Enabled" : "Disabled"}
                             </span>
                           </td>
-                          <td>
-                            <Link href={`/enterprise/custom-objects?definitionId=${d.id}`} className="badge internal" style={{ textDecoration: "none" }}>
+                          <td><Link className="reviewLink" href={`/enterprise/custom-objects?definitionId=${d.id}`}>
                               Manage
                             </Link>
                           </td>
@@ -265,8 +264,7 @@ export default async function CustomObjectsPage({ searchParams }: CustomObjectsP
                             <tr key={r.id} style={selectedRecordId === r.id ? { background: "var(--surface-strong)" } : {}}>
                               <td><strong>{r.recordKey}</strong></td>
                               <td><span className="badge internal">{r.status}</span></td>
-                              <td>
-                                <Link href={`/enterprise/custom-objects?definitionId=${selectedDef.id}&recordId=${r.id}`} className="badge internal" style={{ textDecoration: "none" }}>
+                              <td><Link className="reviewLink" href={`/enterprise/custom-objects?definitionId=${selectedDef.id}&recordId=${r.id}`}>
                                   Manage Values
                                 </Link>
                               </td>

@@ -21,11 +21,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="authShell">
+      <div className="orbCanvas" aria-hidden="true">
+        <div className="orbMint" />
+        <div className="orbPeach" />
+        <div className="orbLavender" />
+      </div>
+
       <section className="authPanel" aria-labelledby="login-heading">
         <div>
-          <span className="authMark material-symbols-outlined" aria-hidden="true">
-            shield
-          </span>
+    
           <p className="eyebrow">Cybernara secure access</p>
           <h1 id="login-heading">Sign in to Cybernara</h1>
           <p>
@@ -44,18 +48,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <input type="hidden" name="next" value={nextPath} />
           <label>
             Email
-            <input name="email" type="email" autoComplete="email" required />
+            <input name="email" type="email" autoComplete="email" required placeholder="admin@cybernara.internal" />
           </label>
           <label>
             Password
-            <input name="password" type="password" autoComplete="current-password" required />
+            <input name="password" type="password" autoComplete="current-password" required placeholder="••••••••••••" />
           </label>
           <button type="submit">Sign in</button>
         </form>
 
-        <p className="authNote">
+        {/* <p className="authNote">
           Missing or expired sessions return here automatically. Successful sign-in returns to <code>{nextPath}</code>.
-        </p>
+        </p> */}
       </section>
     </main>
   );

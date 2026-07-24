@@ -143,29 +143,30 @@ export class AssessmentService {
     if (replay) {
       return replay;
     }
-    const item = await this.requireItem(input.tenantId, input.assessmentId, input.itemId);
-    const updated = approveApplicability(item, {
-      applicable: input.applicable,
-      rationale: input.rationale,
-      approvedBy: input.actorId
-    });
-    await this.repository.updateItem({ ...input, item: updated });
-
-    // G-01 Phase 1: dual-write into the normalized execution graph. A missing
-    // control instance would mean this item predates migration
-    // 0013_g01_assessment_execution_normalization.sql (created before this
-    // remediation pass) — skip rather than fail the whole request for
-    // pre-existing data, since backfilling those is separate "Backfill"-stage
-    // work, not something a live mutation should block on.
-    const controlInstance = await this.repository.findControlInstanceByItem(input.tenantId, input.itemId);
-    if (controlInstance) {
-      const decision = createApplicabilityDecision({
-        controlInstanceId: controlInstance.id,
+    const siblings = await this.findHarmonizedSiblingItems(input.tenantId, input.assessmentId, input.itemId);
+    for (const item of siblings) {
+      const updated = approveApplicability(item, {
         applicable: input.applicable,
         rationale: input.rationale,
-        decidedBy: input.actorId
+        approvedBy: input.actorId
       });
-      await this.repository.recordApplicabilityDecision({ tenantId: input.tenantId, decision });
+      await this.repository.updateItem({
+        tenantId: input.tenantId,
+        assessmentId: input.assessmentId,
+        item: updated,
+        actorId: input.actorId
+      });
+
+      const controlInstance = await this.repository.findControlInstanceByItem(input.tenantId, item.id);
+      if (controlInstance) {
+        const decision = createApplicabilityDecision({
+          controlInstanceId: controlInstance.id,
+          applicable: input.applicable,
+          rationale: input.rationale,
+          decidedBy: input.actorId
+        });
+        await this.repository.recordApplicabilityDecision({ tenantId: input.tenantId, decision });
+      }
     }
 
     const assessment = await this.repository.updateAssessmentStatus({
@@ -199,21 +200,26 @@ export class AssessmentService {
     if (replay) {
       return replay;
     }
-    const item = await this.requireItem(input.tenantId, input.assessmentId, input.itemId);
-    const updated = submitAnswer(item, { answerText: input.answerText, evidenceIds: input.evidenceIds });
-    await this.repository.updateItem({ ...input, item: updated });
+    const siblings = await this.findHarmonizedSiblingItems(input.tenantId, input.assessmentId, input.itemId);
+    for (const item of siblings) {
+      const updated = submitAnswer(item, { answerText: input.answerText, evidenceIds: input.evidenceIds });
+      await this.repository.updateItem({
+        tenantId: input.tenantId,
+        assessmentId: input.assessmentId,
+        item: updated,
+        actorId: input.actorId
+      });
 
-    // G-01 Phase 1: dual-write an append-only answer revision alongside the
-    // legacy overwritable answer_text/evidence_ids columns.
-    const previousRevision = await this.repository.findLatestAnswerRevision(input.tenantId, input.itemId);
-    const revision = createAnswerRevision({
-      assessmentItemId: input.itemId,
-      revision: (previousRevision?.revision ?? 0) + 1,
-      responseJson: { answerText: input.answerText, evidenceIds: input.evidenceIds },
-      submittedBy: input.actorId,
-      supersedesId: previousRevision?.id
-    });
-    await this.repository.recordAnswerRevision({ tenantId: input.tenantId, revision });
+      const previousRevision = await this.repository.findLatestAnswerRevision(input.tenantId, item.id);
+      const revision = createAnswerRevision({
+        assessmentItemId: item.id,
+        revision: (previousRevision?.revision ?? 0) + 1,
+        responseJson: { answerText: input.answerText, evidenceIds: input.evidenceIds },
+        submittedBy: input.actorId,
+        supersedesId: previousRevision?.id
+      });
+      await this.repository.recordAnswerRevision({ tenantId: input.tenantId, revision });
+    }
 
     const assessment = await this.updateStatusFromItems(input.tenantId, input.assessmentId, input.actorId);
     await this.publishMutation({
@@ -241,36 +247,32 @@ export class AssessmentService {
     if (replay) {
       return replay;
     }
-    const item = await this.requireItem(input.tenantId, input.assessmentId, input.itemId);
-    const updated = reviewItem(item, {
-      approved: input.approved,
-      reviewerId: input.actorId,
-      reason: input.reason
-    });
-    await this.repository.updateItem({ ...input, item: updated });
-
-    // G-01 Phase 1: dual-write a persisted review decision alongside the
-    // legacy status-only transition. Spec §10/§18 require reviewer !=
-    // submitter for review_decisions (enforced by a DB trigger, see
-    // 0013_g01_assessment_execution_normalization.sql) — this codebase does
-    // not yet have distinct reviewer/submitter RBAC enforcement anywhere
-    // (the legacy reviewItem() domain function has never checked this), so a
-    // single actor legitimately submitting and reviewing their own answer is
-    // today's real, unavoidable usage pattern, not a bug to paper over. Skip
-    // recording the decision in that specific case rather than throw and
-    // break the legacy flow this migration must not change; a real
-    // distinct-reviewer flow gets a full review_decisions row as intended.
-    const latestAnswer = await this.repository.findLatestAnswerRevision(input.tenantId, input.itemId);
-    if (latestAnswer && latestAnswer.submittedBy !== input.actorId) {
-      const decision = createReviewDecision({
-        assessmentItemId: input.itemId,
-        answerRevisionId: latestAnswer.id,
-        reviewerId: input.actorId,
-        answerSubmittedBy: latestAnswer.submittedBy,
+    const siblings = await this.findHarmonizedSiblingItems(input.tenantId, input.assessmentId, input.itemId);
+    for (const item of siblings) {
+      const updated = reviewItem(item, {
         approved: input.approved,
+        reviewerId: input.actorId,
         reason: input.reason
       });
-      await this.repository.recordReviewDecision({ tenantId: input.tenantId, decision });
+      await this.repository.updateItem({
+        tenantId: input.tenantId,
+        assessmentId: input.assessmentId,
+        item: updated,
+        actorId: input.actorId
+      });
+
+      const latestAnswer = await this.repository.findLatestAnswerRevision(input.tenantId, item.id);
+      if (latestAnswer && latestAnswer.submittedBy !== input.actorId) {
+        const decision = createReviewDecision({
+          assessmentItemId: item.id,
+          answerRevisionId: latestAnswer.id,
+          reviewerId: input.actorId,
+          answerSubmittedBy: latestAnswer.submittedBy,
+          approved: input.approved,
+          reason: input.reason
+        });
+        await this.repository.recordReviewDecision({ tenantId: input.tenantId, decision });
+      }
     }
 
     const assessment = await this.updateStatusFromItems(input.tenantId, input.assessmentId, input.actorId);
@@ -298,9 +300,16 @@ export class AssessmentService {
     if (replay) {
       return replay;
     }
-    const item = await this.requireItem(input.tenantId, input.assessmentId, input.itemId);
-    const updated = reopenItem(item, { reviewerId: input.actorId, reason: input.reason });
-    await this.repository.updateItem({ ...input, item: updated });
+    const siblings = await this.findHarmonizedSiblingItems(input.tenantId, input.assessmentId, input.itemId);
+    for (const item of siblings) {
+      const updated = reopenItem(item, { reviewerId: input.actorId, reason: input.reason });
+      await this.repository.updateItem({
+        tenantId: input.tenantId,
+        assessmentId: input.assessmentId,
+        item: updated,
+        actorId: input.actorId
+      });
+    }
     const assessment = await this.repository.updateAssessmentStatus({
       tenantId: input.tenantId,
       assessmentId: input.assessmentId,
@@ -317,6 +326,26 @@ export class AssessmentService {
       body: { assessmentId: input.assessmentId, itemId: input.itemId }
     });
     return assessment;
+  }
+
+  private async findHarmonizedSiblingItems(
+    tenantId: string,
+    assessmentId: string,
+    targetItemId: string
+  ): Promise<AssessmentItem[]> {
+    const assessment = await this.repository.findAssessment(tenantId, assessmentId);
+    if (!assessment) return [];
+    const targetItem = assessment.items.find((item) => item.id === targetItemId);
+    if (!targetItem) return [];
+
+    return assessment.items.filter(
+      (candidate) =>
+        candidate.id === targetItemId ||
+        (targetItem.controlRef.harmonizedControlId &&
+          candidate.controlRef.harmonizedControlId === targetItem.controlRef.harmonizedControlId) ||
+        (targetItem.controlRef.questionVersionId &&
+          candidate.controlRef.questionVersionId === targetItem.controlRef.questionVersionId)
+    );
   }
 
   async close(input: {

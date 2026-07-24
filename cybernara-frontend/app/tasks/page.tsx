@@ -98,7 +98,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
                 {tasks.map((task) => (
                   <tr key={task.id}>
                     <td>
-                      <small style={{ fontFamily: "monospace" }}>{task.id.slice(0, 8)}</small>
+                      <small>{task.id.slice(0, 8)}</small>
                     </td>
                     <td>
                       <strong>{task.title}</strong>
@@ -129,9 +129,6 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
                           name="status"
                           defaultValue={task.status}
                           style={{
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            border: "1px solid #ccc",
                             background: "#fff",
                             fontSize: "0.9em"
                           }}

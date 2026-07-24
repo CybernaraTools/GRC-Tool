@@ -58,8 +58,15 @@ export function RiskAiAssistForm({
       }
       const nextRecommendation = responseBody as RiskAssistRecommendation;
       setRecommendation(nextRecommendation);
-      if (nextRecommendation.escalationDecision === "create_new_risk") {
-        if (nextRecommendation.riskTitle) {
+      if (nextRecommendation.escalationDecision === "create_new_risk" || nextRecommendation.escalationDecision === "link_existing_risk") {
+        if (nextRecommendation.recommendedExistingRiskKey) {
+          setRiskKey(nextRecommendation.recommendedExistingRiskKey);
+        } else if (nextRecommendation.riskTitle) {
+          setRiskKey(defaultKey);
+        }
+        if (nextRecommendation.recommendedExistingRiskTitle) {
+          setTitle(nextRecommendation.recommendedExistingRiskTitle);
+        } else if (nextRecommendation.riskTitle) {
           setTitle(nextRecommendation.riskTitle);
         }
         if (nextRecommendation.category) {
@@ -73,6 +80,8 @@ export function RiskAiAssistForm({
         }
         if (nextRecommendation.suggestedMitigation) {
           setMitigationPlan(nextRecommendation.suggestedMitigation);
+        } else if (nextRecommendation.recommendedExistingRiskReason) {
+          setMitigationPlan(nextRecommendation.recommendedExistingRiskReason);
         }
         if (nextRecommendation.suggestedTreatment) {
           setStrategy(treatmentStrategyValue(nextRecommendation.suggestedTreatment));
@@ -195,17 +204,19 @@ export function RiskAiAssistForm({
         </label>
         <button type="submit">Create and link risk</button>
       </form>
-      <RiskAiProposal recommendation={recommendation} loading={status === "loading"} />
+      <RiskAiProposal recommendation={recommendation} loading={status === "loading"} assessmentId={assessmentId} />
     </>
   );
 }
 
 function RiskAiProposal({
   recommendation,
-  loading
+  loading,
+  assessmentId
 }: {
   recommendation: RiskAssistRecommendation | null;
   loading: boolean;
+  assessmentId: string;
 }) {
   return (
     <aside className="miniForm" aria-label="AI risk proposal">
@@ -220,9 +231,45 @@ function RiskAiProposal({
             <span className="label">Escalation decision</span>
             <h3>{decisionLabel(recommendation.escalationDecision)}</h3>
             <p>{recommendation.escalationDecisionRationale}</p>
-            {recommendation.findingReassessmentRecommended ? (
-              <div className="constraintNote">
-                Finding reassessment recommended: evidence or reviewer context may contradict the current finding.
+            {recommendation.findingReassessmentRecommended || recommendation.escalationDecision === "no_escalation" ? (
+              <div
+                style={{
+                  marginTop: "1rem",
+                  marginBottom: "1rem",
+                  padding: "1rem 1.25rem",
+                  borderRadius: "10px",
+                  background: "rgba(245, 158, 11, 0.08)",
+                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span style={{ fontSize: "1.2rem" }}>⚠️</span>
+                  <strong style={{ color: "#d97706", fontSize: "0.95rem" }}>Needs Better Production Evidence for Approval</strong>
+                </div>
+                <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--color-text-secondary, #475569)", lineHeight: "1.5" }}>
+                  Risk AI recommends reassessing this finding because operational evidence is simulated or incomplete. Go to the Assessment Review page to request authoritative system evidence from the control owner.
+                </p>
+                <a
+                  href={`/assessments/review?assessmentId=${assessmentId}`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "0.5rem 1rem",
+                    borderRadius: "6px",
+                    background: "#2563eb",
+                    color: "#ffffff",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    textDecoration: "none",
+                    width: "fit-content"
+                  }}
+                >
+                  Review Assessment Page &rarr;
+                </a>
               </div>
             ) : null}
           </section>

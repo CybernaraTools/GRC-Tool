@@ -244,9 +244,9 @@ function ControlsTable({ controls, params }: { controls: HarmonizedControl[]; pa
               <td>
                 <strong>{control.harmonizedId}</strong>
                 {control.tenantId === "00000000-0000-4000-8000-000000000001" ? (
-                  <span className="badge global" style={{ display: "block", marginTop: "4px", backgroundColor: "#0369a1", color: "#fff", fontSize: "0.75rem", padding: "2px 4px", borderRadius: "4px", textAlign: "center" }}>Global</span>
+                  <span className="badge global">Global</span>
                 ) : (
-                  <span className="badge tenant" style={{ display: "block", marginTop: "4px", backgroundColor: "#92400e", color: "#fff", fontSize: "0.75rem", padding: "2px 4px", borderRadius: "4px", textAlign: "center" }}>Tenant Overlay</span>
+                  <span className="badge tenant">Tenant Overlay</span>
                 )}
               </td>
               <td>{control.domain}</td>
@@ -260,8 +260,7 @@ function ControlsTable({ controls, params }: { controls: HarmonizedControl[]; pa
                   {control.sourceSheet} row {control.sourceRowNumber ?? "n/a"}
                 </small>
               </td>
-              <td>
-                <Link href={controlHref(params, control.harmonizedId)}>Inspect mappings</Link>
+              <td><Link className="reviewLink" href={controlHref(params, control.harmonizedId)}>Inspect mappings</Link>
               </td>
             </tr>
           ))}
@@ -324,9 +323,9 @@ function MappingsTable({ mappings, emptyTitle }: { mappings: ControlMapping[]; e
               <td>
                 {mapping.frameworkKey}
                 {mapping.tenantId === "00000000-0000-4000-8000-000000000001" ? (
-                  <span className="badge global" style={{ display: "block", marginTop: "4px", backgroundColor: "#0369a1", color: "#fff", fontSize: "0.75rem", padding: "2px 4px", borderRadius: "4px", textAlign: "center" }}>Global</span>
+                  <span className="badge global">Global</span>
                 ) : (
-                  <span className="badge tenant" style={{ display: "block", marginTop: "4px", backgroundColor: "#92400e", color: "#fff", fontSize: "0.75rem", padding: "2px 4px", borderRadius: "4px", textAlign: "center" }}>Tenant Overlay</span>
+                  <span className="badge tenant">Tenant Overlay</span>
                 )}
               </td>
               <td>{mapping.sourceControlId}</td>

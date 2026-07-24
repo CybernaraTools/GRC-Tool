@@ -12,8 +12,16 @@ export async function POST(request: NextRequest) {
   }
 
   const api = createServerApiClient(session);
-  if (text(formData, "intent") === "enableFramework") {
+  const intent = text(formData, "intent");
+  if (intent === "enableFramework") {
     await api.enableFramework({
+      frameworkVersionId: text(formData, "frameworkVersionId")
+    });
+    return redirectTo(request, "/frameworks");
+  }
+
+  if (intent === "disableFramework") {
+    await api.disableFramework({
       frameworkVersionId: text(formData, "frameworkVersionId")
     });
     return redirectTo(request, "/frameworks");

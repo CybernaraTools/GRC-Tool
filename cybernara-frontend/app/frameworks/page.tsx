@@ -189,9 +189,9 @@ function ContentPackTable({
               <td>
                 <span className="badge internal">{pack.status}</span>
                 {pack.tenantId === "00000000-0000-4000-8000-000000000001" ? (
-                  <span className="badge global" style={{ marginLeft: "8px", backgroundColor: "#0369a1", color: "#fff" }}>Global</span>
+                  <span className="badge global">Global</span>
                 ) : (
-                  <span className="badge tenant" style={{ marginLeft: "8px", backgroundColor: "#92400e", color: "#fff" }}>Tenant Overlay</span>
+                  <span className="badge tenant">Tenant Overlay</span>
                 )}
               </td>
               <td>{pack.publishedAt ? formatDateTime(pack.publishedAt) : "Unpublished"}</td>
@@ -204,7 +204,16 @@ function ContentPackTable({
                   {isPlatform ? (
                     <span className="badge global">Global content</span>
                   ) : enabledVersionIds.has(pack.id) ? (
-                    <span className="badge internal">Enabled</span>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span className="badge internal">Enabled</span>
+                      <form action="/frameworks/actions" method="post" style={{ margin: 0 }}>
+                        <input type="hidden" name="intent" value="disableFramework" />
+                        <input type="hidden" name="frameworkVersionId" value={pack.id} />
+                        <button type="submit" className="secondaryButton">
+                          Disable framework
+                        </button>
+                      </form>
+                    </div>
                   ) : (
                     <form action="/frameworks/actions" method="post">
                       <input type="hidden" name="intent" value="enableFramework" />
@@ -244,6 +253,7 @@ function EnabledFrameworks({ frameworks }: { frameworks: FrameworkEnablement[] }
                 <th scope="col">Version</th>
                 <th scope="col">Status</th>
                 <th scope="col">Enabled</th>
+                <th scope="col">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -256,6 +266,15 @@ function EnabledFrameworks({ frameworks }: { frameworks: FrameworkEnablement[] }
                   <td>{framework.versionKey}</td>
                   <td><span className="badge internal">{framework.status}</span></td>
                   <td>{formatDateTime(framework.subscribedAt)}</td>
+                  <td>
+                    <form action="/frameworks/actions" method="post" style={{ margin: 0 }}>
+                      <input type="hidden" name="intent" value="disableFramework" />
+                      <input type="hidden" name="frameworkVersionId" value={framework.frameworkVersionId} />
+                      <button type="submit" className="secondaryButton">
+                        Disable framework
+                      </button>
+                    </form>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -290,9 +309,9 @@ function RequirementsTable({ requirements }: { requirements: FrameworkRequiremen
               <td>
                 {requirement.frameworkKey}
                 {requirement.tenantId === "00000000-0000-4000-8000-000000000001" ? (
-                  <span className="badge global" style={{ display: "block", marginTop: "4px", backgroundColor: "#0369a1", color: "#fff", fontSize: "0.75rem", padding: "2px 4px", borderRadius: "4px", textAlign: "center" }}>Global</span>
+                  <span className="badge global">Global</span>
                 ) : (
-                  <span className="badge tenant" style={{ display: "block", marginTop: "4px", backgroundColor: "#92400e", color: "#fff", fontSize: "0.75rem", padding: "2px 4px", borderRadius: "4px", textAlign: "center" }}>Tenant Overlay</span>
+                  <span className="badge tenant">Tenant Overlay</span>
                 )}
               </td>
               <td>

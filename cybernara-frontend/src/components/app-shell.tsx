@@ -1,6 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { CONTRACT_SHA256, operations } from "../lib/api/generated";
+import { useEffect, useState, type ReactNode } from "react";
 import { resolvePrimaryRole as resolvePrimaryRoleFromRoles, visibleNavForSession } from "../lib/navigation";
 import type { SessionContext } from "../lib/session";
 import { SidebarNav } from "./sidebar-nav";
@@ -14,33 +15,55 @@ export function AppShell({
   session: SessionContext | null;
   title?: string;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const primaryRole = resolvePrimaryRole(session);
   const navItems = visibleNavForSession(session);
 
+  useEffect(() => {
+    const saved = localStorage.getItem("cybernara_theme") as "dark" | "light" | null;
+    if (saved) {
+      setTheme(saved);
+      document.documentElement.setAttribute("data-theme", saved);
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("cybernara_theme", nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
+  };
+
   return (
-    <div className="appFrame">
+    <div className={collapsed ? "appFrame sidebarCollapsed" : "appFrame"}>
+      <div className="orbCanvas" aria-hidden="true">
+        <div className="orbMint" />
+        <div className="orbPeach" />
+        <div className="orbLavender" />
+      </div>
+
       <aside className="sidebar">
-        <Link href="/" className="sidebarBrand">
-          <span className="sidebarBrandMark" aria-hidden="true">
-            <span className="material-symbols-outlined">shield</span>
-          </span>
-          <span>
-            <strong>Cybernara</strong>
-            <small>GRC PLATFORM</small>
-          </span>
-        </Link>
+        <div className="sidebarHeader">
+          <Link href="/" className="sidebarBrand">
+            <span className="sidebarBrandMark" aria-hidden="true">
+              <span className="material-symbols-outlined">shield</span>
+            </span>
+            <span>
+              <strong>Cybernara</strong>
+              <small>GRC PLATFORM</small>
+            </span>
+          </Link>
+        </div>
 
         <SidebarNav items={navItems} />
 
         <div className="sidebarFooter">
-          <div className="contract" aria-label="Backend contract status">
-            <span>Backend API</span>
-            <strong>0.1.0-m0</strong>
-            <code>{CONTRACT_SHA256.slice(0, 16)}</code>
-          </div>
           {session ? (
             <div className="userPanel" aria-label="Signed-in user">
-              <span className="userPanelIdentity">
+              <span className="userPanelIdentity" title={session.email ?? session.userId}>
                 <span className="material-symbols-outlined" aria-hidden="true">
                   account_circle
                 </span>
@@ -50,8 +73,9 @@ export function AppShell({
                 </span>
               </span>
               <form action="/api/auth/logout" method="post">
-                <button className="secondaryButton" type="submit">
-                  Sign out
+                <button className="secondaryButton logoutBtn" type="submit" title="Sign out">
+                  <span className="material-symbols-outlined">logout</span>
+                  <span>Sign out</span>
                 </button>
               </form>
             </div>
@@ -61,28 +85,37 @@ export function AppShell({
 
       <main className="workspaceColumn">
         <header className="topbar">
-          <div>
-            <p className="eyebrow">Private-cloud GRC and privacy compliance</p>
-            <h1>{title}</h1>
+          <div className="topbarLeft">
+            <button
+              type="button"
+              className="sidebarToggleBtn"
+              onClick={() => setCollapsed(!collapsed)}
+              title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+              aria-label={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              <span className="material-symbols-outlined">
+                {collapsed ? "menu" : "menu_open"}
+              </span>
+            </button>
+            <div>
+              <h1>{title}</h1>
+            </div>
           </div>
+
+          <button
+            type="button"
+            className="themeToggleBtn"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+            aria-label="Toggle color theme"
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              {theme === "dark" ? "light_mode" : "dark_mode"}
+            </span>
+          </button>
         </header>
 
         <div className="workspaceContent">
-          <section className="statusGrid" aria-label="Foundation status">
-            <article>
-              <span className="label">Generated Operations</span>
-              <strong>{operations.length}</strong>
-            </article>
-            <article>
-              <span className="label">Session</span>
-              <strong>{sessionLabel(session)}</strong>
-            </article>
-            <article>
-              <span className="label">Business Data Path</span>
-              <strong>Backend API only</strong>
-            </article>
-          </section>
-
           {children}
         </div>
       </main>
@@ -95,11 +128,4 @@ function resolvePrimaryRole(session: SessionContext | null) {
     return "super_admin";
   }
   return resolvePrimaryRoleFromRoles(session?.roles ?? []);
-}
-
-function sessionLabel(session: SessionContext | null): string {
-  if (!session) {
-    return "Required";
-  }
-  return session.kind === "platform" ? session.platformRole : session.clearance;
 }

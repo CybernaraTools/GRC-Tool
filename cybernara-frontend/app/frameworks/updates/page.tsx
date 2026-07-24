@@ -187,8 +187,7 @@ export default async function FrameworkUpdatesPage({ searchParams }: UpdatesPage
                           <td>
                             <code>{d.fromVersionKey || "v1"} ➔ {d.toVersionKey || "v2"}</code>
                           </td>
-                          <td>
-                            <Link href={`/frameworks/updates?diffId=${d.id}`} className="badge internal" style={{ textDecoration: "none" }}>
+                          <td><Link className="reviewLink" href={`/frameworks/updates?diffId=${d.id}`}>
                               View Diffs
                             </Link>
                           </td>

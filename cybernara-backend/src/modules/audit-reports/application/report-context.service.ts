@@ -41,6 +41,19 @@ export class ReportContextService {
     const citationManifest = buildCitationManifest(snapshot.payload, engineResult);
     const evidenceLimitations: string[] = [];
 
+    // Detect legacy/reconstruction data-quality limitation: Not Applicable controls with finding/remediation history.
+    for (const item of snapshot.payload.items) {
+      if (item.applicability && item.applicability.applicable === false) {
+        const itemFindings = snapshot.payload.findings.filter((f) => f.assessmentItemId === item.itemId);
+        if (itemFindings.length > 0) {
+          const findingIds = itemFindings.map((f) => f.id).join(", ");
+          evidenceLimitations.push(
+            `Data Quality / Legacy Reconstruction Limitation: Control ${item.controlRef.controlId} is marked Not Applicable, but has ${itemFindings.length} finding(s) (${findingIds}) and associated remediation history in record history.`
+          );
+        }
+      }
+    }
+
     for (const evidenceRef of snapshot.payload.evidence) {
       const citationId = `EVIDENCE:${evidenceRef.evidenceId}`;
       const citation = citationManifest.get(citationId);
