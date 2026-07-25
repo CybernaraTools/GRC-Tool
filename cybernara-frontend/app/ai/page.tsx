@@ -57,7 +57,7 @@ export default async function AiPage({ searchParams }: AiPageProps) {
       : pendingQuestions[0] ?? null;
 
   return (
-    <AppShell session={session} title="Governed AI Review">
+    <AppShell session={session} title="AI Question Generation">
       <section className="workspace aiWorkbench" aria-labelledby="ai-heading">
         <div className="sectionHeader">
           <div>

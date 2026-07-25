@@ -53,29 +53,17 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
         {apiError ? <ErrorState title="Tasks could not be loaded" detail={apiError} /> : null}
 
         {/* Filter Toolbar */}
-        <div className="filterToolbar" style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
-          <Link
-            className={`badge ${!filterStatus ? "restricted" : "internal"}`}
-            href="/tasks"
-          >
+        <div className="tagList" style={{ padding: "0 24px 16px" }}>
+          <Link className={!filterStatus ? "active" : ""} href="/tasks">
             All Tasks
           </Link>
-          <Link
-            className={`badge ${filterStatus === "pending" ? "restricted" : "internal"}`}
-            href="/tasks?status=pending"
-          >
+          <Link className={filterStatus === "pending" ? "active" : ""} href="/tasks?status=pending">
             Pending
           </Link>
-          <Link
-            className={`badge ${filterStatus === "in_progress" ? "restricted" : "internal"}`}
-            href="/tasks?status=in_progress"
-          >
+          <Link className={filterStatus === "in_progress" ? "active" : ""} href="/tasks?status=in_progress">
             In Progress
           </Link>
-          <Link
-            className={`badge ${filterStatus === "completed" ? "restricted" : "internal"}`}
-            href="/tasks?status=completed"
-          >
+          <Link className={filterStatus === "completed" ? "active" : ""} href="/tasks?status=completed">
             Completed
           </Link>
         </div>
@@ -128,10 +116,6 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
                         <select
                           name="status"
                           defaultValue={task.status}
-                          style={{
-                            background: "#fff",
-                            fontSize: "0.9em"
-                          }}
                         >
                           <option value="pending">Pending</option>
                           <option value="in_progress">In Progress</option>

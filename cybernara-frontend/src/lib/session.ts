@@ -101,20 +101,17 @@ export function sessionBackendHeaders(session: SessionContext): Record<string, s
   };
 }
 
-export function isTenantSession(session: SessionContext | null): session is TenantSessionContext {
-  return session?.kind === "tenant";
+function stringArray(input: unknown): string[] {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+  return input.filter((item): item is string => typeof item === "string");
 }
 
 export function isPlatformSession(session: SessionContext | null): session is PlatformSessionContext {
   return session?.kind === "platform";
 }
 
-function stringArray(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value.filter((entry): entry is string => typeof entry === "string");
-  }
-  if (typeof value === "string" && value.trim().length > 0) {
-    return value.split(/[,\s]+/).filter(Boolean);
-  }
-  return [];
+export function isTenantSession(session: SessionContext | null): session is TenantSessionContext {
+  return session?.kind === "tenant";
 }

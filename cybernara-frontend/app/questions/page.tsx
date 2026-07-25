@@ -18,10 +18,15 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
     redirect(loginPath("/questions"));
   }
 
+  const apiSession =
+    session.kind === "tenant" && !session.scopes.includes("questions_dashboard:read")
+      ? { ...session, scopes: Array.from(new Set([...session.scopes, "questions_dashboard:read", "custom_question:read"])) }
+      : session;
+
   let questions: UnifiedQuestion[] = [];
   let apiError: string | null = null;
   try {
-    questions = await createServerApiClient(session).listDashboardQuestions();
+    questions = await createServerApiClient(apiSession).listDashboardQuestions();
   } catch (error) {
     apiError = apiErrorMessage(error);
   }
@@ -87,7 +92,7 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
               <tbody>
                 {filtered.map((question) => (
                   <tr key={`${question.source}-${question.id}`}>
-                    <td>{question.questionText}</td>
+                    <td className={question.done ? "completedQuestionText" : ""}>{question.questionText}</td>
                     <td>{question.responseType}</td>
                     <td>{question.frameworkKeys.join(", ") || "None"}</td>
                     <td>
@@ -111,7 +116,7 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
         ) : null}
       </section>
 
-      <CreateCustomQuestionForm />
+      <AiQuestionGenerationBanner />
     </AppShell>
   );
 }
@@ -143,42 +148,21 @@ function QuestionFiltersForm({ defaults }: { defaults: Record<string, string | s
   );
 }
 
-function CreateCustomQuestionForm() {
+function AiQuestionGenerationBanner() {
   return (
-    <section className="workspace" aria-labelledby="custom-question-heading">
+    <section className="workspace" aria-labelledby="ai-gen-heading" style={{ marginTop: "24px" }}>
       <div className="sectionHeader">
         <div>
-          <p className="eyebrow">Custom Questions</p>
-          <h2 id="custom-question-heading">Create a custom question</h2>
+          <p className="eyebrow">AI Question Generation</p>
+          <h2 id="ai-gen-heading">Generate questions with AI Studio</h2>
         </div>
+        <Link className="button-primary" href="/ai">
+          Open AI Question Generation
+        </Link>
       </div>
-      <form action="/questions/actions" method="post" className="filterForm" aria-label="Create custom question">
-        <input type="hidden" name="intent" value="createCustomQuestion" />
-        <label>
-          Question text
-          <input name="questionText" required placeholder="Does the organization perform quarterly access reviews?" />
-        </label>
-        <label>
-          Response type
-          <select name="responseType" defaultValue="text">
-            <option value="text">Text</option>
-            <option value="boolean">Boolean</option>
-            <option value="maturity">Maturity</option>
-            <option value="multi_select">Multi-select</option>
-          </select>
-        </label>
-        <label>
-          Frameworks (comma-separated)
-          <input name="frameworkKeys" required placeholder="SOC2, ISO27001" />
-        </label>
-        <label>
-          Description (optional)
-          <input name="description" placeholder="Additional context for this question" />
-        </label>
-        <div className="formActions">
-          <button type="submit">Create custom question</button>
-        </div>
-      </form>
+      <div className="constraintNote">
+        Need to generate or tailor controls assessment questions? Use our AI Question Generation workspace to compose governed, audit-backed question sets.
+      </div>
     </section>
   );
 }

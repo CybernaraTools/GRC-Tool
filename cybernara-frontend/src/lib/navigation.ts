@@ -84,7 +84,7 @@ export const operationalNavItems: NavItem[] = [
     savedViews: false,
     bulkActions: false,
     publicPreview: false,
-    requiredScopes: ["questions_dashboard:read"]
+    requiredScopes: []
   },
   {
     label: "Dashboard",
@@ -94,7 +94,7 @@ export const operationalNavItems: NavItem[] = [
     savedViews: false,
     bulkActions: false,
     publicPreview: false,
-    requiredScopes: ["questions_dashboard:read"]
+    requiredScopes: []
   },
   {
     label: "Assessments",
@@ -147,7 +147,7 @@ export const operationalNavItems: NavItem[] = [
     requiredScopes: ["finding:read", "remediation_task:read", "risk:read"]
   },
   {
-    label: "AI Review",
+    label: "AI Question Generation",
     href: "/ai",
     icon: "smart_toy",
     roles: ["platform_admin", "compliance_manager", "auditor"],

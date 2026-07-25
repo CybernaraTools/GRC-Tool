@@ -56,7 +56,7 @@ describe("operational shell hardening helpers", () => {
         roles: ["platform_admin"],
         scopes: ["audit_event:read", "framework-content:read"]
       }).map((item) => item.label)
-    ).toEqual(["Audit Log", "Framework Library", "Audit Reports"]);
+    ).toEqual(["Audit Log", "Framework Library", "Questions", "Dashboard", "Audit Reports"]);
 
     expect(canPerform({ roles: ["compliance_manager"], scopes: ["privacy_rights_request:read"] }, "privacy_rights_request:write")).toBe(false);
   });

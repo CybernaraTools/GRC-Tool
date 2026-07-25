@@ -56,10 +56,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </label>
           <button type="submit">Sign in</button>
         </form>
-
-        {/* <p className="authNote">
-          Missing or expired sessions return here automatically. Successful sign-in returns to <code>{nextPath}</code>.
-        </p> */}
       </section>
     </main>
   );
