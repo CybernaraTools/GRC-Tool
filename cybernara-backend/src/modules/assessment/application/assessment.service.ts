@@ -11,7 +11,8 @@ import {
   reviseDraftAssessment,
   submitAnswer,
   type AssessmentItem,
-  type AssessmentStatus
+  type AssessmentStatus,
+  type PinnedControlRef
 } from "../domain/assessment.js";
 import {
   createAnswerRevision,
@@ -61,6 +62,57 @@ export class AssessmentService {
       tenantId: input.tenantId,
       scopeName: input.scopeName,
       controls,
+      createdBy: input.actorId,
+      ownerId: input.ownerId
+    });
+    const persisted = await this.repository.createAssessment({
+      assessment,
+      periodStart: input.periodStart,
+      periodEnd: input.periodEnd
+    });
+    await this.publishMutation({
+      tenantId: input.tenantId,
+      actorId: input.actorId,
+      idempotencyKey: input.idempotencyKey,
+      eventType: "assessment.created",
+      assessmentId: persisted.id,
+      body: { assessmentId: persisted.id, scopeName: persisted.scopeName }
+    });
+    return persisted;
+  }
+
+  /**
+   * Questions Page / Compliance Dashboard feature: an additive sibling to
+   * create() for assessments originated from a tenant's own custom question
+   * (src/modules/tenant-questions). Custom questions have no backing in the
+   * canonical control-mapping catalog, so `resolveAssessmentControls()`
+   * (which only ever resolves against CANONICAL_CONTENT_TENANT_ID-scoped
+   * rows) cannot and does not resolve them — this method accepts an
+   * already-fully-specified PinnedControlRef[] and skips that resolution
+   * step entirely, reusing every other part of the existing create() flow
+   * (idempotency replay, the createAssessment domain function, persistence,
+   * outbox/audit publish) unchanged. Existing callers of create() are
+   * unaffected — this is a new method, not a modified one.
+   */
+  async createFromPinnedControls(input: {
+    tenantId: string;
+    actorId: string;
+    ownerId: string;
+    scopeName: string;
+    periodStart: Date;
+    periodEnd: Date;
+    controls: PinnedControlRef[];
+    idempotencyKey: string;
+  }): Promise<AssessmentRecord> {
+    const replay = await this.replayedAssessment(input.tenantId, input.idempotencyKey);
+    if (replay) {
+      return replay;
+    }
+
+    const assessment = createAssessment({
+      tenantId: input.tenantId,
+      scopeName: input.scopeName,
+      controls: input.controls,
       createdBy: input.actorId,
       ownerId: input.ownerId
     });

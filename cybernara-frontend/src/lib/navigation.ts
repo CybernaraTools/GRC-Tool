@@ -77,6 +77,26 @@ export const operationalNavItems: NavItem[] = [
     requiredScopes: ["harmonization:read"]
   },
   {
+    label: "Questions",
+    href: "/questions",
+    icon: "quiz",
+    roles: ["platform_admin", "compliance_manager", "auditor"],
+    savedViews: false,
+    bulkActions: false,
+    publicPreview: false,
+    requiredScopes: ["questions_dashboard:read"]
+  },
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: "insights",
+    roles: ["platform_admin", "compliance_manager", "auditor", "viewer"],
+    savedViews: false,
+    bulkActions: false,
+    publicPreview: false,
+    requiredScopes: ["questions_dashboard:read"]
+  },
+  {
     label: "Assessments",
     href: "/assessments",
     icon: "assignment",

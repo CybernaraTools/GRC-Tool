@@ -662,6 +662,22 @@ export function buildOpenApiSpec() {
           }
         }
       },
+      "/v1/framework-content/enabled-frameworks/disable": {
+        post: {
+          operationId: "disableFramework",
+          tags: ["FrameworkContent"],
+          summary: "Disable an enabled framework version for the current tenant.",
+          parameters: [...requestContextHeaders()],
+          requestBody: jsonRequest("EnableFrameworkRequest"),
+          responses: {
+            "200": jsonResponse("Framework version disabled.", "FrameworkEnablement"),
+            "400": { $ref: "#/components/responses/Problem" },
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" },
+            "404": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
       "/v1/framework-content/question-options": {
         get: {
           operationId: "listAssessmentQuestionOptions",
@@ -789,6 +805,82 @@ export function buildOpenApiSpec() {
           parameters: [pathParameter("frameworkKey"), ...paginationParameters(), ...requestContextHeaders()],
           responses: {
             "200": jsonArrayResponse("Controls unique to a source framework.", "ControlMapping"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/tenant-questions": {
+        get: {
+          operationId: "listTenantQuestions",
+          tags: ["TenantQuestions"],
+          parameters: [...requestContextHeaders()],
+          responses: {
+            "200": jsonArrayResponse("Tenant custom questions.", "TenantQuestion"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" }
+          }
+        },
+        post: {
+          operationId: "createTenantQuestion",
+          tags: ["TenantQuestions"],
+          parameters: [...requestContextHeaders()],
+          requestBody: jsonRequest("CreateTenantQuestionRequest"),
+          responses: {
+            "201": jsonResponse("Custom question created.", "TenantQuestion"),
+            "400": { $ref: "#/components/responses/Problem" },
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/tenant-questions/{questionId}": {
+        get: {
+          operationId: "getTenantQuestion",
+          tags: ["TenantQuestions"],
+          parameters: [pathParameter("questionId", "uuid"), ...requestContextHeaders()],
+          responses: {
+            "200": jsonResponse("Custom question.", "TenantQuestion"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" },
+            "404": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/tenant-questions/{questionId}/create-assessment": {
+        post: {
+          operationId: "createAssessmentForCustomQuestion",
+          tags: ["TenantQuestions"],
+          parameters: [pathParameter("questionId", "uuid"), idempotencyHeader(), ...requestContextHeaders()],
+          requestBody: jsonRequest("CreateAssessmentFromQuestionRequest"),
+          responses: {
+            "201": jsonResponse("Assessment created from custom question.", "Assessment"),
+            "400": { $ref: "#/components/responses/Problem" },
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" },
+            "404": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/questions-dashboard/questions": {
+        get: {
+          operationId: "listDashboardQuestions",
+          tags: ["QuestionsDashboard"],
+          parameters: [...requestContextHeaders()],
+          responses: {
+            "200": jsonArrayResponse("Unified canonical + custom question list with completion status.", "UnifiedQuestion"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/questions-dashboard/summary": {
+        get: {
+          operationId: "getQuestionsDashboardSummary",
+          tags: ["QuestionsDashboard"],
+          parameters: [...requestContextHeaders()],
+          responses: {
+            "200": jsonResponse("Overall + per-framework compliance summary.", "DashboardSummary"),
             "401": { $ref: "#/components/responses/Problem" },
             "403": { $ref: "#/components/responses/Problem" }
           }
@@ -4984,6 +5076,91 @@ export function buildOpenApiSpec() {
         },
         AuditReportLifecycleStatus: {
           enum: ["draft", "published"]
+        },
+        TenantQuestion: {
+          type: "object",
+          required: ["id", "tenantId", "questionText", "responseType", "frameworkKeys", "status", "createdBy", "createdAt", "done"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            tenantId: { type: "string", format: "uuid" },
+            questionText: { type: "string" },
+            responseType: { enum: ["boolean", "text", "maturity", "multi_select"] },
+            description: { type: "string", nullable: true },
+            frameworkKeys: { type: "array", items: { type: "string" } },
+            status: { enum: ["active", "archived"] },
+            backingQuestionVersionId: { type: "string", format: "uuid", nullable: true },
+            createdBy: { type: "string", format: "uuid" },
+            createdAt: { type: "string", format: "date-time" },
+            done: { type: "boolean" }
+          }
+        },
+        CreateTenantQuestionRequest: {
+          type: "object",
+          required: ["questionText", "responseType", "frameworkKeys"],
+          properties: {
+            questionText: { type: "string" },
+            responseType: { enum: ["boolean", "text", "maturity", "multi_select"] },
+            description: { type: "string" },
+            frameworkKeys: { type: "array", items: { type: "string" } }
+          }
+        },
+        CreateAssessmentFromQuestionRequest: {
+          type: "object",
+          required: ["scopeName", "ownerId", "periodStart", "periodEnd"],
+          properties: {
+            scopeName: { type: "string" },
+            ownerId: { type: "string", format: "uuid" },
+            periodStart: { type: "string", format: "date" },
+            periodEnd: { type: "string", format: "date" }
+          }
+        },
+        UnifiedQuestion: {
+          type: "object",
+          required: ["id", "source", "questionVersionId", "questionText", "responseType", "frameworkKeys", "done", "assessmentId"],
+          properties: {
+            id: { type: "string" },
+            source: { enum: ["canonical", "custom"] },
+            questionVersionId: { type: "string" },
+            questionText: { type: "string" },
+            responseType: { type: "string" },
+            frameworkKeys: { type: "array", items: { type: "string" } },
+            done: { type: "boolean" },
+            assessmentId: { type: "string", format: "uuid", nullable: true }
+          }
+        },
+        FrameworkComplianceSummary: {
+          type: "object",
+          required: ["frameworkKey", "totalQuestions", "completedQuestions", "remainingQuestions", "compliancePercent"],
+          properties: {
+            frameworkKey: { type: "string" },
+            totalQuestions: { type: "integer" },
+            completedQuestions: { type: "integer" },
+            remainingQuestions: { type: "integer" },
+            compliancePercent: { type: "number" }
+          }
+        },
+        DashboardSummary: {
+          type: "object",
+          required: ["totalQuestions", "completedQuestions", "remainingQuestions", "overallCompletionPercent", "frameworks", "recentAssessments"],
+          properties: {
+            totalQuestions: { type: "integer" },
+            completedQuestions: { type: "integer" },
+            remainingQuestions: { type: "integer" },
+            overallCompletionPercent: { type: "number" },
+            frameworks: { type: "array", items: { $ref: "#/components/schemas/FrameworkComplianceSummary" } },
+            recentAssessments: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string", format: "uuid" },
+                  scopeName: { type: "string" },
+                  status: { type: "string" },
+                  createdAt: { type: "string", format: "date-time" }
+                }
+              }
+            }
+          }
         },
         ClosedAssessmentSummary: {
           type: "object",

@@ -230,7 +230,7 @@ function GenerateReportForm({ assessmentId, label, isSecondary }: { assessmentId
     <form action="/reports/actions" method="post" style={{ margin: 0 }}>
       <input type="hidden" name="intent" value="generateReport" />
       <input type="hidden" name="assessmentId" value={assessmentId} />
-      <button type="submit">
+      <button type="submit" className={isSecondary ? "secondary" : undefined}>
         <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>summarize</span>
         {label}
       </button>

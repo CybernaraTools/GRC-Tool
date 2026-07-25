@@ -21,6 +21,8 @@ const realFrontendRoutes = [
   "/frameworks",
   "/frameworks/updates",
   "/harmonization",
+  "/questions",
+  "/dashboard",
   "/assessments",
   "/assessments/review",
   "/reports",
@@ -38,7 +40,7 @@ describe("operational shell hardening helpers", () => {
     const viewerItems = visibleNavForRole("viewer").map((item) => item.label);
     const adminItems = visibleNavForRole("platform_admin").map((item) => item.label);
 
-    expect(viewerItems).toEqual(["My Tasks", "Framework Library", "Harmonization", "Assessments", "Enterprise GRC"]);
+    expect(viewerItems).toEqual(["My Tasks", "Framework Library", "Harmonization", "Dashboard", "Assessments", "Enterprise GRC"]);
     expect(visibleNavForRole("auditor").map((item) => item.label)).toContain("Audit Log");
     expect(adminItems).toContain("Enterprise GRC");
   });
@@ -54,7 +56,7 @@ describe("operational shell hardening helpers", () => {
         roles: ["platform_admin"],
         scopes: ["audit_event:read", "framework-content:read"]
       }).map((item) => item.label)
-    ).toEqual(["Audit Log", "Framework Library"]);
+    ).toEqual(["Audit Log", "Framework Library", "Audit Reports"]);
 
     expect(canPerform({ roles: ["compliance_manager"], scopes: ["privacy_rights_request:read"] }, "privacy_rights_request:write")).toBe(false);
   });

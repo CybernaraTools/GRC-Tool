@@ -150,7 +150,12 @@ const resourceTypeClassification: Record<string, Classification> = {
   // Closed Assessment AI Audit Reports feature — matches
   // `classification cybernara_classification not null default 'confidential'`
   // on ai_audit_reports (0051_g15_ai_audit_reports.sql).
-  audit_report: "confidential"
+  audit_report: "confidential",
+  // Questions Page / Compliance Dashboard feature — matches each new
+  // table's own `classification cybernara_classification not null default
+  // 'confidential'` baseline (0052_tenant_custom_questions.sql).
+  tenant_question: "confidential",
+  questions_dashboard: "confidential"
 };
 
 export function classificationForResourceType(resourceType: string): Classification {
