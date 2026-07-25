@@ -21,6 +21,7 @@ import type {
   RemediationTask,
   ReportExport,
   ReviewDecision,
+  TenantQuestion,
   TestProcedure
 } from "../../src/lib/api/generated";
 import { formatDateTime, firstValue, type SearchParamsRecord } from "../../src/lib/listing";
@@ -67,6 +68,8 @@ export async function AssessmentWorkspacePage({
   let selectedQuestion: AssessmentQuestionOption | null = null;
   let editingAssessment: Assessment | null = null;
   let apiError: string | null = null;
+  let preselectedCanonical: AssessmentQuestionOption | null = null;
+  let preselectedCustom: TenantQuestion | null = null;
 
   try {
     [assessments, questionOptions] = await Promise.all([
@@ -77,6 +80,16 @@ export async function AssessmentWorkspacePage({
     if (editAssessmentId) {
       editingAssessment = assessments.find((candidate) => candidate.id === editAssessmentId) ?? await api.getAssessment(editAssessmentId);
     }
+    if (mode === "owner" && !editingAssessment) {
+      const preselectedQuestionVersionId = textParam(params, "questionVersionId");
+      if (preselectedQuestionVersionId) {
+        preselectedCanonical = questionOptions.find((option) => option.questionVersionId === preselectedQuestionVersionId) ?? null;
+      }
+      const preselectedCustomQuestionId = textParam(params, "customQuestionId");
+      if (preselectedCustomQuestionId) {
+        preselectedCustom = await api.getTenantQuestion(preselectedCustomQuestionId);
+      }
+    }
     const assessmentId = textParam(params, "assessmentId");
     if (assessmentId) {
       assessment = await api.getAssessment(assessmentId);
@@ -85,6 +98,19 @@ export async function AssessmentWorkspacePage({
       selectedQuestion = item?.controlRef.questionVersionId
         ? questionOptions.find((option) => option.questionVersionId === item?.controlRef.questionVersionId) ?? null
         : null;
+      if (!selectedQuestion && item && item.controlRef.controlId?.startsWith("CUSTOM-")) {
+        // This item was created from a tenant custom question (see
+        // /questions and tenant-questions module), not the canonical
+        // question repository — questionOptions only ever contains
+        // canonical entries, so build the same AssessmentQuestionOption
+        // shape from the real custom question record instead of leaving
+        // every downstream display ("Question catalog entry unavailable",
+        // wrong default response type on the answer form, etc.) silently
+        // treating a real question as absent.
+        const customQuestions = await api.listTenantQuestions();
+        const customQuestion = customQuestions.find((candidate) => candidate.backingQuestionVersionId === item?.controlRef.questionVersionId);
+        selectedQuestion = customQuestion ? customQuestionAsOption(customQuestion, item) : null;
+      }
       [evidenceObjects, reportExports, signoffs, evidenceUploadPolicy] = await Promise.all([
         api.listEvidenceObjects({ limit: 50, offset: 0 }),
         mode === "review" ? api.listReportExports({ assessmentId: assessment.id, limit: 10, offset: 0 }) : Promise.resolve([]),
@@ -161,6 +187,8 @@ export async function AssessmentWorkspacePage({
               questionOptions={questionOptions}
               canCreate={canCreateAssessment(session)}
               editingAssessment={editingAssessment}
+              preselectedCanonical={preselectedCanonical}
+              preselectedCustom={preselectedCustom}
             />
           ) : null}
         </section>
@@ -397,27 +425,22 @@ function CreateAssessmentForm({
   ownerId,
   questionOptions,
   canCreate,
-  editingAssessment
+  editingAssessment,
+  preselectedCanonical,
+  preselectedCustom
 }: {
   ownerId: string;
   questionOptions: AssessmentQuestionOption[];
   canCreate: boolean;
   editingAssessment: Assessment | null;
+  preselectedCanonical: AssessmentQuestionOption | null;
+  preselectedCustom: TenantQuestion | null;
 }) {
   if (!canCreate) {
     return (
       <div className="constraintNote">
         Assessment creation is available to Platform Admin and Compliance Manager roles. This session can review
         existing assessment content but cannot create new scopes.
-      </div>
-    );
-  }
-
-  if (questionOptions.length === 0) {
-    return (
-      <div className="constraintNote">
-        No approved assessment questions are available yet. Enable a framework in the Framework Library to seed curated
-        baseline questions before creating an assessment.
       </div>
     );
   }
@@ -430,28 +453,52 @@ function CreateAssessmentForm({
     );
   }
 
-  const groupedOptions = groupQuestionOptions(questionOptions);
+  const isEditing = Boolean(editingAssessment);
   const selectedQuestionVersionId = editingAssessment?.items[0]?.controlRef.questionVersionId;
   const currentOption = selectedQuestionVersionId
     ? questionOptions.find((option) => option.questionVersionId === selectedQuestionVersionId)
     : null;
-  const firstOption =
-    currentOption ??
-    questionOptions.find((option) => option.responseType === "text") ??
-    groupedOptions[0]?.options[0] ??
-    questionOptions[0];
-  const typeSummary = questionTypeSummary(questionOptions);
-  const isEditing = Boolean(editingAssessment);
+
+  // The only entry point for creating a new assessment is the Questions page
+  // (which links here with ?questionVersionId= or ?customQuestionId=). There
+  // is no free-form question picker here anymore.
+  if (!isEditing && !preselectedCanonical && !preselectedCustom) {
+    return (
+      <div className="constraintNote">
+        Start a new assessment from the <Link href="/questions">Questions page</Link> — select a question there and use its
+        &ldquo;Create Assessment&rdquo; action to arrive here with the question pre-filled.
+      </div>
+    );
+  }
+
+  const questionText = isEditing
+    ? currentOption?.questionText ?? "Unknown question"
+    : preselectedCanonical?.questionText ?? preselectedCustom?.questionText ?? "";
+  const responseType = isEditing
+    ? currentOption?.responseType
+    : preselectedCanonical?.responseType ?? preselectedCustom?.responseType;
+  const frameworks = isEditing
+    ? (currentOption ? frameworkLabels(currentOption) : [])
+    : preselectedCanonical
+      ? frameworkLabels(preselectedCanonical)
+      : preselectedCustom?.frameworkKeys ?? [];
+
+  const isCustom = !isEditing && Boolean(preselectedCustom);
+  const intent = isEditing ? "updateAssessment" : isCustom ? "createAssessmentFromCustomQuestion" : "createAssessment";
 
   return (
     <form
       className="filterForm"
-      action={assessmentActionPath}
+      action={isCustom ? "/questions/actions" : assessmentActionPath}
       method="post"
       aria-label={isEditing ? "Edit draft assessment" : "Create assessment scope"}
     >
-      <input type="hidden" name="intent" value={isEditing ? "updateAssessment" : "createAssessment"} />
+      <input type="hidden" name="intent" value={intent} />
       {editingAssessment ? <input type="hidden" name="assessmentId" value={editingAssessment.id} /> : null}
+      {!isEditing && preselectedCanonical ? (
+        <input type="hidden" name="questionVersionId" value={preselectedCanonical.questionVersionId} />
+      ) : null}
+      {!isEditing && preselectedCustom ? <input type="hidden" name="customQuestionId" value={preselectedCustom.id} /> : null}
       <input type="hidden" name="ownerId" value={ownerId} />
       <HiddenIdempotency />
       <label>
@@ -476,49 +523,27 @@ function CreateAssessmentForm({
           required
         />
       </label>
-      <label>
-        Approved question
-        <select name="questionVersionId" required defaultValue={firstOption?.questionVersionId}>
-          {groupedOptions.map((group) => (
-            <optgroup key={group.harmonizedControlId} label={`${group.harmonizedControlId} - ${group.harmonizedControlName}`}>
-              {group.options.map((option) => (
-                <option key={option.questionVersionId} value={option.questionVersionId}>
-                  {option.questionText} [{responseTypeLabel(option.responseType)} | {frameworkLabels(option).join(", ")}]
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </label>
-      <div className="questionTypeSummary" aria-label="Available assessment question response types">
-        {typeSummary.map((entry) => (
-          <span key={entry.responseType}>
-            <strong>{entry.count}</strong>
-            <small>{responseTypeLabel(entry.responseType)}</small>
-          </span>
-        ))}
-      </div>
-      <div className="questionOptionPreview" aria-label="Approved question selection context">
-        {groupedOptions.slice(0, 6).map((group) => (
-          <article key={group.harmonizedControlId}>
-            <span className="label">{group.harmonizedControlId}</span>
-            <strong>{group.harmonizedControlName}</strong>
-            <small>{group.options.length} approved question{group.options.length === 1 ? "" : "s"}</small>
-            <small>{questionTypeSummary(group.options).map((entry) => `${entry.count} ${responseTypeLabel(entry.responseType)}`).join(" / ")}</small>
-            <div className="tagList">
-              {frameworkLabels(group.options[0]).slice(0, 8).map((frameworkKey) => (
-                <span key={frameworkKey}>{frameworkKey}</span>
-              ))}
-            </div>
-          </article>
-        ))}
+      <div className="questionOptionPreview" aria-label="Selected question">
+        <article>
+          <span className="label">{isCustom ? "Custom question" : "Approved question"}</span>
+          <strong>{questionText}</strong>
+          <small>{responseType ? responseTypeLabel(responseType) : ""}</small>
+          <div className="tagList">
+            {frameworks.map((frameworkKey) => (
+              <span key={frameworkKey}>{frameworkKey}</span>
+            ))}
+          </div>
+        </article>
       </div>
       <p className="constraintNote">
-        Framework, mapping, harmonized control, and question version are resolved from the approved repository entry.
+        {isEditing
+          ? "The question for a draft assessment cannot be changed here — create a new draft from the Questions page to assess a different question."
+          : "This question was selected on the Questions page. To assess a different question, go back and choose it there."}
       </p>
       <div className="formActions">
         <button type="submit">{isEditing ? "Save draft assessment" : "Create assessment"}</button>
         {isEditing ? <Link href="/assessments" className="secondary">Cancel edit</Link> : null}
+        {!isEditing ? <Link href="/questions" className="secondary">Choose a different question</Link> : null}
       </div>
     </form>
   );
@@ -1624,28 +1649,55 @@ function AssessmentHidden({
   );
 }
 
-function groupQuestionOptions(questionOptions: AssessmentQuestionOption[]): Array<{
-  harmonizedControlId: string;
-  harmonizedControlName: string;
-  options: AssessmentQuestionOption[];
-}> {
-  const groups = new Map<string, { harmonizedControlId: string; harmonizedControlName: string; options: AssessmentQuestionOption[] }>();
-  for (const option of questionOptions) {
-    const existing = groups.get(option.harmonizedControlId);
-    if (existing) {
-      existing.options.push(option);
-      continue;
-    }
-    groups.set(option.harmonizedControlId, {
-      harmonizedControlId: option.harmonizedControlId,
-      harmonizedControlName: option.harmonizedControlName,
-      options: [option]
-    });
-  }
-  return [...groups.values()].map((group) => ({
-    ...group,
-    options: sortQuestionOptions(group.options)
-  }));
+// Builds the same AssessmentQuestionOption shape the canonical question
+// repository returns, from a tenant custom question instead — so every
+// existing display/answer-form component that already knows how to render
+// an AssessmentQuestionOption (ControlOwnerQuestionPanel,
+// ReviewerQuestionPanel, QuestionAnswerInput, frameworkLabels, ...) works
+// unmodified for custom-question items too, instead of falling back to
+// "Question catalog entry unavailable" and a default plain-text answer
+// input regardless of the question's real declared response type. Only a
+// UI-local display object — never sent back to the server.
+function customQuestionAsOption(question: TenantQuestion, item: AssessmentItem): AssessmentQuestionOption {
+  return {
+    frameworkId: "",
+    frameworkVersionId: "",
+    frameworkKey: item.controlRef.frameworkKey ?? "",
+    frameworkName: item.controlRef.frameworkKey ?? "",
+    frameworkVersion: item.controlRef.frameworkVersion ?? "",
+    frameworkKeys: question.frameworkKeys,
+    sourcePackageId: "",
+    controlId: item.controlRef.controlId ?? "",
+    controlTitle: "Tenant-authored custom question",
+    harmonizedControlId: item.controlRef.harmonizedControlId ?? "",
+    harmonizedControlName: "Custom question (not from the canonical control catalog)",
+    mappingVersion: item.controlRef.mappingVersion ?? "",
+    questionVersionId: question.backingQuestionVersionId ?? item.controlRef.questionVersionId ?? "",
+    questionSetId: "",
+    questionSetKey: "custom",
+    questionVersion: 1,
+    questionText: question.questionText,
+    responseType: question.responseType,
+    evidenceExpectationIds: [],
+    citations: [],
+    confidence: 1,
+    sourceType: "curated",
+    sourceAiQuestionVersionId: null,
+    generationRunId: null,
+    promptVersionId: null,
+    modelDeploymentId: null,
+    retrievalIndexId: null,
+    status: "approved",
+    approvedBy: question.createdBy,
+    approvedAt: question.createdAt,
+    classification: "confidential",
+    createdBy: question.createdBy,
+    createdAt: question.createdAt,
+    updatedBy: question.createdBy,
+    updatedAt: question.createdAt,
+    previousVersionCount: 0,
+    isCurrentVersion: true
+  };
 }
 
 function frameworkLabels(option: AssessmentQuestionOption): string[] {
@@ -1662,36 +1714,6 @@ function citationLabel(citation: AssessmentQuestionOption["citations"][number]):
 
 function responseTypeLabel(value: AssessmentQuestionOption["responseType"]): string {
   return value === "multi_select" ? "Multi-select" : value[0].toUpperCase() + value.slice(1);
-}
-
-function questionTypeSummary(questionOptions: AssessmentQuestionOption[]): Array<{ responseType: AssessmentQuestionOption["responseType"]; count: number }> {
-  const counts = new Map<AssessmentQuestionOption["responseType"], number>();
-  for (const option of questionOptions) {
-    counts.set(option.responseType, (counts.get(option.responseType) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .sort(([left], [right]) => responseTypeRank(left) - responseTypeRank(right))
-    .map(([responseType, count]) => ({ responseType, count }));
-}
-
-function sortQuestionOptions(questionOptions: AssessmentQuestionOption[]): AssessmentQuestionOption[] {
-  return [...questionOptions].sort((left, right) =>
-    responseTypeRank(left.responseType) - responseTypeRank(right.responseType) ||
-    left.questionText.localeCompare(right.questionText)
-  );
-}
-
-function responseTypeRank(value: AssessmentQuestionOption["responseType"]): number {
-  if (value === "boolean") {
-    return 0;
-  }
-  if (value === "maturity") {
-    return 1;
-  }
-  if (value === "multi_select") {
-    return 2;
-  }
-  return 3;
 }
 
 function canCreateAssessment(session: Awaited<ReturnType<typeof requireSession>>): boolean {

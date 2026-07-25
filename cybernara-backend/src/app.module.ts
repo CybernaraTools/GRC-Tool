@@ -17,6 +17,8 @@ import { ReportingAnalyticsModule } from "./modules/reporting-analytics/reportin
 import { RiskWorkflowModule } from "./modules/risk-workflow/risk-workflow.module.js";
 import { TasksModule } from "./modules/tasks/tasks.module.js";
 import { FrameworkUpdateModule } from "./modules/framework-update/framework-update.module.js";
+import { TenantQuestionsModule } from "./modules/tenant-questions/tenant-questions.module.js";
+import { QuestionsDashboardModule } from "./modules/questions-dashboard/questions-dashboard.module.js";
 import { HealthController } from "./health.controller.js";
 import { RootController } from "./root.controller.js";
 import { RootStatusService } from "./root-status.service.js";
@@ -40,7 +42,9 @@ import { RootStatusService } from "./root-status.service.js";
     TasksModule,
     FrameworkUpdateModule,
     ReportingAnalyticsModule,
-    AuditReportsModule
+    AuditReportsModule,
+    TenantQuestionsModule,
+    QuestionsDashboardModule
   ],
   controllers: [RootController, HealthController],
   providers: [RootStatusService]

@@ -2968,6 +2968,85 @@
         }
       }
     },
+    "/v1/framework-content/enabled-frameworks/disable": {
+      "post": {
+        "operationId": "disableFramework",
+        "tags": [
+          "FrameworkContent"
+        ],
+        "summary": "Disable an enabled framework version for the current tenant.",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-scopes",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-clearance",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Classification"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnableFrameworkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Framework version disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrameworkEnablement"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
     "/v1/framework-content/question-options": {
       "get": {
         "operationId": "listAssessmentQuestionOptions",
@@ -3832,6 +3911,441 @@
                   "items": {
                     "$ref": "#/components/schemas/ControlMapping"
                   }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/tenant-questions": {
+      "get": {
+        "operationId": "listTenantQuestions",
+        "tags": [
+          "TenantQuestions"
+        ],
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-scopes",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-clearance",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Classification"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant custom questions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenantQuestion"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTenantQuestion",
+        "tags": [
+          "TenantQuestions"
+        ],
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-scopes",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-clearance",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Classification"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenantQuestionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Custom question created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantQuestion"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/tenant-questions/{questionId}": {
+      "get": {
+        "operationId": "getTenantQuestion",
+        "tags": [
+          "TenantQuestions"
+        ],
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-scopes",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-clearance",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Classification"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Custom question.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantQuestion"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/tenant-questions/{questionId}/create-assessment": {
+      "post": {
+        "operationId": "createAssessmentForCustomQuestion",
+        "tags": [
+          "TenantQuestions"
+        ],
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-scopes",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-clearance",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Classification"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssessmentFromQuestionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assessment created from custom question.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assessment"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/questions-dashboard/questions": {
+      "get": {
+        "operationId": "listDashboardQuestions",
+        "tags": [
+          "QuestionsDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-scopes",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-clearance",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Classification"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unified canonical + custom question list with completion status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UnifiedQuestion"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/questions-dashboard/summary": {
+      "get": {
+        "operationId": "getQuestionsDashboardSummary",
+        "tags": [
+          "QuestionsDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-scopes",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-clearance",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Classification"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Overall + per-framework compliance summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
                 }
               }
             }
@@ -33703,6 +34217,256 @@
           "draft",
           "published"
         ]
+      },
+      "TenantQuestion": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "questionText",
+          "responseType",
+          "frameworkKeys",
+          "status",
+          "createdBy",
+          "createdAt",
+          "done"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "questionText": {
+            "type": "string"
+          },
+          "responseType": {
+            "enum": [
+              "boolean",
+              "text",
+              "maturity",
+              "multi_select"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "frameworkKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "enum": [
+              "active",
+              "archived"
+            ]
+          },
+          "backingQuestionVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "done": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateTenantQuestionRequest": {
+        "type": "object",
+        "required": [
+          "questionText",
+          "responseType",
+          "frameworkKeys"
+        ],
+        "properties": {
+          "questionText": {
+            "type": "string"
+          },
+          "responseType": {
+            "enum": [
+              "boolean",
+              "text",
+              "maturity",
+              "multi_select"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "frameworkKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateAssessmentFromQuestionRequest": {
+        "type": "object",
+        "required": [
+          "scopeName",
+          "ownerId",
+          "periodStart",
+          "periodEnd"
+        ],
+        "properties": {
+          "scopeName": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "UnifiedQuestion": {
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "questionVersionId",
+          "questionText",
+          "responseType",
+          "frameworkKeys",
+          "done",
+          "assessmentId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "canonical",
+              "custom"
+            ]
+          },
+          "questionVersionId": {
+            "type": "string"
+          },
+          "questionText": {
+            "type": "string"
+          },
+          "responseType": {
+            "type": "string"
+          },
+          "frameworkKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "assessmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      },
+      "FrameworkComplianceSummary": {
+        "type": "object",
+        "required": [
+          "frameworkKey",
+          "totalQuestions",
+          "completedQuestions",
+          "remainingQuestions",
+          "compliancePercent"
+        ],
+        "properties": {
+          "frameworkKey": {
+            "type": "string"
+          },
+          "totalQuestions": {
+            "type": "integer"
+          },
+          "completedQuestions": {
+            "type": "integer"
+          },
+          "remainingQuestions": {
+            "type": "integer"
+          },
+          "compliancePercent": {
+            "type": "number"
+          }
+        }
+      },
+      "DashboardSummary": {
+        "type": "object",
+        "required": [
+          "totalQuestions",
+          "completedQuestions",
+          "remainingQuestions",
+          "overallCompletionPercent",
+          "frameworks",
+          "recentAssessments"
+        ],
+        "properties": {
+          "totalQuestions": {
+            "type": "integer"
+          },
+          "completedQuestions": {
+            "type": "integer"
+          },
+          "remainingQuestions": {
+            "type": "integer"
+          },
+          "overallCompletionPercent": {
+            "type": "number"
+          },
+          "frameworks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FrameworkComplianceSummary"
+            }
+          },
+          "recentAssessments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "scopeName": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
       },
       "ClosedAssessmentSummary": {
         "type": "object",

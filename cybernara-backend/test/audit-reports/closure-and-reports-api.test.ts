@@ -11,6 +11,7 @@ import { DATABASE_POOL } from "../../src/platform/database/tokens.js";
 import { ProblemDetailsFilter } from "../../src/shared/problem-details.filter.js";
 import { approvedControlSelectionForTenant } from "../helpers/question-repository-fixture.js";
 import { emptyNarrativePayload, NARRATIVE_SECTION_KEYS, validateNarrativeGroundedness, runComplianceEngine } from "../../src/modules/audit-reports/public.js";
+import type { ClosureSnapshotPayload } from "../../src/modules/closure-snapshot/public.js";
 
 let app: INestApplication;
 let baseUrl: string;
