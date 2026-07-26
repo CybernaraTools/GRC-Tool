@@ -5147,16 +5147,16 @@ export function buildOpenApiSpec() {
         },
         ControlDispositionResult: {
           type: "object",
-          required: ["itemId", "controlId", "harmonizedControlId", "frameworkKey", "frameworkVersion", "disposition", "reason", "findingIds", "citationId"],
+          required: ["itemId", "controlId", "harmonizedControlId", "frameworkKey", "frameworkVersion", "disposition", "reason", "findingCount", "citationId"],
           properties: {
             itemId: { type: "string", format: "uuid" },
             controlId: { type: "string" },
             harmonizedControlId: { type: "string" },
             frameworkKey: { type: "string" },
             frameworkVersion: { type: "string" },
-            disposition: { enum: ["satisfied", "remediation_verified", "accepted_residual_risk", "unresolved", "not_applicable"] },
+            disposition: { enum: ["approved", "not_approved", "not_applicable"] },
             reason: { type: "string" },
-            findingIds: { type: "array", items: { type: "string", format: "uuid" } },
+            findingCount: { type: "integer" },
             citationId: { type: "string" }
           }
         },
@@ -5166,10 +5166,8 @@ export function buildOpenApiSpec() {
             "frameworkKey",
             "frameworkVersion",
             "applicableCount",
-            "satisfiedCount",
-            "remediatedCount",
-            "acceptedRiskCount",
-            "unresolvedCount",
+            "approvedCount",
+            "notApprovedCount",
             "notApplicableCount",
             "rawPercentage",
             "displayPercentage",
@@ -5180,10 +5178,8 @@ export function buildOpenApiSpec() {
             frameworkKey: { type: "string" },
             frameworkVersion: { type: "string" },
             applicableCount: { type: "integer" },
-            satisfiedCount: { type: "integer" },
-            remediatedCount: { type: "integer" },
-            acceptedRiskCount: { type: "integer" },
-            unresolvedCount: { type: "integer" },
+            approvedCount: { type: "integer" },
+            notApprovedCount: { type: "integer" },
             notApplicableCount: { type: "integer" },
             rawPercentage: { type: "number", nullable: true },
             displayPercentage: { type: "string" },
@@ -5201,14 +5197,43 @@ export function buildOpenApiSpec() {
         },
         FindingSummaryRow: {
           type: "object",
-          required: ["id", "severity", "description", "assessmentItemId", "ownerId", "dueAt"],
+          required: [
+            "id",
+            "severity",
+            "description",
+            "assessmentItemId",
+            "frameworkKey",
+            "controlId",
+            "ownerId",
+            "dueAt",
+            "remediationStatus",
+            "riskAccepted"
+          ],
           properties: {
             id: { type: "string", format: "uuid" },
             severity: { enum: ["low", "medium", "high", "critical"] },
             description: { type: "string" },
             assessmentItemId: { type: "string", format: "uuid", nullable: true },
+            frameworkKey: { type: "string", nullable: true },
+            controlId: { type: "string", nullable: true },
             ownerId: { type: "string", format: "uuid", nullable: true },
-            dueAt: { type: "string", format: "date-time", nullable: true }
+            dueAt: { type: "string", format: "date-time", nullable: true },
+            remediationStatus: { type: "string", nullable: true },
+            riskAccepted: { type: "boolean" }
+          }
+        },
+        QuestionAnswerRow: {
+          type: "object",
+          required: ["itemId", "frameworkKey", "controlId", "questionText", "answerText", "applicable", "applicabilityRationale", "evidenceCount"],
+          properties: {
+            itemId: { type: "string", format: "uuid" },
+            frameworkKey: { type: "string" },
+            controlId: { type: "string" },
+            questionText: { type: "string" },
+            answerText: { type: "string", nullable: true },
+            applicable: { type: "boolean" },
+            applicabilityRationale: { type: "string", nullable: true },
+            evidenceCount: { type: "integer" }
           }
         },
         RemediationTaskSummaryRow: {
@@ -5229,6 +5254,10 @@ export function buildOpenApiSpec() {
             id: { type: "string", format: "uuid" },
             findingId: { type: "string", format: "uuid" },
             riskId: { type: "string", format: "uuid" },
+            riskTitle: { type: "string" },
+            riskCategory: { type: "string" },
+            riskInherentScore: { type: "number" },
+            riskResidualScore: { type: "number" },
             rationale: { type: "string" },
             approverId: { type: "string", format: "uuid" },
             approvedAt: { type: "string", format: "date-time" },
@@ -5261,7 +5290,7 @@ export function buildOpenApiSpec() {
         },
         AuditReportJson: {
           type: "object",
-          required: ["assessment", "compliance", "evidence", "findings", "remediationTasks", "riskAcceptances", "signoffs"],
+          required: ["assessment", "questionsAndAnswers", "compliance", "evidence", "findings", "remediationTasks", "riskAcceptances", "signoffs"],
           properties: {
             assessment: {
               type: "object",
@@ -5278,6 +5307,7 @@ export function buildOpenApiSpec() {
                 closedBy: { type: "string", format: "uuid", nullable: true }
               }
             },
+            questionsAndAnswers: { type: "array", items: { $ref: "#/components/schemas/QuestionAnswerRow" } },
             compliance: { $ref: "#/components/schemas/ComplianceEngineResult" },
             evidence: {
               type: "object",

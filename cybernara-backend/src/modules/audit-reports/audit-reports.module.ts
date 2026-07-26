@@ -4,6 +4,7 @@ import { AssessmentModule } from "../assessment/public.js";
 import { AuditSecurityModule } from "../audit-security/public.js";
 import { RiskWorkflowModule } from "../risk-workflow/public.js";
 import { EvidenceAssuranceModule } from "../evidence-assurance/public.js";
+import { QuestionsDashboardModule } from "../questions-dashboard/public.js";
 import { OutboxModule } from "../outbox/public.js";
 import { PlatformHardeningModule } from "../platform-hardening/public.js";
 import { AuditReportService } from "./application/audit-report.service.js";
@@ -19,6 +20,7 @@ import { AuditReportController } from "./presentation/audit-report.controller.js
     AuditSecurityModule,
     RiskWorkflowModule,
     EvidenceAssuranceModule,
+    QuestionsDashboardModule,
     OutboxModule,
     PlatformHardeningModule
   ],

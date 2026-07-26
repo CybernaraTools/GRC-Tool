@@ -1,7 +1,14 @@
-// Deterministic compliance engine. Pure function, no DB/AI access — every
-// compliance number the platform report states traces back to this module's
-// output, computed directly from live platform data (no AI narrative,
-// no re-derivation elsewhere).
+// Deterministic compliance engine. Pure function, no DB/AI access.
+//
+// The evaluation of each control already happened during the assessment
+// itself - a reviewer either approved the item or didn't, before the
+// assessment could close. This engine does not re-judge that decision by
+// cross-referencing findings/remediation/risk-acceptance state; it reports
+// the review outcome exactly as it was recorded. Findings, remediation, and
+// risk acceptances are real facts about what happened and are surfaced in
+// full elsewhere in the report (Findings/Remediation/Risk Acceptance
+// registers) - they are informative context, not a second, silent scoring
+// pass on top of the reviewer's own decision.
 
 export interface ComplianceEngineItem {
   itemId: string;
@@ -20,31 +27,12 @@ export interface ComplianceEngineFinding {
   assessmentItemId: string | null;
 }
 
-export interface ComplianceEngineRemediationTask {
-  id: string;
-  findingId: string;
-  status: string;
-  reviews: { decision: string }[];
-}
-
-export interface ComplianceEngineRiskAcceptance {
-  findingId: string;
-  active: boolean;
-}
-
 export interface ComplianceEngineInput {
   items: ComplianceEngineItem[];
   findings: ComplianceEngineFinding[];
-  remediationTasks: ComplianceEngineRemediationTask[];
-  riskAcceptances: ComplianceEngineRiskAcceptance[];
 }
 
-export type ControlDisposition =
-  | "satisfied"
-  | "remediation_verified"
-  | "accepted_residual_risk"
-  | "unresolved"
-  | "not_applicable";
+export type ControlDisposition = "approved" | "not_approved" | "not_applicable";
 
 export interface ControlDispositionResult {
   itemId: string;
@@ -54,7 +42,7 @@ export interface ControlDispositionResult {
   frameworkVersion: string;
   disposition: ControlDisposition;
   reason: string;
-  findingIds: string[];
+  findingCount: number;
   citationId: string;
 }
 
@@ -62,10 +50,8 @@ export interface FrameworkComplianceResult {
   frameworkKey: string;
   frameworkVersion: string;
   applicableCount: number;
-  satisfiedCount: number;
-  remediatedCount: number;
-  acceptedRiskCount: number;
-  unresolvedCount: number;
+  approvedCount: number;
+  notApprovedCount: number;
   notApplicableCount: number;
   rawPercentage: number | null;
   displayPercentage: string;
@@ -78,136 +64,59 @@ export interface ComplianceEngineResult {
   frameworks: FrameworkComplianceResult[];
 }
 
-type FindingResolution = "remediation_verified" | "accepted_residual_risk" | "unresolved";
-
-const DISPOSITION_PRIORITY: Record<FindingResolution, number> = {
-  unresolved: 3,
-  accepted_residual_risk: 2,
-  remediation_verified: 1
-};
-
 export function runComplianceEngine(input: ComplianceEngineInput): ComplianceEngineResult {
-  const findingsByItem = new Map<string, ComplianceEngineFinding[]>();
+  const findingCountByItem = new Map<string, number>();
   for (const finding of input.findings) {
     if (!finding.assessmentItemId) {
       continue;
     }
-    const list = findingsByItem.get(finding.assessmentItemId) ?? [];
-    list.push(finding);
-    findingsByItem.set(finding.assessmentItemId, list);
-  }
-
-  const remediationByFinding = new Map<string, ComplianceEngineRemediationTask[]>();
-  for (const task of input.remediationTasks) {
-    const list = remediationByFinding.get(task.findingId) ?? [];
-    list.push(task);
-    remediationByFinding.set(task.findingId, list);
-  }
-
-  const activeAcceptanceByFinding = new Map<string, boolean>();
-  for (const acceptance of input.riskAcceptances) {
-    if (acceptance.active) {
-      activeAcceptanceByFinding.set(acceptance.findingId, true);
-    }
+    findingCountByItem.set(finding.assessmentItemId, (findingCountByItem.get(finding.assessmentItemId) ?? 0) + 1);
   }
 
   const dispositions: ControlDispositionResult[] = input.items.map((item) => {
     const citationId = `CONTROL:${item.controlRef.frameworkKey}:${item.controlRef.controlId}`;
-
-    if (item.applicability && item.applicability.applicable === false) {
-      const itemFindings = findingsByItem.get(item.itemId) ?? [];
-      return {
-        itemId: item.itemId,
-        controlId: item.controlRef.controlId,
-        harmonizedControlId: item.controlRef.harmonizedControlId,
-        frameworkKey: item.controlRef.frameworkKey,
-        frameworkVersion: item.controlRef.frameworkVersion,
-        disposition: "not_applicable",
-        reason:
-          itemFindings.length > 0
-            ? `Control was formally marked not applicable, but has ${itemFindings.length} associated finding(s) in historical records.`
-            : "Control was formally marked not applicable.",
-        findingIds: itemFindings.map((finding) => finding.id),
-        citationId
-      };
-    }
-
-    if (item.status !== "approved") {
-      return {
-        itemId: item.itemId,
-        controlId: item.controlRef.controlId,
-        harmonizedControlId: item.controlRef.harmonizedControlId,
-        frameworkKey: item.controlRef.frameworkKey,
-        frameworkVersion: item.controlRef.frameworkVersion,
-        disposition: "unresolved",
-        reason: `Required review incomplete at closure: item status was '${item.status}', not 'approved'.`,
-        findingIds: [],
-        citationId
-      };
-    }
-
-    const itemFindings = findingsByItem.get(item.itemId) ?? [];
-    if (itemFindings.length === 0) {
-      return {
-        itemId: item.itemId,
-        controlId: item.controlRef.controlId,
-        harmonizedControlId: item.controlRef.harmonizedControlId,
-        frameworkKey: item.controlRef.frameworkKey,
-        frameworkVersion: item.controlRef.frameworkVersion,
-        disposition: "satisfied",
-        reason: "Approved control with no associated finding.",
-        findingIds: [],
-        citationId
-      };
-    }
-
-    let worst: FindingResolution = "remediation_verified";
-    for (const finding of itemFindings) {
-      const resolution = resolveFinding(finding.id, remediationByFinding, activeAcceptanceByFinding);
-      if (DISPOSITION_PRIORITY[resolution] > DISPOSITION_PRIORITY[worst]) {
-        worst = resolution;
-      }
-    }
-
-    const reasonByResolution: Record<FindingResolution, string> = {
-      remediation_verified: "All associated findings had remediation completed and formally verified by an authorized reviewer.",
-      accepted_residual_risk: "At least one associated finding's residual risk was formally accepted via an active, approved risk acceptance, and no finding remains unresolved.",
-      unresolved: "At least one associated finding has no verified remediation and no active risk acceptance."
-    };
-
-    return {
+    const findingCount = findingCountByItem.get(item.itemId) ?? 0;
+    const base = {
       itemId: item.itemId,
       controlId: item.controlRef.controlId,
       harmonizedControlId: item.controlRef.harmonizedControlId,
       frameworkKey: item.controlRef.frameworkKey,
       frameworkVersion: item.controlRef.frameworkVersion,
-      disposition: worst,
-      reason: reasonByResolution[worst],
-      findingIds: itemFindings.map((finding) => finding.id),
+      findingCount,
       citationId
+    };
+
+    if (item.applicability && item.applicability.applicable === false) {
+      return {
+        ...base,
+        disposition: "not_applicable" as const,
+        reason:
+          findingCount > 0
+            ? `Control was formally marked not applicable, but has ${findingCount} associated finding(s) in historical records.`
+            : "Control was formally marked not applicable."
+      };
+    }
+
+    if (item.status === "approved") {
+      return {
+        ...base,
+        disposition: "approved" as const,
+        reason:
+          findingCount > 0
+            ? `Reviewer approved this control during the assessment, with ${findingCount} associated finding(s) on record (see Findings Register).`
+            : "Reviewer approved this control during the assessment, with no associated findings."
+      };
+    }
+
+    return {
+      ...base,
+      disposition: "not_approved" as const,
+      reason: `Not approved at closure: item status was '${item.status}', not 'approved'.`
     };
   });
 
   const frameworks = computeFrameworkCompliance(dispositions);
   return { dispositions, frameworks };
-}
-
-function resolveFinding(
-  findingId: string,
-  remediationByFinding: Map<string, ComplianceEngineRemediationTask[]>,
-  activeAcceptanceByFinding: Map<string, boolean>
-): FindingResolution {
-  const tasks = remediationByFinding.get(findingId) ?? [];
-  const verified = tasks.some(
-    (task) => task.status === "verified" && task.reviews.some((review) => review.decision === "approved")
-  );
-  if (verified) {
-    return "remediation_verified";
-  }
-  if (activeAcceptanceByFinding.get(findingId)) {
-    return "accepted_residual_risk";
-  }
-  return "unresolved";
 }
 
 function computeFrameworkCompliance(dispositions: ControlDispositionResult[]): FrameworkComplianceResult[] {
@@ -223,29 +132,24 @@ function computeFrameworkCompliance(dispositions: ControlDispositionResult[]): F
 
   const results: FrameworkComplianceResult[] = [];
   for (const [frameworkKey, { frameworkVersion, items }] of byFramework) {
-    const satisfiedCount = items.filter((item) => item.disposition === "satisfied").length;
-    const remediatedCount = items.filter((item) => item.disposition === "remediation_verified").length;
-    const acceptedRiskCount = items.filter((item) => item.disposition === "accepted_residual_risk").length;
-    const unresolvedCount = items.filter((item) => item.disposition === "unresolved").length;
+    const approvedCount = items.filter((item) => item.disposition === "approved").length;
+    const notApprovedCount = items.filter((item) => item.disposition === "not_approved").length;
     const notApplicableCount = items.filter((item) => item.disposition === "not_applicable").length;
     const applicableCount = items.length - notApplicableCount;
-    const compliantCount = satisfiedCount + remediatedCount;
 
-    const rawPercentage = applicableCount > 0 ? (compliantCount / applicableCount) * 100 : null;
+    const rawPercentage = applicableCount > 0 ? (approvedCount / applicableCount) * 100 : null;
     const displayPercentage = rawPercentage === null ? "N/A (no applicable controls)" : `${Math.round(rawPercentage * 100) / 100}%`;
     const formula =
       applicableCount > 0
-        ? `(${satisfiedCount} satisfied + ${remediatedCount} remediation verified) / ${applicableCount} applicable × 100 = ${displayPercentage}`
+        ? `${approvedCount} approved / ${applicableCount} applicable × 100 = ${displayPercentage}`
         : `No applicable controls for ${frameworkKey} (all ${notApplicableCount} marked not applicable).`;
 
     results.push({
       frameworkKey,
       frameworkVersion,
       applicableCount,
-      satisfiedCount,
-      remediatedCount,
-      acceptedRiskCount,
-      unresolvedCount,
+      approvedCount,
+      notApprovedCount,
       notApplicableCount,
       rawPercentage,
       displayPercentage,

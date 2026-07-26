@@ -63,7 +63,7 @@ export class AuditReportService {
       throw new ForbiddenException("Audit reports can only be generated for closed assessments.");
     }
 
-    const reportJson = await this.reportContext.assemble(input.tenantId, assessment);
+    const reportJson = await this.reportContext.assemble(input.tenantId, input.actorId, assessment);
 
     const reportId = randomUUID();
     const generatedAt = new Date();

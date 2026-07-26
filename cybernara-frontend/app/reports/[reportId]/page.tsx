@@ -9,6 +9,7 @@ import type {
   EvidenceSummaryRow,
   FindingSummaryRow,
   FrameworkComplianceResult,
+  QuestionAnswerRow,
   RemediationTaskSummaryRow,
   RiskAcceptanceSummaryRow,
   SignoffRow
@@ -84,13 +85,22 @@ export default async function ReportViewerPage({ params }: { params: Promise<{ r
         </header>
 
         <p style={{ fontSize: "12px", color: "var(--ink-faint)" }}>
-          Every figure below is read directly from live data for this assessment and computed by deterministic rules. No AI
-          model was used to generate this report.
+          This report is a complete summary of this assessment from start to end — the questions asked, answers and evidence
+          submitted, findings raised, remediation and risk acceptance activity, and the reviewer&rsquo;s own approval
+          decisions. It does not re-evaluate anything: the compliance figures below reflect the review outcome already
+          recorded during the assessment, exactly as recorded. No AI model was used to generate this report.
         </p>
+
+        <section className="trustBoundary" aria-label="Assessment questions and answers">
+          <div className="trustBoundaryHeader">
+            <span className="trustBoundaryTitle">1. Assessment Questions & Answers</span>
+          </div>
+          <QuestionAnswerList rows={json.questionsAndAnswers} />
+        </section>
 
         <section className="trustBoundary" aria-label="Framework compliance">
           <div className="trustBoundaryHeader">
-            <span className="trustBoundaryTitle">1. Framework Compliance Scorecards</span>
+            <span className="trustBoundaryTitle">2. Framework Compliance Scorecards</span>
           </div>
           <div className="frameworkGrid">
             {json.compliance.frameworks.map((framework) => (
@@ -104,14 +114,14 @@ export default async function ReportViewerPage({ params }: { params: Promise<{ r
 
         <section className="trustBoundary" aria-label="Control disposition matrix">
           <div className="trustBoundaryHeader">
-            <span className="trustBoundaryTitle">2. Control Evaluation Matrix</span>
+            <span className="trustBoundaryTitle">3. Control Evaluation Matrix</span>
           </div>
           <DispositionMatrix rows={json.compliance.dispositions} />
         </section>
 
         <section className="trustBoundary" aria-label="Evidence matrix">
           <div className="trustBoundaryHeader">
-            <span className="trustBoundaryTitle">3. Evidence Matrix</span>
+            <span className="trustBoundaryTitle">4. Evidence Matrix</span>
           </div>
           <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
             Total: <strong>{json.evidence.total}</strong>
@@ -123,7 +133,7 @@ export default async function ReportViewerPage({ params }: { params: Promise<{ r
 
         <section className="trustBoundary" aria-label="Findings register">
           <div className="trustBoundaryHeader">
-            <span className="trustBoundaryTitle">4. Findings Register</span>
+            <span className="trustBoundaryTitle">5. Findings Register</span>
           </div>
           <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
             Total: <strong>{json.findings.total}</strong>
@@ -135,7 +145,7 @@ export default async function ReportViewerPage({ params }: { params: Promise<{ r
 
         <section className="trustBoundary" aria-label="Remediation tasks">
           <div className="trustBoundaryHeader">
-            <span className="trustBoundaryTitle">5. Remediation Register</span>
+            <span className="trustBoundaryTitle">6. Remediation Register</span>
           </div>
           <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
             Total: <strong>{json.remediationTasks.total}</strong>
@@ -147,7 +157,7 @@ export default async function ReportViewerPage({ params }: { params: Promise<{ r
 
         <section className="trustBoundary" aria-label="Risk acceptances">
           <div className="trustBoundaryHeader">
-            <span className="trustBoundaryTitle">6. Accepted Residual Risks</span>
+            <span className="trustBoundaryTitle">7. Accepted Residual Risks</span>
           </div>
           <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
             Total: <strong>{json.riskAcceptances.total}</strong> · Currently active: <strong>{json.riskAcceptances.active}</strong>
@@ -157,12 +167,41 @@ export default async function ReportViewerPage({ params }: { params: Promise<{ r
 
         <section className="trustBoundary" aria-label="Reviewer decisions">
           <div className="trustBoundaryHeader">
-            <span className="trustBoundaryTitle">7. Reviewer Decisions</span>
+            <span className="trustBoundaryTitle">8. Reviewer Decisions</span>
           </div>
           <SignoffsTable rows={json.signoffs} />
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function QuestionAnswerList({ rows }: { rows: QuestionAnswerRow[] }) {
+  if (rows.length === 0) {
+    return <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>No questions on this assessment.</p>;
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      {rows.map((row) => (
+        <article
+          key={row.itemId}
+          style={{ border: "1px solid var(--border)", borderRadius: "10px", background: "var(--surface-muted)", padding: "14px 16px" }}
+        >
+          <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--ink-muted)", marginBottom: "6px" }}>
+            {row.frameworkKey} &middot; {row.controlId}
+          </div>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--ink)", marginBottom: "6px" }}>{row.questionText}</div>
+          <div style={{ fontSize: "13px", color: row.answerText ? "var(--ink-muted)" : "var(--ink-faint)", fontStyle: row.answerText ? "normal" : "italic" }}>
+            {row.answerText ?? "Not answered."}
+          </div>
+          <div style={{ fontSize: "11px", color: "var(--ink-faint)", marginTop: "8px" }}>
+            Applicable: {row.applicable ? "Yes" : `No${row.applicabilityRationale ? ` — ${row.applicabilityRationale}` : ""}`}
+            {" · "}
+            Evidence attached: {row.evidenceCount}
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }
 
@@ -177,20 +216,12 @@ function FrameworkScorecardView({ framework }: { framework: FrameworkComplianceR
       <div className="frameworkFormula">{framework.formula}</div>
       <div className="frameworkStatsList">
         <div className="frameworkStatItem">
-          <span>Satisfied</span>
-          <strong>{framework.satisfiedCount}</strong>
+          <span>Approved</span>
+          <strong>{framework.approvedCount}</strong>
         </div>
         <div className="frameworkStatItem">
-          <span>Remediated</span>
-          <strong>{framework.remediatedCount}</strong>
-        </div>
-        <div className="frameworkStatItem">
-          <span>Accepted Risk</span>
-          <strong>{framework.acceptedRiskCount}</strong>
-        </div>
-        <div className="frameworkStatItem">
-          <span>Unresolved</span>
-          <strong>{framework.unresolvedCount}</strong>
+          <span>Not Approved</span>
+          <strong>{framework.notApprovedCount}</strong>
         </div>
         <div className="frameworkStatItem" style={{ gridColumn: "span 2" }}>
           <span>Not Applicable</span>
@@ -212,6 +243,7 @@ function DispositionMatrix({ rows }: { rows: ControlDispositionResult[] }) {
             <th scope="col">Control</th>
             <th scope="col">Harmonized Control</th>
             <th scope="col">Disposition</th>
+            <th scope="col">Findings</th>
             <th scope="col">Reason</th>
           </tr>
         </thead>
@@ -222,6 +254,7 @@ function DispositionMatrix({ rows }: { rows: ControlDispositionResult[] }) {
               <td><code style={{ fontSize: "12px" }}>{row.controlId}</code></td>
               <td><code style={{ fontSize: "11px", color: "var(--ink-muted)" }}>{row.harmonizedControlId}</code></td>
               <td><DispositionPill disposition={row.disposition} /></td>
+              <td>{row.findingCount}</td>
               <td className="matrixReasonText">{row.reason}</td>
             </tr>
           ))}
@@ -264,16 +297,22 @@ function FindingsTable({ rows }: { rows: FindingSummaryRow[] }) {
       <table className="matrixTable">
         <thead>
           <tr>
+            <th scope="col">Control</th>
             <th scope="col">Severity</th>
             <th scope="col">Description</th>
+            <th scope="col">Remediated</th>
+            <th scope="col">Risk Accepted</th>
             <th scope="col">Due</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={row.id}>
-              <td style={{ fontWeight: 700, textTransform: "capitalize" }}>{row.severity}</td>
+              <td style={{ fontWeight: 700 }}>{row.frameworkKey && row.controlId ? `${row.frameworkKey} ${row.controlId}` : "—"}</td>
+              <td style={{ textTransform: "capitalize" }}>{row.severity}</td>
               <td className="matrixReasonText">{row.description}</td>
+              <td><BooleanPill value={row.remediationStatus === "verified"} /></td>
+              <td><BooleanPill value={row.riskAccepted} /></td>
               <td>{row.dueAt ? new Date(row.dueAt).toLocaleDateString() : "—"}</td>
             </tr>
           ))}
@@ -319,6 +358,8 @@ function AcceptancesTable({ rows }: { rows: RiskAcceptanceSummaryRow[] }) {
         <thead>
           <tr>
             <th scope="col">Finding</th>
+            <th scope="col">Risk</th>
+            <th scope="col">Risk Score</th>
             <th scope="col">Rationale</th>
             <th scope="col">Active</th>
             <th scope="col">Expires</th>
@@ -328,8 +369,10 @@ function AcceptancesTable({ rows }: { rows: RiskAcceptanceSummaryRow[] }) {
           {rows.map((row) => (
             <tr key={row.id}>
               <td><code style={{ fontSize: "12px" }}>{row.findingId.slice(0, 8)}</code></td>
+              <td style={{ fontWeight: 700 }}>{row.riskTitle ? `${row.riskTitle} (${row.riskCategory ?? "—"})` : "—"}</td>
+              <td>{row.riskInherentScore !== undefined ? `${row.riskInherentScore} → ${row.riskResidualScore}` : "—"}</td>
               <td className="matrixReasonText">{row.rationale}</td>
-              <td>{row.active ? "Yes" : "No"}</td>
+              <td><BooleanPill value={row.active} /></td>
               <td>{new Date(row.expiresAt).toLocaleDateString()}</td>
             </tr>
           ))}
@@ -371,16 +414,20 @@ function SignoffsTable({ rows }: { rows: SignoffRow[] }) {
 
 function DispositionPill({ disposition }: { disposition: string }) {
   switch (disposition) {
-    case "satisfied":
-      return <span className="dispBadge dispSatisfied">Satisfied</span>;
-    case "remediation_verified":
-      return <span className="dispBadge dispRemediated">Remediation Verified</span>;
-    case "accepted_residual_risk":
-      return <span className="dispBadge dispAcceptedRisk">Accepted Residual Risk</span>;
+    case "approved":
+      return <span className="dispBadge dispSatisfied">Approved</span>;
     case "not_applicable":
       return <span className="dispBadge dispNotApplicable">Not Applicable</span>;
-    case "unresolved":
+    case "not_approved":
     default:
-      return <span className="dispBadge dispUnresolved">Unresolved</span>;
+      return <span className="dispBadge dispUnresolved">Not Approved</span>;
   }
+}
+
+function BooleanPill({ value }: { value: boolean }) {
+  return value ? (
+    <span className="dispBadge dispSatisfied">Yes</span>
+  ) : (
+    <span className="dispBadge dispNotApplicable">No</span>
+  );
 }

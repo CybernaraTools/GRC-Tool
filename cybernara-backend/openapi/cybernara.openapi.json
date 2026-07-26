@@ -34395,7 +34395,7 @@
           "frameworkVersion",
           "disposition",
           "reason",
-          "findingIds",
+          "findingCount",
           "citationId"
         ],
         "properties": {
@@ -34417,22 +34417,16 @@
           },
           "disposition": {
             "enum": [
-              "satisfied",
-              "remediation_verified",
-              "accepted_residual_risk",
-              "unresolved",
+              "approved",
+              "not_approved",
               "not_applicable"
             ]
           },
           "reason": {
             "type": "string"
           },
-          "findingIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            }
+          "findingCount": {
+            "type": "integer"
           },
           "citationId": {
             "type": "string"
@@ -34445,10 +34439,8 @@
           "frameworkKey",
           "frameworkVersion",
           "applicableCount",
-          "satisfiedCount",
-          "remediatedCount",
-          "acceptedRiskCount",
-          "unresolvedCount",
+          "approvedCount",
+          "notApprovedCount",
           "notApplicableCount",
           "rawPercentage",
           "displayPercentage",
@@ -34465,16 +34457,10 @@
           "applicableCount": {
             "type": "integer"
           },
-          "satisfiedCount": {
+          "approvedCount": {
             "type": "integer"
           },
-          "remediatedCount": {
-            "type": "integer"
-          },
-          "acceptedRiskCount": {
-            "type": "integer"
-          },
-          "unresolvedCount": {
+          "notApprovedCount": {
             "type": "integer"
           },
           "notApplicableCount": {
@@ -34523,8 +34509,12 @@
           "severity",
           "description",
           "assessmentItemId",
+          "frameworkKey",
+          "controlId",
           "ownerId",
-          "dueAt"
+          "dueAt",
+          "remediationStatus",
+          "riskAccepted"
         ],
         "properties": {
           "id": {
@@ -34547,6 +34537,14 @@
             "format": "uuid",
             "nullable": true
           },
+          "frameworkKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "controlId": {
+            "type": "string",
+            "nullable": true
+          },
           "ownerId": {
             "type": "string",
             "format": "uuid",
@@ -34556,6 +34554,55 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "remediationStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "riskAccepted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuestionAnswerRow": {
+        "type": "object",
+        "required": [
+          "itemId",
+          "frameworkKey",
+          "controlId",
+          "questionText",
+          "answerText",
+          "applicable",
+          "applicabilityRationale",
+          "evidenceCount"
+        ],
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "frameworkKey": {
+            "type": "string"
+          },
+          "controlId": {
+            "type": "string"
+          },
+          "questionText": {
+            "type": "string"
+          },
+          "answerText": {
+            "type": "string",
+            "nullable": true
+          },
+          "applicable": {
+            "type": "boolean"
+          },
+          "applicabilityRationale": {
+            "type": "string",
+            "nullable": true
+          },
+          "evidenceCount": {
+            "type": "integer"
           }
         }
       },
@@ -34618,6 +34665,18 @@
           "riskId": {
             "type": "string",
             "format": "uuid"
+          },
+          "riskTitle": {
+            "type": "string"
+          },
+          "riskCategory": {
+            "type": "string"
+          },
+          "riskInherentScore": {
+            "type": "number"
+          },
+          "riskResidualScore": {
+            "type": "number"
           },
           "rationale": {
             "type": "string"
@@ -34709,6 +34768,7 @@
         "type": "object",
         "required": [
           "assessment",
+          "questionsAndAnswers",
           "compliance",
           "evidence",
           "findings",
@@ -34768,6 +34828,12 @@
                 "format": "uuid",
                 "nullable": true
               }
+            }
+          },
+          "questionsAndAnswers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestionAnswerRow"
             }
           },
           "compliance": {
