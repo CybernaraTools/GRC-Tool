@@ -2126,7 +2126,7 @@ export function buildOpenApiSpec() {
           tags: ["AuditReports"],
           parameters: [pathParameter("assessmentId", "uuid"), idempotencyHeader(), ...requestContextHeaders()],
           responses: {
-            "201": jsonResponse("Audit report generated.", "AuditReport"),
+            "201": jsonResponse("Audit report generated from this assessment's live data. No AI call is made.", "AuditReport"),
             "400": { $ref: "#/components/responses/Problem" },
             "401": { $ref: "#/components/responses/Problem" },
             "403": { $ref: "#/components/responses/Problem" },
@@ -2161,20 +2161,6 @@ export function buildOpenApiSpec() {
                 }
               }
             },
-            "401": { $ref: "#/components/responses/Problem" },
-            "403": { $ref: "#/components/responses/Problem" },
-            "404": { $ref: "#/components/responses/Problem" }
-          }
-        }
-      },
-      "/v1/audit-reports/{reportId}/publish": {
-        post: {
-          operationId: "publishAuditReport",
-          tags: ["AuditReports"],
-          parameters: [pathParameter("reportId", "uuid"), ...requestContextHeaders()],
-          responses: {
-            "201": jsonResponse("Audit report published.", "AuditReport"),
-            "400": { $ref: "#/components/responses/Problem" },
             "401": { $ref: "#/components/responses/Problem" },
             "403": { $ref: "#/components/responses/Problem" },
             "404": { $ref: "#/components/responses/Problem" }
@@ -5074,9 +5060,6 @@ export function buildOpenApiSpec() {
             updatedAt: { type: "string", format: "date-time" }
           }
         },
-        AuditReportLifecycleStatus: {
-          enum: ["draft", "published"]
-        },
         TenantQuestion: {
           type: "object",
           required: ["id", "tenantId", "questionText", "responseType", "frameworkKeys", "status", "createdBy", "createdAt", "done"],
@@ -5162,6 +5145,179 @@ export function buildOpenApiSpec() {
             }
           }
         },
+        ControlDispositionResult: {
+          type: "object",
+          required: ["itemId", "controlId", "harmonizedControlId", "frameworkKey", "frameworkVersion", "disposition", "reason", "findingIds", "citationId"],
+          properties: {
+            itemId: { type: "string", format: "uuid" },
+            controlId: { type: "string" },
+            harmonizedControlId: { type: "string" },
+            frameworkKey: { type: "string" },
+            frameworkVersion: { type: "string" },
+            disposition: { enum: ["satisfied", "remediation_verified", "accepted_residual_risk", "unresolved", "not_applicable"] },
+            reason: { type: "string" },
+            findingIds: { type: "array", items: { type: "string", format: "uuid" } },
+            citationId: { type: "string" }
+          }
+        },
+        FrameworkComplianceResult: {
+          type: "object",
+          required: [
+            "frameworkKey",
+            "frameworkVersion",
+            "applicableCount",
+            "satisfiedCount",
+            "remediatedCount",
+            "acceptedRiskCount",
+            "unresolvedCount",
+            "notApplicableCount",
+            "rawPercentage",
+            "displayPercentage",
+            "formula",
+            "citationId"
+          ],
+          properties: {
+            frameworkKey: { type: "string" },
+            frameworkVersion: { type: "string" },
+            applicableCount: { type: "integer" },
+            satisfiedCount: { type: "integer" },
+            remediatedCount: { type: "integer" },
+            acceptedRiskCount: { type: "integer" },
+            unresolvedCount: { type: "integer" },
+            notApplicableCount: { type: "integer" },
+            rawPercentage: { type: "number", nullable: true },
+            displayPercentage: { type: "string" },
+            formula: { type: "string" },
+            citationId: { type: "string" }
+          }
+        },
+        ComplianceEngineResult: {
+          type: "object",
+          required: ["dispositions", "frameworks"],
+          properties: {
+            dispositions: { type: "array", items: { $ref: "#/components/schemas/ControlDispositionResult" } },
+            frameworks: { type: "array", items: { $ref: "#/components/schemas/FrameworkComplianceResult" } }
+          }
+        },
+        FindingSummaryRow: {
+          type: "object",
+          required: ["id", "severity", "description", "assessmentItemId", "ownerId", "dueAt"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            severity: { enum: ["low", "medium", "high", "critical"] },
+            description: { type: "string" },
+            assessmentItemId: { type: "string", format: "uuid", nullable: true },
+            ownerId: { type: "string", format: "uuid", nullable: true },
+            dueAt: { type: "string", format: "date-time", nullable: true }
+          }
+        },
+        RemediationTaskSummaryRow: {
+          type: "object",
+          required: ["id", "findingId", "status", "ownerId", "dueAt"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            findingId: { type: "string", format: "uuid" },
+            status: { enum: ["open", "in_progress", "verified", "risk_accepted"] },
+            ownerId: { type: "string", format: "uuid" },
+            dueAt: { type: "string", format: "date-time" }
+          }
+        },
+        RiskAcceptanceSummaryRow: {
+          type: "object",
+          required: ["id", "findingId", "rationale", "approverId", "approvedAt", "expiresAt", "active"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            findingId: { type: "string", format: "uuid" },
+            riskId: { type: "string", format: "uuid" },
+            rationale: { type: "string" },
+            approverId: { type: "string", format: "uuid" },
+            approvedAt: { type: "string", format: "date-time" },
+            expiresAt: { type: "string", format: "date-time" },
+            active: { type: "boolean" }
+          }
+        },
+        EvidenceSummaryRow: {
+          type: "object",
+          required: ["id", "fileName", "state", "classification", "linkedItemIds"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            fileName: { type: "string" },
+            state: { type: "string" },
+            classification: { type: "string" },
+            linkedItemIds: { type: "array", items: { type: "string", format: "uuid" } }
+          }
+        },
+        SignoffRow: {
+          type: "object",
+          required: ["id", "scopeType", "scopeId", "signerId", "decision", "signedAt"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            scopeType: { type: "string" },
+            scopeId: { type: "string" },
+            signerId: { type: "string", format: "uuid" },
+            decision: { type: "string" },
+            signedAt: { type: "string", format: "date-time" }
+          }
+        },
+        AuditReportJson: {
+          type: "object",
+          required: ["assessment", "compliance", "evidence", "findings", "remediationTasks", "riskAcceptances", "signoffs"],
+          properties: {
+            assessment: {
+              type: "object",
+              required: ["id", "scopeName", "status", "periodStart", "periodEnd", "frameworkKeys", "itemCount", "closedAt", "closedBy"],
+              properties: {
+                id: { type: "string", format: "uuid" },
+                scopeName: { type: "string" },
+                status: { type: "string" },
+                periodStart: { type: "string", format: "date-time" },
+                periodEnd: { type: "string", format: "date-time" },
+                frameworkKeys: { type: "array", items: { type: "string" } },
+                itemCount: { type: "integer" },
+                closedAt: { type: "string", format: "date-time", nullable: true },
+                closedBy: { type: "string", format: "uuid", nullable: true }
+              }
+            },
+            compliance: { $ref: "#/components/schemas/ComplianceEngineResult" },
+            evidence: {
+              type: "object",
+              required: ["total", "byState", "items"],
+              properties: {
+                total: { type: "integer" },
+                byState: { type: "object", additionalProperties: { type: "integer" } },
+                items: { type: "array", items: { $ref: "#/components/schemas/EvidenceSummaryRow" } }
+              }
+            },
+            findings: {
+              type: "object",
+              required: ["total", "bySeverity", "items"],
+              properties: {
+                total: { type: "integer" },
+                bySeverity: { type: "object", additionalProperties: { type: "integer" } },
+                items: { type: "array", items: { $ref: "#/components/schemas/FindingSummaryRow" } }
+              }
+            },
+            remediationTasks: {
+              type: "object",
+              required: ["total", "byStatus", "items"],
+              properties: {
+                total: { type: "integer" },
+                byStatus: { type: "object", additionalProperties: { type: "integer" } },
+                items: { type: "array", items: { $ref: "#/components/schemas/RemediationTaskSummaryRow" } }
+              }
+            },
+            riskAcceptances: {
+              type: "object",
+              required: ["total", "active", "items"],
+              properties: {
+                total: { type: "integer" },
+                active: { type: "integer" },
+                items: { type: "array", items: { $ref: "#/components/schemas/RiskAcceptanceSummaryRow" } }
+              }
+            },
+            signoffs: { type: "array", items: { $ref: "#/components/schemas/SignoffRow" } }
+          }
+        },
         ClosedAssessmentSummary: {
           type: "object",
           required: ["assessmentId", "scopeName", "frameworks", "periodStart", "periodEnd", "itemCount", "findingCount"],
@@ -5180,9 +5336,7 @@ export function buildOpenApiSpec() {
               nullable: true,
               properties: {
                 reportId: { type: "string", format: "uuid" },
-                lifecycleStatus: { $ref: "#/components/schemas/AuditReportLifecycleStatus" },
-                generatedAt: { type: "string", format: "date-time" },
-                groundednessScore: { type: "number" }
+                generatedAt: { type: "string", format: "date-time" }
               }
             }
           }
@@ -5194,23 +5348,12 @@ export function buildOpenApiSpec() {
             "tenantId",
             "version",
             "assessmentId",
-            "snapshotId",
             "reportType",
-            "lifecycleStatus",
-            "reportSchemaVersion",
-            "complianceMethodologyVersion",
-            "aiPromptVersion",
             "generatedBy",
             "generatedAt",
             "reportHash",
-            "snapshotHash",
             "artifactMimeType",
             "structuredReportJson",
-            "provenance",
-            "citationManifest",
-            "groundednessScore",
-            "groundednessValidationLog",
-            "narrativeAvailable",
             "classification",
             "createdBy",
             "createdAt",
@@ -5222,24 +5365,12 @@ export function buildOpenApiSpec() {
             tenantId: { type: "string", format: "uuid" },
             version: { type: "integer" },
             assessmentId: { type: "string", format: "uuid" },
-            snapshotId: { type: "string", format: "uuid" },
             reportType: { enum: ["closure_audit"] },
-            lifecycleStatus: { $ref: "#/components/schemas/AuditReportLifecycleStatus" },
-            reportSchemaVersion: { type: "string" },
-            complianceMethodologyVersion: { type: "string" },
-            aiPromptVersion: { type: "string" },
-            aiModelMetadata: { type: "object", additionalProperties: true },
             generatedBy: { type: "string", format: "uuid" },
             generatedAt: { type: "string", format: "date-time" },
             reportHash: { type: "string" },
-            snapshotHash: { type: "string" },
             artifactMimeType: { type: "string" },
-            structuredReportJson: { type: "object", additionalProperties: true },
-            provenance: { type: "object", additionalProperties: true },
-            citationManifest: { type: "object", additionalProperties: true },
-            groundednessScore: { type: "number" },
-            groundednessValidationLog: { type: "array", items: { type: "object", additionalProperties: true } },
-            narrativeAvailable: { type: "boolean" },
+            structuredReportJson: { $ref: "#/components/schemas/AuditReportJson" },
             classification: { $ref: "#/components/schemas/Classification" },
             createdBy: { type: "string", format: "uuid" },
             createdAt: { type: "string", format: "date-time" },

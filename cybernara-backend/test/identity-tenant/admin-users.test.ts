@@ -53,7 +53,7 @@ describe("Admin user and role API", () => {
   });
 
   it("rejects every admin endpoint for a non-admin subject", async () => {
-    const headers = requestHeaders(tenantA, "assessment:read");
+    const headers = requestHeaders(tenantA, "assessment:read", "");
     const getRoles = await fetch(`${baseUrl}/v1/admin/roles`, { headers });
     const getUsers = await fetch(`${baseUrl}/v1/admin/users`, { headers });
     const invite = await fetch(`${baseUrl}/v1/admin/users/invite`, {
@@ -182,13 +182,13 @@ describe("Admin user and role API", () => {
   }
 });
 
-function requestHeaders(tenantId: string, scopes: string): Record<string, string> {
+function requestHeaders(tenantId: string, scopes: string, roles: string = "platform_admin"): Record<string, string> {
   return {
     "x-tenant-id": tenantId,
     "x-user-id": randomUUID(),
     "x-user-clearance": "restricted",
     "x-user-scopes": scopes,
-    "x-user-roles": "platform_admin"
+    "x-user-roles": roles
   };
 }
 

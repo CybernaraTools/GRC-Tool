@@ -41,10 +41,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     if (statusFilter === "not_generated" && assessment.latestReport) {
       return false;
     }
-    if (statusFilter === "draft" && assessment.latestReport?.lifecycleStatus !== "draft") {
-      return false;
-    }
-    if (statusFilter === "published" && assessment.latestReport?.lifecycleStatus !== "published") {
+    if (statusFilter === "generated" && !assessment.latestReport) {
       return false;
     }
     return true;
@@ -52,13 +49,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
   const totalClosed = assessments.length;
   const totalGenerated = assessments.filter((a) => a.latestReport).length;
-  const totalDraft = assessments.filter((a) => a.latestReport?.lifecycleStatus === "draft").length;
-  const totalPublished = assessments.filter((a) => a.latestReport?.lifecycleStatus === "published").length;
 
   return (
     <AppShell session={session} title="Assessment Audit Reports">
       <div className="reportDocContainer">
-        {/* SUMMARY STATS BAR */}
         <div className="reportsSummaryGrid">
           <div className="reportsSummaryCard">
             <span className="label">Closed Assessments</span>
@@ -68,30 +62,22 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           <div className="reportsSummaryCard">
             <span className="label">Reports Generated</span>
             <strong>{totalGenerated}</strong>
-            <small>Immutable snapshot reports</small>
-          </div>
-          <div className="reportsSummaryCard">
-            <span className="label">Draft Status</span>
-            <strong>{totalDraft}</strong>
-            <small>Pending final publication</small>
-          </div>
-          <div className="reportsSummaryCard">
-            <span className="label">Published</span>
-            <strong>{totalPublished}</strong>
-            <small>Official audit reports</small>
+            <small>Deterministic, no AI</small>
           </div>
         </div>
 
-        {/* SECTION HEADER */}
         <div className="sectionHeader" style={{ paddingBottom: "12px", borderBottom: "1px solid var(--border)" }}>
           <div>
             <span className="eyebrow">Audit & Assurance</span>
             <h2 id="reports-heading" style={{ fontSize: "20px", fontWeight: 800 }}>Closed Assessment Audit Reports</h2>
+            <p style={{ fontSize: "13px", color: "var(--ink-muted)", marginTop: "6px", maxWidth: "640px" }}>
+              Each report covers one closed assessment: its framework compliance, control dispositions, evidence, findings,
+              remediation, risk acceptances, and reviewer sign-offs — read directly from live data. No AI is used.
+            </p>
           </div>
           <span>Showing {filtered.length} of {totalClosed} assessment(s)</span>
         </div>
 
-        {/* FILTERS FORM */}
         <ReportFiltersForm defaults={resolvedSearchParams} />
 
         {actionError ? <ErrorState title="Action failed" detail={actionError} /> : null}
@@ -132,8 +118,7 @@ function ReportFiltersForm({ defaults }: { defaults: Record<string, string | str
         <select name="reportStatus" defaultValue={value(defaults.reportStatus)}>
           <option value="">All statuses</option>
           <option value="not_generated">Not generated</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
+          <option value="generated">Generated</option>
         </select>
       </label>
       <div className="formActions">
@@ -151,7 +136,6 @@ function ReportFiltersForm({ defaults }: { defaults: Record<string, string | str
 
 function ClosedAssessmentCard({ assessment }: { assessment: ClosedAssessmentSummary }) {
   const report = assessment.latestReport;
-  const isPublished = report?.lifecycleStatus === "published";
   const hasReport = Boolean(report);
 
   return (
@@ -162,9 +146,7 @@ function ClosedAssessmentCard({ assessment }: { assessment: ClosedAssessmentSumm
           <h3 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>{assessment.scopeName}</h3>
         </div>
         {hasReport ? (
-          <span className={`dispBadge ${isPublished ? "dispSatisfied" : "dispNotApplicable"}`}>
-            {report?.lifecycleStatus ? report.lifecycleStatus.toUpperCase() : "DRAFT"}
-          </span>
+          <span className="dispBadge dispSatisfied">REPORT GENERATED</span>
         ) : (
           <span className="dispBadge" style={{ background: "var(--surface-muted)", color: "var(--ink-muted)", border: "1px solid var(--border)" }}>
             NOT GENERATED
@@ -190,14 +172,6 @@ function ClosedAssessmentCard({ assessment }: { assessment: ClosedAssessmentSumm
         <div>
           Items / Findings: <strong>{assessment.itemCount} / {assessment.findingCount}</strong>
         </div>
-        {report ? (
-          <div style={{ gridColumn: "span 2", display: "flex", alignItems: "center", gap: "8px" }}>
-            <span>Groundedness Score:</span>
-            <strong style={{ color: report.groundednessScore === 100 ? "#16a34a" : "#d97706" }}>
-              {report.groundednessScore}%
-            </strong>
-          </div>
-        ) : null}
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginTop: "auto", paddingTop: "8px" }}>

@@ -3,71 +3,21 @@ import Link from "next/link";
 import { AppShell } from "../../../src/components/app-shell";
 import { ErrorState } from "../../../src/components/ui-states";
 import { createServerApiClient, apiErrorMessage } from "../../../src/lib/api/server";
-import type { AuditReport } from "../../../src/lib/api/generated";
+import type {
+  AuditReport,
+  ControlDispositionResult,
+  EvidenceSummaryRow,
+  FindingSummaryRow,
+  FrameworkComplianceResult,
+  RemediationTaskSummaryRow,
+  RiskAcceptanceSummaryRow,
+  SignoffRow
+} from "../../../src/lib/api/generated";
 import { loginPath } from "../../../src/lib/auth";
 import { readSessionContext } from "../../../src/lib/session";
 
-interface FrameworkComplianceView {
-  frameworkKey: string;
-  displayPercentage: string;
-  rawPercentage: number | null;
-  formula: string;
-  applicableCount: number;
-  satisfiedCount: number;
-  remediatedCount: number;
-  acceptedRiskCount: number;
-  unresolvedCount: number;
-  notApplicableCount: number;
-}
-
-interface ControlDispositionView {
-  controlId: string;
-  harmonizedControlId: string;
-  frameworkKey: string;
-  disposition: string;
-  reason: string;
-}
-
-interface NarrativeStatementView {
-  text: string;
-  citations: string[];
-  claimType: "fact" | "inference" | "commentary";
-}
-
-type NarrativeSectionsView = Record<string, NarrativeStatementView[]>;
-
-interface StructuredReportView {
-  engineResult: { frameworks: FrameworkComplianceView[]; dispositions: ControlDispositionView[] };
-  narrative: NarrativeSectionsView | null;
-  evidenceLimitations: string[];
-}
-
-const NARRATIVE_SECTION_LABELS: Record<string, string> = {
-  executiveSummary: "Executive Summary",
-  overallAssessmentAnalysis: "Overall Assessment Analysis",
-  frameworkComplianceNarrative: "Framework Compliance Narrative",
-  controlObservations: "Control Observations",
-  evidenceAnalysis: "Evidence Analysis",
-  materialFindings: "Material Findings",
-  riskAnalysis: "Risk Analysis",
-  remediationAnalysis: "Remediation Analysis",
-  acceptedResidualRiskNarrative: "Accepted Residual Risk Narrative",
-  remainingGaps: "Remaining Gaps",
-  managementAttentionAreas: "Management Attention Areas",
-  auditorNotes: "Auditor Notes",
-  limitations: "Limitations",
-  conclusion: "Conclusion"
-};
-
-export default async function ReportViewerPage({
-  params,
-  searchParams
-}: {
-  params: Promise<{ reportId: string }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export default async function ReportViewerPage({ params }: { params: Promise<{ reportId: string }> }) {
   const { reportId } = await params;
-  const resolvedSearchParams = searchParams ? await searchParams : {};
   const session = await readSessionContext();
   if (!session) {
     redirect(loginPath(`/reports/${reportId}`));
@@ -81,8 +31,6 @@ export default async function ReportViewerPage({
     apiError = apiErrorMessage(error);
   }
 
-  const actionError = value(resolvedSearchParams?.error);
-
   if (apiError || !report) {
     return (
       <AppShell session={session} title="Audit Report">
@@ -93,233 +41,140 @@ export default async function ReportViewerPage({
     );
   }
 
-  const structured = report.structuredReportJson as unknown as StructuredReportView;
+  const json = report.structuredReportJson;
   const shortId = `report-${report.id.slice(0, 8)}`;
-  const canPublish = report.lifecycleStatus === "draft" && report.groundednessScore === 100;
 
   return (
     <AppShell session={session} title="Audit Report Viewer">
       <div className="reportDocContainer">
         <Link href="/reports" style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 600, color: "var(--ink-muted)", textDecoration: "none" }}>
           <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>arrow_back</span>
-          Back to Audit Reports
+          Back to Reports
         </Link>
 
-        {/* 1. REPORT HEADER */}
         <header className="reportHeaderCard">
           <div className="reportHeaderLeft">
             <span className="eyebrow">Closed Assessment Audit Report</span>
-            <h2 className="reportHeaderTitle">Report {shortId}</h2>
+            <h2 className="reportHeaderTitle">{json.assessment.scopeName}</h2>
             <div className="reportIdMeta">
-              <span>Full Identifier:</span>
-              <code className="reportIdChip" title={report.id}>{report.id}</code>
+              <span>Assessment ID:</span>
+              <code className="reportIdChip" title={json.assessment.id}>{json.assessment.id}</code>
               <span>&middot;</span>
-              <span>Generated {report.generatedAt ? new Date(report.generatedAt).toLocaleDateString() : "recent"}</span>
+              <span>Report {shortId}</span>
+              <span>&middot;</span>
+              <span>Generated {new Date(report.generatedAt).toLocaleString()}</span>
             </div>
+            <p style={{ fontSize: "12px", color: "var(--ink-muted)", marginTop: "6px" }}>
+              Period {new Date(json.assessment.periodStart).toLocaleDateString()} - {new Date(json.assessment.periodEnd).toLocaleDateString()}
+              {" · "}
+              Closed {json.assessment.closedAt ? `${new Date(json.assessment.closedAt).toLocaleDateString()} by ${json.assessment.closedBy}` : "Unknown"}
+              {" · "}
+              Frameworks: {json.assessment.frameworkKeys.join(", ") || "None"}
+            </p>
           </div>
 
           <div className="reportHeaderActions">
-            <span className={`dispBadge ${report.lifecycleStatus === "published" ? "dispSatisfied" : "dispNotApplicable"}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
-                {report.lifecycleStatus === "published" ? "verified" : "edit_note"}
-              </span>
-              {report.lifecycleStatus.toUpperCase()}
-            </span>
-
             <a href={`/reports/${report.id}/download`} style={{ textDecoration: "none" }}>
               <button type="button" className="secondaryButton" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
                 <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>download</span>
                 Download PDF
               </button>
             </a>
-
-            {canPublish ? (
-              <form action="/reports/actions" method="post" style={{ margin: 0 }}>
-                <input type="hidden" name="intent" value="publishReport" />
-                <input type="hidden" name="reportId" value={report.id} />
-                <button type="submit" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>publish</span>
-                  Publish Report
-                </button>
-              </form>
-            ) : null}
           </div>
         </header>
 
-        {actionError ? <ErrorState title="Action failed" detail={actionError} /> : null}
+        <p style={{ fontSize: "12px", color: "var(--ink-faint)" }}>
+          Every figure below is read directly from live data for this assessment and computed by deterministic rules. No AI
+          model was used to generate this report.
+        </p>
 
-        {/* 2. GROUNDEDNESS / ASSURANCE CARD */}
-        <GroundednessAssuranceCard report={report} />
-
-        {/* TRUST BOUNDARY 1: DETERMINISTIC PLATFORM DATA */}
-        <section className="trustBoundary" aria-label="Deterministic compliance data">
+        <section className="trustBoundary" aria-label="Framework compliance">
           <div className="trustBoundaryHeader">
-            <span className="trustBoundaryTitle">Deterministic Platform Data (Source of Truth)</span>
-            <span className="trustBoundaryBadge trustBoundaryBadgeVerified">
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>verified_user</span>
-              Engine Verified
-            </span>
+            <span className="trustBoundaryTitle">1. Framework Compliance Scorecards</span>
           </div>
-
-          {/* 3. FRAMEWORK COMPLIANCE SCORECARDS */}
           <div className="frameworkGrid">
-            {structured.engineResult.frameworks.map((fw) => (
-              <FrameworkScorecardView key={fw.frameworkKey} framework={fw} />
+            {json.compliance.frameworks.map((framework) => (
+              <FrameworkScorecardView key={framework.frameworkKey} framework={framework} />
             ))}
           </div>
-
-          {/* 4. CONTROL EVALUATION MATRIX */}
-          <article className="matrixCard">
-            <div>
-              <h3>Control Evaluation Matrix</h3>
-              <p style={{ fontSize: "12px", color: "var(--ink-muted)", marginTop: "4px" }}>
-                Deterministic evaluation of controls based on submitted answers, evidence links, reviewer approvals, and risk acceptances.
-              </p>
-            </div>
-            <div className="tableScrollerClean">
-              <table className="matrixTable">
-                <thead>
-                  <tr>
-                    <th scope="col">Framework</th>
-                    <th scope="col">Control</th>
-                    <th scope="col">Harmonized Control</th>
-                    <th scope="col">Disposition</th>
-                    <th scope="col">Evaluation Reason</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {structured.engineResult.dispositions.map((disp, idx) => (
-                    <tr key={`${disp.controlId}-${idx}`}>
-                      <td style={{ fontWeight: 700 }}>{disp.frameworkKey}</td>
-                      <td>
-                        <code style={{ fontSize: "12px", fontWeight: 700 }}>{disp.controlId}</code>
-                      </td>
-                      <td>
-                        <code style={{ fontSize: "11px", color: "var(--ink-muted)" }}>{disp.harmonizedControlId}</code>
-                      </td>
-                      <td>
-                        <DispositionPill disposition={disp.disposition} />
-                      </td>
-                      <td className="matrixReasonText">{disp.reason}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          {/* 5. EVIDENCE / DATA QUALITY LIMITATIONS */}
-          {structured.evidenceLimitations.length > 0 ? (
-            <article className="limitationsCard">
-              <div className="limitationsTitle">
-                <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>warning</span>
-                Data Quality & Evidence Limitations
-              </div>
-              <ul className="limitationsList">
-                {structured.evidenceLimitations.map((lim, idx) => (
-                  <li key={idx}>{lim}</li>
-                ))}
-              </ul>
-            </article>
+          {json.compliance.frameworks.length === 0 ? (
+            <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>No framework-linked items on this assessment.</p>
           ) : null}
         </section>
 
-        {/* TRUST BOUNDARY 2: AI NARRATIVE SYNTHESIS */}
-        <section className="trustBoundary" aria-label="AI narrative synthesis">
+        <section className="trustBoundary" aria-label="Control disposition matrix">
           <div className="trustBoundaryHeader">
-            <span className="trustBoundaryTitle">AI Narrative Synthesis</span>
-            <span className="trustBoundaryBadge trustBoundaryBadgeAi">
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>psychology</span>
-              Governed AI Synthesis
-            </span>
+            <span className="trustBoundaryTitle">2. Control Evaluation Matrix</span>
           </div>
+          <DispositionMatrix rows={json.compliance.dispositions} />
+        </section>
 
-          {/* 9. NARRATIVE UNAVAILABLE STATE OR SECTIONS */}
-          {!report.narrativeAvailable ? (
-            <article className="narrativeUnavailablePanel">
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span className="material-symbols-outlined" style={{ color: "var(--ink-muted)" }}>info</span>
-                <span className="narrativeUnavailableTitle">AI Narrative Synthesis Unavailable</span>
-              </div>
-              <p className="narrativeUnavailableDesc">
-                The generated AI narrative did not satisfy Cybernara's strict 100% grounding requirement during validation attempt budget and was excluded from this report. All deterministic framework scorecards, control matrix, and data quality limitations above remain fully available as the primary source of truth.
-              </p>
-            </article>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              {Object.entries(NARRATIVE_SECTION_LABELS).map(([key, label]) => {
-                const stmts = structured.narrative?.[key];
-                if (!stmts || stmts.length === 0) return null;
-                return <NarrativeSectionCard key={key} label={label} statements={stmts} />;
-              })}
-            </div>
-          )}
+        <section className="trustBoundary" aria-label="Evidence matrix">
+          <div className="trustBoundaryHeader">
+            <span className="trustBoundaryTitle">3. Evidence Matrix</span>
+          </div>
+          <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
+            Total: <strong>{json.evidence.total}</strong>
+            {" · "}
+            {Object.entries(json.evidence.byState).map(([state, count]) => `${state}: ${count}`).join(" · ")}
+          </p>
+          <EvidenceTable rows={json.evidence.items} />
+        </section>
+
+        <section className="trustBoundary" aria-label="Findings register">
+          <div className="trustBoundaryHeader">
+            <span className="trustBoundaryTitle">4. Findings Register</span>
+          </div>
+          <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
+            Total: <strong>{json.findings.total}</strong>
+            {" · "}
+            {Object.entries(json.findings.bySeverity).map(([severity, count]) => `${severity}: ${count}`).join(" · ")}
+          </p>
+          <FindingsTable rows={json.findings.items} />
+        </section>
+
+        <section className="trustBoundary" aria-label="Remediation tasks">
+          <div className="trustBoundaryHeader">
+            <span className="trustBoundaryTitle">5. Remediation Register</span>
+          </div>
+          <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
+            Total: <strong>{json.remediationTasks.total}</strong>
+            {" · "}
+            {Object.entries(json.remediationTasks.byStatus).map(([status, count]) => `${status}: ${count}`).join(" · ")}
+          </p>
+          <RemediationTable rows={json.remediationTasks.items} />
+        </section>
+
+        <section className="trustBoundary" aria-label="Risk acceptances">
+          <div className="trustBoundaryHeader">
+            <span className="trustBoundaryTitle">6. Accepted Residual Risks</span>
+          </div>
+          <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
+            Total: <strong>{json.riskAcceptances.total}</strong> · Currently active: <strong>{json.riskAcceptances.active}</strong>
+          </p>
+          <AcceptancesTable rows={json.riskAcceptances.items} />
+        </section>
+
+        <section className="trustBoundary" aria-label="Reviewer decisions">
+          <div className="trustBoundaryHeader">
+            <span className="trustBoundaryTitle">7. Reviewer Decisions</span>
+          </div>
+          <SignoffsTable rows={json.signoffs} />
         </section>
       </div>
     </AppShell>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Sub-components                                                             */
-/* -------------------------------------------------------------------------- */
-
-function GroundednessAssuranceCard({ report }: { report: AuditReport }) {
-  const passed = report.groundednessScore === 100;
-  return (
-    <article className={`assuranceCard ${passed ? "assuranceCardSuccess" : "assuranceCardWarning"}`}>
-      <div className="assuranceHeader">
-        <div className="assuranceScoreGroup">
-          <span className={`material-symbols-outlined ${passed ? "assuranceScoreSuccess" : "assuranceScoreWarning"}`} style={{ fontSize: "32px" }}>
-            {passed ? "verified" : "gpp_maybe"}
-          </span>
-          <div>
-            <div className={`assuranceScore ${passed ? "assuranceScoreSuccess" : "assuranceScoreWarning"}`}>
-              {report.groundednessScore}% Groundedness
-            </div>
-            <div className="assuranceTitle">
-              {passed ? "Rule #2 Citation-Grounded Narrative" : "AI Narrative Grounding Rejected"}
-            </div>
-          </div>
-        </div>
-
-        <div className="assurancePills">
-          <span className="assurancePill">
-            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
-              {passed ? "check_circle" : "cancel"}
-            </span>
-            Narrative: {report.narrativeAvailable ? "Verified & Included" : "Excluded (<100%)"}
-          </span>
-
-          <span className="assurancePill">
-            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>refresh</span>
-            Validation Attempts: {report.groundednessValidationLog.length}
-          </span>
-        </div>
-      </div>
-
-      <p className="assuranceDescription">
-        {passed
-          ? "Every fact and inference statement in this narrative was strictly verified against a cited source record before publication. No ungrounded claims or hallucinated numeric values were permitted."
-          : "This report's AI narrative did not reach 100% groundedness during generation and was excluded from display. The deterministic compliance output below remains the fully trusted source of truth."}
-      </p>
-    </article>
-  );
-}
-
-function FrameworkScorecardView({ framework }: { framework: FrameworkComplianceView }) {
+function FrameworkScorecardView({ framework }: { framework: FrameworkComplianceResult }) {
   const isNa = framework.rawPercentage === null;
   return (
     <article className="frameworkScorecard">
       <div className="frameworkScorecardHeader">
         <span className="frameworkKeyBadge">{framework.frameworkKey}</span>
-        <span className={isNa ? "frameworkBigNa" : "frameworkBigPercentage"}>
-          {framework.displayPercentage}
-        </span>
+        <span className={isNa ? "frameworkBigNa" : "frameworkBigPercentage"}>{framework.displayPercentage}</span>
       </div>
-
       <div className="frameworkFormula">{framework.formula}</div>
-
       <div className="frameworkStatsList">
         <div className="frameworkStatItem">
           <span>Satisfied</span>
@@ -346,6 +201,174 @@ function FrameworkScorecardView({ framework }: { framework: FrameworkComplianceV
   );
 }
 
+function DispositionMatrix({ rows }: { rows: ControlDispositionResult[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="tableScrollerClean">
+      <table className="matrixTable">
+        <thead>
+          <tr>
+            <th scope="col">Framework</th>
+            <th scope="col">Control</th>
+            <th scope="col">Harmonized Control</th>
+            <th scope="col">Disposition</th>
+            <th scope="col">Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, idx) => (
+            <tr key={`${row.itemId}-${idx}`}>
+              <td style={{ fontWeight: 700 }}>{row.frameworkKey}</td>
+              <td><code style={{ fontSize: "12px" }}>{row.controlId}</code></td>
+              <td><code style={{ fontSize: "11px", color: "var(--ink-muted)" }}>{row.harmonizedControlId}</code></td>
+              <td><DispositionPill disposition={row.disposition} /></td>
+              <td className="matrixReasonText">{row.reason}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EvidenceTable({ rows }: { rows: EvidenceSummaryRow[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="tableScrollerClean">
+      <table className="matrixTable">
+        <thead>
+          <tr>
+            <th scope="col">File</th>
+            <th scope="col">State</th>
+            <th scope="col">Linked Items</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td style={{ fontWeight: 700 }}>{row.fileName}</td>
+              <td>{row.state}</td>
+              <td>{row.linkedItemIds.length}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function FindingsTable({ rows }: { rows: FindingSummaryRow[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="tableScrollerClean">
+      <table className="matrixTable">
+        <thead>
+          <tr>
+            <th scope="col">Severity</th>
+            <th scope="col">Description</th>
+            <th scope="col">Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td style={{ fontWeight: 700, textTransform: "capitalize" }}>{row.severity}</td>
+              <td className="matrixReasonText">{row.description}</td>
+              <td>{row.dueAt ? new Date(row.dueAt).toLocaleDateString() : "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RemediationTable({ rows }: { rows: RemediationTaskSummaryRow[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="tableScrollerClean">
+      <table className="matrixTable">
+        <thead>
+          <tr>
+            <th scope="col">Task</th>
+            <th scope="col">Finding</th>
+            <th scope="col">Status</th>
+            <th scope="col">Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td><code style={{ fontSize: "12px" }}>{row.id.slice(0, 8)}</code></td>
+              <td><code style={{ fontSize: "12px" }}>{row.findingId.slice(0, 8)}</code></td>
+              <td>{row.status}</td>
+              <td>{new Date(row.dueAt).toLocaleDateString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AcceptancesTable({ rows }: { rows: RiskAcceptanceSummaryRow[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="tableScrollerClean">
+      <table className="matrixTable">
+        <thead>
+          <tr>
+            <th scope="col">Finding</th>
+            <th scope="col">Rationale</th>
+            <th scope="col">Active</th>
+            <th scope="col">Expires</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td><code style={{ fontSize: "12px" }}>{row.findingId.slice(0, 8)}</code></td>
+              <td className="matrixReasonText">{row.rationale}</td>
+              <td>{row.active ? "Yes" : "No"}</td>
+              <td>{new Date(row.expiresAt).toLocaleDateString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SignoffsTable({ rows }: { rows: SignoffRow[] }) {
+  if (rows.length === 0) {
+    return <p style={{ fontSize: "13px", color: "var(--ink-muted)" }}>No reviewer decisions recorded.</p>;
+  }
+  return (
+    <div className="tableScrollerClean">
+      <table className="matrixTable">
+        <thead>
+          <tr>
+            <th scope="col">Scope</th>
+            <th scope="col">Decision</th>
+            <th scope="col">Signer</th>
+            <th scope="col">Signed At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td style={{ fontWeight: 700 }}>{row.scopeType}</td>
+              <td style={{ textTransform: "capitalize" }}>{row.decision}</td>
+              <td><code style={{ fontSize: "12px" }}>{row.signerId.slice(0, 8)}</code></td>
+              <td>{new Date(row.signedAt).toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function DispositionPill({ disposition }: { disposition: string }) {
   switch (disposition) {
     case "satisfied":
@@ -360,87 +383,4 @@ function DispositionPill({ disposition }: { disposition: string }) {
     default:
       return <span className="dispBadge dispUnresolved">Unresolved</span>;
   }
-}
-
-function NarrativeSectionCard({ label, statements }: { label: string; statements: NarrativeStatementView[] }) {
-  return (
-    <article className="narrativeCard">
-      <div className="narrativeSectionHeader">
-        <h3 className="narrativeTitle">{label}</h3>
-        <span className="label" style={{ fontSize: "10px" }}>AI Synthesis</span>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        {statements.map((stmt, idx) => (
-          <NarrativeStatementBlock key={idx} statement={stmt} />
-        ))}
-      </div>
-    </article>
-  );
-}
-
-function NarrativeStatementBlock({ statement }: { statement: NarrativeStatementView }) {
-  if (statement.claimType === "commentary") {
-    return (
-      <div className="aiObservationBox">
-        <div className="aiObservationHeader">
-          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>lightbulb</span>
-          AI Advisory Observation
-        </div>
-        <div className="aiObservationText">{statement.text}</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="narrativeStatement">
-      <div>{statement.text}</div>
-      {statement.citations.length > 0 ? (
-        <div className="citationChipsRow">
-          <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--ink-faint)", marginRight: "2px" }}>Sources:</span>
-          {statement.citations.map((citationId) => (
-            <CitationChip key={citationId} citationId={citationId} />
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function CitationChip({ citationId }: { citationId: string }) {
-  const parts = citationId.split(":");
-  const type = parts[0] ?? "";
-  let icon = "description";
-  let label = citationId;
-
-  if (type === "FRAMEWORK_COMPLIANCE") {
-    icon = "verified";
-    label = `Framework · ${parts[1] ?? ""}`;
-  } else if (type === "CONTROL") {
-    icon = "rule";
-    label = `Control · ${parts[2] ?? parts[1] ?? ""}`;
-  } else if (type === "FINDING") {
-    icon = "warning";
-    label = `Finding · ${parts[1]?.slice(0, 8) ?? ""}`;
-  } else if (type === "RISK_ACCEPTANCE") {
-    icon = "task_alt";
-    label = `Risk Acceptance · ${parts[1]?.slice(0, 8) ?? ""}`;
-  } else if (type === "EVIDENCE") {
-    icon = "description";
-    label = `Evidence · ${parts[1]?.slice(0, 8) ?? ""}`;
-  } else if (type === "RISK") {
-    icon = "shield";
-    label = `Risk · ${parts[1]?.slice(0, 8) ?? ""}`;
-  }
-
-  return (
-    <span className="citationChip" title={`Source Citation: ${citationId}`}>
-      <span className="material-symbols-outlined citationChipIcon">{icon}</span>
-      <span>{label}</span>
-    </span>
-  );
-}
-
-function value(input: string | string[] | undefined): string {
-  return Array.isArray(input) ? input[0] ?? "" : input ?? "";
 }

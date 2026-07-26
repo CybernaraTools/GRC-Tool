@@ -139,6 +139,7 @@ export interface RiskWorkflowRepository {
   hasRemediationEvidenceLinks(tenantId: string, remediationTaskId: string): Promise<boolean>;
   findActiveRiskAcceptanceForTask(tenantId: string, remediationTaskId: string): Promise<RiskAcceptanceRecord | null>;
   findRiskAcceptance(tenantId: string, riskAcceptanceId: string): Promise<RiskAcceptanceRecord | null>;
+  listRiskAcceptances(input: { tenantId: string; pagination: Pagination }): Promise<RiskAcceptanceRecord[]>;
   createRiskAcceptanceReview(input: {
     tenantId: string;
     review: RiskAcceptanceReview;

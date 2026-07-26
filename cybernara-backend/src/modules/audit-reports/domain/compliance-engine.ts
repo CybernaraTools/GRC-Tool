@@ -1,11 +1,43 @@
-import type { ClosureSnapshotPayload } from "../../closure-snapshot/public.js";
-
 // Deterministic compliance engine. Pure function, no DB/AI access — every
-// number a generated report can ever state traces back to this module's
-// output, and the Rule #2 groundedness validator diffs AI narrative claims
-// against exactly these values (never a re-derivation performed elsewhere,
-// per the feature spec's citation-manifest single-source-of-truth
-// requirement).
+// compliance number the platform report states traces back to this module's
+// output, computed directly from live platform data (no AI narrative,
+// no re-derivation elsewhere).
+
+export interface ComplianceEngineItem {
+  itemId: string;
+  status: string;
+  applicability: { applicable: boolean } | null;
+  controlRef: {
+    frameworkKey: string;
+    frameworkVersion: string;
+    controlId: string;
+    harmonizedControlId: string;
+  };
+}
+
+export interface ComplianceEngineFinding {
+  id: string;
+  assessmentItemId: string | null;
+}
+
+export interface ComplianceEngineRemediationTask {
+  id: string;
+  findingId: string;
+  status: string;
+  reviews: { decision: string }[];
+}
+
+export interface ComplianceEngineRiskAcceptance {
+  findingId: string;
+  active: boolean;
+}
+
+export interface ComplianceEngineInput {
+  items: ComplianceEngineItem[];
+  findings: ComplianceEngineFinding[];
+  remediationTasks: ComplianceEngineRemediationTask[];
+  riskAcceptances: ComplianceEngineRiskAcceptance[];
+}
 
 export type ControlDisposition =
   | "satisfied"
@@ -54,9 +86,9 @@ const DISPOSITION_PRIORITY: Record<FindingResolution, number> = {
   remediation_verified: 1
 };
 
-export function runComplianceEngine(snapshot: ClosureSnapshotPayload): ComplianceEngineResult {
-  const findingsByItem = new Map<string, ClosureSnapshotPayload["findings"]>();
-  for (const finding of snapshot.findings) {
+export function runComplianceEngine(input: ComplianceEngineInput): ComplianceEngineResult {
+  const findingsByItem = new Map<string, ComplianceEngineFinding[]>();
+  for (const finding of input.findings) {
     if (!finding.assessmentItemId) {
       continue;
     }
@@ -65,21 +97,21 @@ export function runComplianceEngine(snapshot: ClosureSnapshotPayload): Complianc
     findingsByItem.set(finding.assessmentItemId, list);
   }
 
-  const remediationByFinding = new Map<string, ClosureSnapshotPayload["remediationTasks"]>();
-  for (const task of snapshot.remediationTasks) {
+  const remediationByFinding = new Map<string, ComplianceEngineRemediationTask[]>();
+  for (const task of input.remediationTasks) {
     const list = remediationByFinding.get(task.findingId) ?? [];
     list.push(task);
     remediationByFinding.set(task.findingId, list);
   }
 
   const activeAcceptanceByFinding = new Map<string, boolean>();
-  for (const acceptance of snapshot.riskAcceptances) {
-    if (acceptance.isActiveAtCapture) {
+  for (const acceptance of input.riskAcceptances) {
+    if (acceptance.active) {
       activeAcceptanceByFinding.set(acceptance.findingId, true);
     }
   }
 
-  const dispositions: ControlDispositionResult[] = snapshot.items.map((item) => {
+  const dispositions: ControlDispositionResult[] = input.items.map((item) => {
     const citationId = `CONTROL:${item.controlRef.frameworkKey}:${item.controlRef.controlId}`;
 
     if (item.applicability && item.applicability.applicable === false) {
@@ -162,7 +194,7 @@ export function runComplianceEngine(snapshot: ClosureSnapshotPayload): Complianc
 
 function resolveFinding(
   findingId: string,
-  remediationByFinding: Map<string, ClosureSnapshotPayload["remediationTasks"]>,
+  remediationByFinding: Map<string, ComplianceEngineRemediationTask[]>,
   activeAcceptanceByFinding: Map<string, boolean>
 ): FindingResolution {
   const tasks = remediationByFinding.get(findingId) ?? [];

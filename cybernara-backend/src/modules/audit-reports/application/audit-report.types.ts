@@ -1,33 +1,98 @@
-import type { Pagination } from "../../../shared/pagination.js";
 import type { ComplianceEngineResult } from "../domain/compliance-engine.js";
-import type { NarrativePayload } from "../domain/narrative-schema.js";
-import type { ValidationAttemptResult } from "../domain/groundedness-validator.js";
+import type { Pagination } from "../../../shared/pagination.js";
 
-export type ReportLifecycleStatus = "draft" | "published";
+export interface RiskAcceptanceSummaryRow {
+  id: string;
+  findingId: string;
+  riskId?: string;
+  rationale: string;
+  approverId: string;
+  approvedAt: Date;
+  expiresAt: Date;
+  active: boolean;
+}
+
+export interface FindingSummaryRow {
+  id: string;
+  severity: string;
+  description: string;
+  assessmentItemId: string | null;
+  ownerId: string | null;
+  dueAt: Date | null;
+}
+
+export interface RemediationTaskSummaryRow {
+  id: string;
+  findingId: string;
+  status: string;
+  ownerId: string;
+  dueAt: Date;
+}
+
+export interface EvidenceSummaryRow {
+  id: string;
+  fileName: string;
+  state: string;
+  classification: string;
+  linkedItemIds: string[];
+}
+
+export interface SignoffRow {
+  id: string;
+  scopeType: string;
+  scopeId: string;
+  signerId: string;
+  decision: string;
+  signedAt: Date;
+}
+
+export interface AuditReportJson {
+  assessment: {
+    id: string;
+    scopeName: string;
+    status: string;
+    periodStart: Date;
+    periodEnd: Date;
+    frameworkKeys: string[];
+    itemCount: number;
+    closedAt: Date | null;
+    closedBy: string | null;
+  };
+  compliance: ComplianceEngineResult;
+  evidence: {
+    total: number;
+    byState: Record<string, number>;
+    items: EvidenceSummaryRow[];
+  };
+  findings: {
+    total: number;
+    bySeverity: Record<string, number>;
+    items: FindingSummaryRow[];
+  };
+  remediationTasks: {
+    total: number;
+    byStatus: Record<string, number>;
+    items: RemediationTaskSummaryRow[];
+  };
+  riskAcceptances: {
+    total: number;
+    active: number;
+    items: RiskAcceptanceSummaryRow[];
+  };
+  signoffs: SignoffRow[];
+}
 
 export interface AuditReportRecord {
   id: string;
   tenantId: string;
   version: number;
   assessmentId: string;
-  snapshotId: string;
   reportType: "closure_audit";
-  lifecycleStatus: ReportLifecycleStatus;
-  reportSchemaVersion: string;
-  complianceMethodologyVersion: string;
-  aiPromptVersion: string;
-  aiModelMetadata: Record<string, unknown>;
   generatedBy: string;
   generatedAt: Date;
   reportHash: string;
-  snapshotHash: string;
   artifactMimeType: string;
-  structuredReportJson: StructuredReportJson;
-  provenance: Record<string, unknown>;
-  citationManifest: Record<string, unknown>;
-  groundednessScore: number;
-  groundednessValidationLog: ValidationAttemptResult[];
-  narrativeAvailable: boolean;
+  structuredReportJson: AuditReportJson;
   classification: string;
   createdBy: string;
   createdAt: Date;
@@ -35,11 +100,10 @@ export interface AuditReportRecord {
   updatedAt: Date;
 }
 
-export interface StructuredReportJson {
-  engineResult: ComplianceEngineResult;
-  narrative: NarrativePayload | null;
-  evidenceLimitations: string[];
-}
+export type AuditReportInsertInput = Omit<
+  AuditReportRecord,
+  "tenantId" | "version" | "classification" | "createdBy" | "createdAt" | "updatedBy" | "updatedAt"
+> & { artifactBytes: Buffer };
 
 export interface ClosedAssessmentSummary {
   assessmentId: string;
@@ -53,22 +117,14 @@ export interface ClosedAssessmentSummary {
   findingCount: number;
   latestReport: {
     reportId: string;
-    lifecycleStatus: ReportLifecycleStatus;
     generatedAt: Date;
-    groundednessScore: number;
   } | null;
 }
 
-export type AuditReportInsertInput = Omit<
-  AuditReportRecord,
-  "tenantId" | "version" | "classification" | "createdBy" | "createdAt" | "updatedBy" | "updatedAt"
-> & { artifactBytes: Buffer };
-
 export interface AuditReportRepository {
-  listClosedAssessments(tenantId: string, actorId: string, pagination: Pagination): Promise<ClosedAssessmentSummary[]>;
+  listClosedAssessments(tenantId: string, pagination: Pagination): Promise<ClosedAssessmentSummary[]>;
   insertReport(input: { tenantId: string; actorId: string; record: AuditReportInsertInput }): Promise<AuditReportRecord>;
-  findReport(tenantId: string, actorId: string, reportId: string): Promise<AuditReportRecord | null>;
-  listReportsForAssessment(tenantId: string, actorId: string, assessmentId: string): Promise<AuditReportRecord[]>;
-  findArtifactBytes(tenantId: string, actorId: string, reportId: string): Promise<Buffer | null>;
-  publishReport(tenantId: string, actorId: string, reportId: string): Promise<AuditReportRecord>;
+  findReport(tenantId: string, reportId: string): Promise<AuditReportRecord | null>;
+  listReportsForAssessment(tenantId: string, assessmentId: string): Promise<AuditReportRecord[]>;
+  findArtifactBytes(tenantId: string, reportId: string): Promise<Buffer | null>;
 }

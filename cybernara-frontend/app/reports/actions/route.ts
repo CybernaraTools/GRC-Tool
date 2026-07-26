@@ -27,16 +27,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (intent === "publishReport") {
-    const reportId = text(formData, "reportId");
-    try {
-      await api.publishAuditReport(reportId);
-      return redirectTo(request, `/reports/${reportId}`);
-    } catch (error) {
-      return redirectTo(request, `/reports/${reportId}?error=${encodeURIComponent(apiErrorMessage(error))}`);
-    }
-  }
-
   return redirectTo(request, "/reports");
 }
 

@@ -24,6 +24,7 @@ export type {
   AssessmentStatus,
   PinnedControlRef
 } from "./domain/assessment.js";
+export type { AssessmentSignoff } from "./domain/execution-graph.js";
 export {
   approveApplicability,
   closeAssessment,
