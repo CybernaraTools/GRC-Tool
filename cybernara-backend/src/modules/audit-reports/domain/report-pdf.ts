@@ -4,6 +4,7 @@ import type {
   AuditReportJson,
   EvidenceSummaryRow,
   FindingSummaryRow,
+  QuestionAnswerRow,
   RemediationTaskSummaryRow,
   RiskAcceptanceSummaryRow,
   SignoffRow
@@ -27,13 +28,17 @@ const INK_FAINT = "#78716c";
 const BORDER = "#e7e5e4";
 const BORDER_STRONG = "#d6d3d1";
 const HEADER_BG = "#f5f5f4";
+const SURFACE_MUTED = "#fafaf9";
 
 const DISPOSITION_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  satisfied: { bg: "#f0fdf4", text: "#166534", border: "#bbf7d0", label: "Satisfied" },
-  remediation_verified: { bg: "#eff6ff", text: "#1e40af", border: "#bfdbfe", label: "Remediation Verified" },
-  accepted_residual_risk: { bg: "#fef3c7", text: "#92400e", border: "#fde68a", label: "Accepted Residual Risk" },
-  not_applicable: { bg: "#f3f4f6", text: "#4b5563", border: "#e5e7eb", label: "Not Applicable" },
-  unresolved: { bg: "#fef2f2", text: "#991b1b", border: "#fecaca", label: "Unresolved" }
+  approved: { bg: "#f0fdf4", text: "#166534", border: "#bbf7d0", label: "Approved" },
+  not_approved: { bg: "#fef2f2", text: "#991b1b", border: "#fecaca", label: "Not Approved" },
+  not_applicable: { bg: "#f3f4f6", text: "#4b5563", border: "#e5e7eb", label: "Not Applicable" }
+};
+
+const BOOLEAN_STYLES = {
+  yes: { bg: "#f0fdf4", text: "#166534", border: "#bbf7d0", label: "Yes" },
+  no: { bg: "#f3f4f6", text: "#4b5563", border: "#e5e7eb", label: "No" }
 };
 
 export async function renderAuditReportPdf(input: AuditReportPdfInput): Promise<Buffer> {
@@ -86,27 +91,31 @@ export async function renderAuditReportPdf(input: AuditReportPdfInput): Promise<
       .fontSize(9)
       .fillColor(INK_FAINT)
       .text(
-        "Every figure below is read directly from live data for this assessment and computed by deterministic rules. No AI model was used to generate this report."
+        "This report is a complete summary of this assessment from start to end - the questions asked, answers and evidence submitted, findings raised, remediation and risk acceptance activity, and the reviewer's own approval decisions. It does not re-evaluate anything: the compliance figures below reflect the review outcome already recorded during the assessment, exactly as recorded. No AI model was used to generate this report."
       );
     doc.moveDown(0.5);
 
-    sectionHeader(doc, "1. Framework Compliance Scorecards");
+    sectionHeader(doc, "1. Assessment Questions & Answers");
+    drawQuestionAnswerCards(doc, report.questionsAndAnswers);
+
+    sectionHeader(doc, "2. Framework Compliance Scorecards");
     drawFrameworkCards(doc, report.compliance.frameworks);
 
-    sectionHeader(doc, "2. Control Evaluation Matrix");
+    sectionHeader(doc, "3. Control Evaluation Matrix");
     drawTable<ControlDispositionResult>(
       doc,
       [
-        { header: "Framework", width: 70, text: (row) => row.frameworkKey, bold: true },
-        { header: "Control", width: 90, text: (row) => row.controlId, mono: true },
-        { header: "Harmonized Control", width: 90, text: (row) => row.harmonizedControlId, mono: true, muted: true },
-        { header: "Disposition", width: 90, badge: (row) => DISPOSITION_STYLES[row.disposition] ?? DISPOSITION_STYLES.unresolved },
-        { header: "Reason", width: contentWidth - 70 - 90 - 90 - 90, text: (row) => row.reason, muted: true }
+        { header: "Framework", width: 65, text: (row) => row.frameworkKey, bold: true },
+        { header: "Control", width: 80, text: (row) => row.controlId, mono: true },
+        { header: "Harmonized Control", width: 80, text: (row) => row.harmonizedControlId, mono: true, muted: true },
+        { header: "Disposition", width: 85, badge: (row) => DISPOSITION_STYLES[row.disposition] ?? DISPOSITION_STYLES.not_approved },
+        { header: "Findings", width: 55, text: (row) => String(row.findingCount), align: "right" },
+        { header: "Reason", width: contentWidth - 65 - 80 - 80 - 85 - 55, text: (row) => row.reason, muted: true }
       ],
       report.compliance.dispositions
     );
 
-    sectionHeader(doc, "3. Evidence Matrix");
+    sectionHeader(doc, "4. Evidence Matrix");
     summaryLine(doc, `Total: ${report.evidence.total}`, report.evidence.byState);
     drawTable<EvidenceSummaryRow>(
       doc,
@@ -118,19 +127,22 @@ export async function renderAuditReportPdf(input: AuditReportPdfInput): Promise<
       report.evidence.items
     );
 
-    sectionHeader(doc, "4. Findings Register");
+    sectionHeader(doc, "5. Findings Register");
     summaryLine(doc, `Total: ${report.findings.total}`, report.findings.bySeverity);
     drawTable<FindingSummaryRow>(
       doc,
       [
-        { header: "Severity", width: 70, text: (row) => capitalize(row.severity), bold: true },
-        { header: "Description", width: contentWidth - 70 - 90, text: (row) => row.description, muted: true },
-        { header: "Due", width: 90, text: (row) => (row.dueAt ? toDate(row.dueAt) : "—") }
+        { header: "Control", width: 90, text: (row) => (row.frameworkKey && row.controlId ? `${row.frameworkKey} ${row.controlId}` : "—"), bold: true },
+        { header: "Severity", width: 55, text: (row) => capitalize(row.severity) },
+        { header: "Description", width: contentWidth - 90 - 55 - 75 - 60 - 60, text: (row) => row.description, muted: true },
+        { header: "Remediated", width: 75, badge: (row) => (row.remediationStatus === "verified" ? BOOLEAN_STYLES.yes : BOOLEAN_STYLES.no) },
+        { header: "Risk Accepted", width: 60, badge: (row) => (row.riskAccepted ? BOOLEAN_STYLES.yes : BOOLEAN_STYLES.no) },
+        { header: "Due", width: 60, text: (row) => (row.dueAt ? toDate(row.dueAt) : "—") }
       ],
       report.findings.items
     );
 
-    sectionHeader(doc, "5. Remediation Register");
+    sectionHeader(doc, "6. Remediation Register");
     summaryLine(doc, `Total: ${report.remediationTasks.total}`, report.remediationTasks.byStatus);
     drawTable<RemediationTaskSummaryRow>(
       doc,
@@ -143,21 +155,27 @@ export async function renderAuditReportPdf(input: AuditReportPdfInput): Promise<
       report.remediationTasks.items
     );
 
-    sectionHeader(doc, "6. Accepted Residual Risks");
+    sectionHeader(doc, "7. Accepted Residual Risks");
     doc.fontSize(9).fillColor(INK_MUTED).text(`Total: ${report.riskAcceptances.total}  ·  Currently active: ${report.riskAcceptances.active}`);
     doc.moveDown(0.5);
     drawTable<RiskAcceptanceSummaryRow>(
       doc,
       [
-        { header: "Finding", width: 80, text: (row) => truncateId(row.findingId), mono: true },
-        { header: "Rationale", width: contentWidth - 80 - 60 - 90, text: (row) => row.rationale, muted: true },
-        { header: "Active", width: 60, text: (row) => (row.active ? "Yes" : "No") },
-        { header: "Expires", width: 90, text: (row) => toDate(row.expiresAt) }
+        { header: "Finding", width: 65, text: (row) => truncateId(row.findingId), mono: true },
+        { header: "Risk", width: 100, text: (row) => (row.riskTitle ? `${row.riskTitle} (${row.riskCategory ?? "—"})` : "—"), bold: true },
+        {
+          header: "Risk Score",
+          width: 65,
+          text: (row) => (row.riskInherentScore !== undefined ? `${row.riskInherentScore} → ${row.riskResidualScore}` : "—")
+        },
+        { header: "Rationale", width: contentWidth - 65 - 100 - 65 - 50 - 80, text: (row) => row.rationale, muted: true },
+        { header: "Active", width: 50, badge: (row) => (row.active ? BOOLEAN_STYLES.yes : BOOLEAN_STYLES.no) },
+        { header: "Expires", width: 80, text: (row) => toDate(row.expiresAt) }
       ],
       report.riskAcceptances.items
     );
 
-    sectionHeader(doc, "7. Reviewer Decisions");
+    sectionHeader(doc, "8. Reviewer Decisions");
     if (report.signoffs.length === 0) {
       doc.fontSize(9).fillColor(INK_MUTED).text("No reviewer decisions recorded.");
     } else {
@@ -209,6 +227,69 @@ function summaryLine(doc: PDFKit.PDFDocument, prefix: string, breakdown: Record<
   doc.fillColor(INK);
 }
 
+function drawQuestionAnswerCards(doc: PDFKit.PDFDocument, rows: QuestionAnswerRow[]): void {
+  if (rows.length === 0) {
+    doc.fontSize(9).fillColor(INK_MUTED).text("No questions on this assessment.");
+    doc.fillColor(INK);
+    return;
+  }
+
+  const left = doc.page.margins.left;
+  const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const pad = 12;
+  const innerWidth = contentWidth - pad * 2;
+
+  for (const row of rows) {
+    doc.font("Helvetica-Bold").fontSize(9.5);
+    const questionLines = doc.heightOfString(row.questionText, { width: innerWidth });
+    const answerText = row.answerText ?? "Not answered.";
+    doc.font("Helvetica").fontSize(9);
+    const answerLines = doc.heightOfString(answerText, { width: innerWidth });
+    const metaHeight = 14;
+    const cardHeight = pad * 2 + 12 + questionLines + 6 + answerLines + 8 + metaHeight;
+
+    ensureSpace(doc, cardHeight + 10);
+    const top = doc.y;
+
+    doc.save();
+    doc.roundedRect(left, top, contentWidth, cardHeight, 6).fillColor(SURFACE_MUTED).fill();
+    doc.roundedRect(left, top, contentWidth, cardHeight, 6).strokeColor(BORDER).lineWidth(1).stroke();
+    doc.restore();
+
+    let cy = top + pad;
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .fillColor(INK_MUTED)
+      .text(`${row.frameworkKey}  ·  ${row.controlId}`, left + pad, cy, { width: innerWidth, lineBreak: false });
+    cy += 12;
+
+    doc.font("Helvetica-Bold").fontSize(9.5).fillColor(INK).text(row.questionText, left + pad, cy, { width: innerWidth });
+    cy += questionLines + 6;
+
+    doc
+      .font(row.answerText ? "Helvetica" : "Helvetica-Oblique")
+      .fontSize(9)
+      .fillColor(row.answerText ? INK_MUTED : INK_FAINT)
+      .text(answerText, left + pad, cy, { width: innerWidth });
+    cy += answerLines + 8;
+
+    doc
+      .font("Helvetica")
+      .fontSize(7.5)
+      .fillColor(INK_FAINT)
+      .text(
+        `Applicable: ${row.applicable ? "Yes" : `No${row.applicabilityRationale ? ` — ${row.applicabilityRationale}` : ""}`}  ·  Evidence attached: ${row.evidenceCount}`,
+        left + pad,
+        cy,
+        { width: innerWidth }
+      );
+
+    doc.y = top + cardHeight + 8;
+  }
+  doc.fillColor(INK).font("Helvetica").fontSize(9);
+}
+
 function drawFrameworkCards(doc: PDFKit.PDFDocument, frameworks: FrameworkComplianceResult[]): void {
   if (frameworks.length === 0) {
     doc.fontSize(9).fillColor(INK_MUTED).text("No framework-linked items on this assessment.");
@@ -221,7 +302,7 @@ function drawFrameworkCards(doc: PDFKit.PDFDocument, frameworks: FrameworkCompli
   const gap = 14;
   const columns = 2;
   const cardWidth = (contentWidth - gap * (columns - 1)) / columns;
-  const cardHeight = 132;
+  const cardHeight = 108;
 
   let col = 0;
   let rowY = doc.y;
@@ -267,10 +348,8 @@ function drawFrameworkCard(doc: PDFKit.PDFDocument, x: number, y: number, w: num
   cy += 10;
 
   const stats: Array<[string, number]> = [
-    ["Satisfied", framework.satisfiedCount],
-    ["Remediated", framework.remediatedCount],
-    ["Accepted Risk", framework.acceptedRiskCount],
-    ["Unresolved", framework.unresolvedCount],
+    ["Approved", framework.approvedCount],
+    ["Not Approved", framework.notApprovedCount],
     ["Not Applicable", framework.notApplicableCount]
   ];
   const statColWidth = (w - pad * 2) / 2;
@@ -291,6 +370,7 @@ interface TableColumn<T> {
   bold?: boolean;
   mono?: boolean;
   muted?: boolean;
+  align?: "left" | "right";
 }
 
 function drawTable<T>(doc: PDFKit.PDFDocument, columns: TableColumn<T>[], rows: T[]): void {
@@ -326,8 +406,7 @@ function drawTable<T>(doc: PDFKit.PDFDocument, columns: TableColumn<T>[], rows: 
 
   for (const row of rows) {
     const cellTexts = columns.map((col) => (col.badge ? null : col.text ? col.text(row) : ""));
-    const font = "Helvetica";
-    doc.font(font).fontSize(8.5);
+    doc.font("Helvetica").fontSize(8.5);
     const heights = columns.map((col, index) => (col.badge ? 18 : doc.heightOfString(cellTexts[index] ?? "", { width: col.width - cellPaddingX * 2 })));
     const rowHeight = Math.max(...heights) + cellPaddingY * 2;
 
@@ -347,7 +426,7 @@ function drawTable<T>(doc: PDFKit.PDFDocument, columns: TableColumn<T>[], rows: 
           .font(col.mono ? "Courier" : col.bold ? "Helvetica-Bold" : "Helvetica")
           .fontSize(8.5)
           .fillColor(col.muted ? INK_MUTED : INK)
-          .text(cellTexts[index] ?? "", x + cellPaddingX, rowY + cellPaddingY, { width: col.width - cellPaddingX * 2 });
+          .text(cellTexts[index] ?? "", x + cellPaddingX, rowY + cellPaddingY, { width: col.width - cellPaddingX * 2, align: col.align ?? "left" });
       }
       x += col.width;
     }

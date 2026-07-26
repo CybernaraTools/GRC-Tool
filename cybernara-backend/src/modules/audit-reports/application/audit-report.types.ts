@@ -5,6 +5,10 @@ export interface RiskAcceptanceSummaryRow {
   id: string;
   findingId: string;
   riskId?: string;
+  riskTitle?: string;
+  riskCategory?: string;
+  riskInherentScore?: number;
+  riskResidualScore?: number;
   rationale: string;
   approverId: string;
   approvedAt: Date;
@@ -17,8 +21,23 @@ export interface FindingSummaryRow {
   severity: string;
   description: string;
   assessmentItemId: string | null;
+  frameworkKey: string | null;
+  controlId: string | null;
   ownerId: string | null;
   dueAt: Date | null;
+  remediationStatus: string | null;
+  riskAccepted: boolean;
+}
+
+export interface QuestionAnswerRow {
+  itemId: string;
+  frameworkKey: string;
+  controlId: string;
+  questionText: string;
+  answerText: string | null;
+  applicable: boolean;
+  applicabilityRationale: string | null;
+  evidenceCount: number;
 }
 
 export interface RemediationTaskSummaryRow {
@@ -58,6 +77,7 @@ export interface AuditReportJson {
     closedAt: Date | null;
     closedBy: string | null;
   };
+  questionsAndAnswers: QuestionAnswerRow[];
   compliance: ComplianceEngineResult;
   evidence: {
     total: number;

@@ -8,6 +8,7 @@ export type {
   ClosedAssessmentSummary,
   EvidenceSummaryRow,
   FindingSummaryRow,
+  QuestionAnswerRow,
   RemediationTaskSummaryRow,
   RiskAcceptanceSummaryRow,
   SignoffRow
@@ -17,9 +18,7 @@ export type {
   ComplianceEngineFinding,
   ComplianceEngineInput,
   ComplianceEngineItem,
-  ComplianceEngineRemediationTask,
   ComplianceEngineResult,
-  ComplianceEngineRiskAcceptance,
   ControlDisposition,
   ControlDispositionResult,
   FrameworkComplianceResult
