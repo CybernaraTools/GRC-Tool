@@ -26,6 +26,7 @@ import type {
 } from "../../src/lib/api/generated";
 import { formatDateTime, firstValue, type SearchParamsRecord } from "../../src/lib/listing";
 import { requireSession } from "../../src/lib/protected-session";
+import { canCreateAssessment as checkCanCreateAssessment, canReviewAssessment, canRaiseFinding, canAnswerQuestion, isOnlyViewer } from "../../src/lib/authorization";
 
 type AssessmentsPageProps = {
   searchParams?: Promise<SearchParamsRecord>;
@@ -160,6 +161,8 @@ export async function AssessmentWorkspacePage({
     apiError = apiErrorMessage(error);
   }
 
+  const isViewer = isOnlyViewer(session);
+
   return (
     <AppShell session={session} title={mode === "review" ? "Assessment Review" : "Assessment Workspace"}>
       {!apiError ? (
@@ -168,10 +171,14 @@ export async function AssessmentWorkspacePage({
           params={params}
           currentUserId={session.userId}
           mode={mode}
+          canCreate={canCreateAssessment(session)}
+          canReview={canReviewAssessment(session)}
+          canRaiseFindingPermission={canRaiseFinding(session)}
+          isViewer={isViewer}
         />
       ) : null}
 
-      {mode === "owner" ? (
+      {mode === "owner" && !isViewer && (editingAssessment || canCreateAssessment(session)) ? (
         <section className="workspace" aria-labelledby="assessment-heading">
           <div className="sectionHeader">
             <div>
@@ -192,7 +199,7 @@ export async function AssessmentWorkspacePage({
             />
           ) : null}
         </section>
-      ) : (
+      ) : mode === "review" ? (
         <section className="workspace" aria-labelledby="assessment-review-heading">
           <div className="sectionHeader">
             <div>
@@ -206,9 +213,9 @@ export async function AssessmentWorkspacePage({
             <EmptyState title="Select an assessment to review" detail="Use the dashboard review links to inspect submitted answers, evidence, findings, test results, sign-offs, and report exports." />
           ) : null}
         </section>
-      )}
+      ) : null}
 
-      {!apiError && assessment ? (
+      {!apiError && assessment && !isViewer ? (
         <>
           <AssessmentSummary assessment={assessment} assessments={assessments} />
           {item ? (
@@ -218,6 +225,9 @@ export async function AssessmentWorkspacePage({
               question={selectedQuestion}
               selectedEvidence={selectedEvidence?.state === "committed" ? selectedEvidence : null}
               evidenceObjects={evidenceObjects}
+              uploadPolicy={evidenceUploadPolicy}
+              ownerId={session.userId}
+              canAnswer={canAnswerQuestion(session)}
               mode={mode}
             />
           ) : (
@@ -233,6 +243,7 @@ export async function AssessmentWorkspacePage({
             selectedEvidenceVersions={selectedEvidenceVersions}
             uploadPolicy={evidenceUploadPolicy}
             ownerId={session.userId}
+            canAnswer={canAnswerQuestion(session)}
             reuseResult={textParam(params, "reuse")}
             mode={mode}
           />
@@ -266,12 +277,20 @@ function AssessmentDashboard({
   assessments,
   params,
   currentUserId,
-  mode
+  mode,
+  canCreate,
+  canReview,
+  canRaiseFindingPermission,
+  isViewer
 }: {
   assessments: Assessment[];
   params: SearchParamsRecord;
   currentUserId: string;
   mode: AssessmentWorkspaceMode;
+  canCreate: boolean;
+  canReview: boolean;
+  canRaiseFindingPermission: boolean;
+  isViewer?: boolean;
 }) {
   const filters = {
     framework: textParam(params, "framework"),
@@ -328,23 +347,31 @@ function AssessmentDashboard({
         <DashboardMetric label="Completed" value={grouped.approved.length + grouped.closed.length} detail={grouped.closed[0]?.scopeName ?? grouped.approved[0]?.scopeName ?? "No completed assessments"} />
         <DashboardMetric label="Assigned to me" value={assignedToMe.length} detail={assignedToMe[0]?.scopeName ?? "No assigned assessment items"} />
       </div>
-      {mode === "owner" ? (
+      {isViewer ? (
         <div className="constraintNote">
-          This page is the control-owner workspace: create assessments, answer assigned controls, upload evidence, and monitor quarantine/scan status.
-          Submitted answers and attached evidence are reviewed in <Link href="/assessments/review">Assessment Review</Link>.
+          Your role has read-only access to assessment statistics. Assessment item details and control workflows are restricted to Control Owners, Compliance Managers, and Auditors.
         </div>
       ) : (
-        <div className="constraintNote">
-          This page is the reviewer workspace: inspect submitted answers and evidence, approve the item, or request changes from the control owner.
-          Control owners answer questions and upload evidence in <Link href="/assessments">Assessment Workspace</Link>.
-        </div>
+        <>
+          {mode === "owner" ? (
+            <div className="constraintNote">
+              This page is the control-owner workspace: create assessments, answer assigned controls, upload evidence, and monitor quarantine/scan status.
+              Submitted answers and attached evidence are reviewed in <Link href="/assessments/review">Assessment Review</Link>.
+            </div>
+          ) : (
+            <div className="constraintNote">
+              This page is the reviewer workspace: inspect submitted answers and evidence, approve the item, or request changes from the control owner.
+              Control owners answer questions and upload evidence in <Link href="/assessments">Assessment Workspace</Link>.
+            </div>
+          )}
+          <AssessmentCardGroup title="Draft" detail="Not started" assessments={grouped.draft} mode={mode} canCreate={canCreate} canReview={canReview} canRaiseFindingPermission={canRaiseFindingPermission} />
+          <AssessmentCardGroup title="In Progress" detail="Work has started" assessments={grouped.inProgress} mode={mode} canCreate={canCreate} canReview={canReview} canRaiseFindingPermission={canRaiseFindingPermission} />
+          <AssessmentCardGroup title="Pending Review" detail="Waiting for reviewer" assessments={grouped.pendingReview} mode={mode} canCreate={canCreate} canReview={canReview} canRaiseFindingPermission={canRaiseFindingPermission} />
+          <AssessmentCardGroup title="Approved" detail="Completed" assessments={grouped.approved} mode={mode} canCreate={canCreate} canReview={canReview} canRaiseFindingPermission={canRaiseFindingPermission} />
+          <AssessmentCardGroup title="Closed" detail="Archived" assessments={grouped.closed} mode={mode} canCreate={canCreate} canReview={canReview} canRaiseFindingPermission={canRaiseFindingPermission} />
+          <AssessmentCardGroup title="Recently Updated" detail="Most recent activity" assessments={recentlyUpdated} mode={mode} canCreate={canCreate} canReview={canReview} canRaiseFindingPermission={canRaiseFindingPermission} />
+        </>
       )}
-      <AssessmentCardGroup title="Draft" detail="Not started" assessments={grouped.draft} mode={mode} />
-      <AssessmentCardGroup title="In Progress" detail="Work has started" assessments={grouped.inProgress} mode={mode} />
-      <AssessmentCardGroup title="Pending Review" detail="Waiting for reviewer" assessments={grouped.pendingReview} mode={mode} />
-      <AssessmentCardGroup title="Approved" detail="Completed" assessments={grouped.approved} mode={mode} />
-      <AssessmentCardGroup title="Closed" detail="Archived" assessments={grouped.closed} mode={mode} />
-      <AssessmentCardGroup title="Recently Updated" detail="Most recent activity" assessments={recentlyUpdated} mode={mode} />
     </section>
   );
 }
@@ -359,7 +386,23 @@ function DashboardMetric({ label, value, detail }: { label: string; value: numbe
   );
 }
 
-function AssessmentCardGroup({ title, detail, assessments, mode }: { title: string; detail: string; assessments: Assessment[]; mode: AssessmentWorkspaceMode }) {
+function AssessmentCardGroup({
+  title,
+  detail,
+  assessments,
+  mode,
+  canCreate,
+  canReview,
+  canRaiseFindingPermission
+}: {
+  title: string;
+  detail: string;
+  assessments: Assessment[];
+  mode: AssessmentWorkspaceMode;
+  canCreate: boolean;
+  canReview: boolean;
+  canRaiseFindingPermission: boolean;
+}) {
   return (
     <div className="tableScroller" aria-label={`${title} assessments`} tabIndex={0}>
       <table>
@@ -398,15 +441,15 @@ function AssessmentCardGroup({ title, detail, assessments, mode }: { title: stri
                   <td>
                     <div className="formActions compactActions">
                       <Link href={`/assessments?assessmentId=${assessment.id}`}>Open</Link>
-                      {mode === "owner" && assessment.status === "not_started" ? (
+                      {mode === "owner" && assessment.status === "not_started" && canCreate ? (
                         <Link href={`/assessments?editAssessmentId=${assessment.id}`}>Edit</Link>
                       ) : null}
-                      {hasReviewableSubmission ? (
+                      {hasReviewableSubmission && canReview ? (
                         <Link href={`/assessments/review?assessmentId=${assessment.id}`}>
                           {mode === "review" ? "Review" : "Review page"}
                         </Link>
                       ) : null}
-                      {assessment.status === "approved" ? (
+                      {assessment.status === "approved" && canRaiseFindingPermission ? (
                         <Link href={`/findings?assessmentId=${assessment.id}`}>Findings</Link>
                       ) : null}
                     </div>
@@ -586,6 +629,9 @@ function ItemWorkflow({
   question,
   selectedEvidence,
   evidenceObjects,
+  uploadPolicy,
+  ownerId,
+  canAnswer,
   mode
 }: {
   assessment: Assessment;
@@ -593,6 +639,9 @@ function ItemWorkflow({
   question: AssessmentQuestionOption | null;
   selectedEvidence: EvidenceObject | null;
   evidenceObjects: EvidenceObject[];
+  uploadPolicy: EvidenceUploadPolicy | null;
+  ownerId: string;
+  canAnswer: boolean;
   mode: AssessmentWorkspaceMode;
 }) {
   const returnToPath = mode === "review" ? "/assessments/review" : "/assessments";
@@ -602,7 +651,12 @@ function ItemWorkflow({
     ...item.evidenceIds,
     ...(selectedEvidence ? [selectedEvidence.id] : [])
   ].filter((id, index, values) => values.indexOf(id) === index);
-  const canEditOwnerItem = canEditAssessmentItem(item);
+  const canEditOwnerItem = canEditAssessmentItem(item, canAnswer);
+  const defaultScopeTags = evidenceScopeTagsForQuestion(question, item);
+  const defaultPeriodStart = dateInputValue(assessment.periodStart);
+  const defaultPeriodEnd = dateInputValue(assessment.periodEnd);
+  const canUploadOwnerEvidence = mode === "owner" && canEditOwnerItem;
+
   return (
     <section className="workspace" aria-labelledby="item-workflow-heading">
       <div className="sectionHeader">
@@ -646,11 +700,41 @@ function ItemWorkflow({
           </form>
         ) : mode === "owner" ? (
           <div className="constraintNote">
-            This answer has been submitted and is locked for review. A reviewer can approve it or reopen it if changes are needed.
+            {!canAnswer
+              ? "Your role can inspect assessment questions and evidence, but only Control Owners and Compliance Managers can submit or edit control answers."
+              : "This answer has been submitted and is locked for review. A reviewer can approve it or reopen it if changes are needed."}
           </div>
         ) : (
           <ReviewerActions assessment={assessment} item={item} />
         )}
+
+        {mode === "owner" ? (
+          canUploadOwnerEvidence ? (
+            uploadPolicy ? (
+              <EvidenceUploadPanel
+                assessmentId={assessment.id}
+                itemId={item.id}
+                ownerId={ownerId}
+                uploadPolicy={uploadPolicy}
+                defaultScopeTags={defaultScopeTags}
+                defaultPeriodStart={defaultPeriodStart}
+                defaultPeriodEnd={defaultPeriodEnd}
+              />
+            ) : (
+              <div className="miniForm">
+                <div className="constraintNote errorNote">Evidence upload policy is unavailable.</div>
+              </div>
+            )
+          ) : (
+            <div className="miniForm">
+              <div className="constraintNote">
+                {!canAnswer
+                  ? "Your role can view uploaded evidence files, but only Control Owners and Compliance Managers can upload evidence."
+                  : "Evidence upload is locked because this answer has already been submitted. A reviewer can reopen the item if more evidence is required."}
+              </div>
+            </div>
+          )
+        ) : null}
       </div>
     </section>
   );
@@ -926,6 +1010,7 @@ function EvidenceWorkflow({
   selectedEvidenceVersions,
   uploadPolicy,
   ownerId,
+  canAnswer,
   reuseResult,
   mode
 }: {
@@ -938,6 +1023,7 @@ function EvidenceWorkflow({
   selectedEvidenceVersions: EvidenceVersion[];
   uploadPolicy: EvidenceUploadPolicy | null;
   ownerId: string;
+  canAnswer: boolean;
   reuseResult: string;
   mode: AssessmentWorkspaceMode;
 }) {
@@ -947,7 +1033,7 @@ function EvidenceWorkflow({
     : assessmentFrameworks(assessment).map(scopeTagFromValue).filter(Boolean);
   const defaultPeriodStart = dateInputValue(assessment.periodStart);
   const defaultPeriodEnd = dateInputValue(assessment.periodEnd);
-  const canUploadOwnerEvidence = mode === "owner" && (!item || canEditAssessmentItem(item));
+  const canUploadOwnerEvidence = mode === "owner" && canAnswer && (!item || canEditAssessmentItem(item, canAnswer));
   const displayedEvidenceObjects = mode === "review" && item
     ? evidenceObjects.filter((evidence) => item.evidenceIds.includes(evidence.id))
     : evidenceObjects;
@@ -984,12 +1070,12 @@ function EvidenceWorkflow({
       {showExtendedReviewWorkflows && mode === "review" && reuseResult ? (
         <div className="constraintNote">Reuse check result: {reuseResult === "yes" ? "Reusable" : "Not reusable"}</div>
       ) : null}
-      <div className="workflowGrid">
-        {canUploadOwnerEvidence ? (
-          uploadPolicy ? (
+      {!item && canUploadOwnerEvidence ? (
+        <div className="workflowGrid">
+          {uploadPolicy ? (
             <EvidenceUploadPanel
               assessmentId={assessment.id}
-              itemId={item?.id}
+              itemId={undefined}
               ownerId={ownerId}
               uploadPolicy={uploadPolicy}
               defaultScopeTags={defaultScopeTags}
@@ -1000,12 +1086,9 @@ function EvidenceWorkflow({
             <div className="miniForm">
               <div className="constraintNote errorNote">Evidence upload policy is unavailable.</div>
             </div>
-          )
-        ) : mode === "owner" ? (
-          <div className="constraintNote">
-            Evidence upload is locked because this answer has already been submitted. A reviewer can reopen the item if more evidence is required.
-          </div>
-        ) : null}
+          )}
+        </div>
+      ) : null}
         {showExtendedReviewWorkflows && mode === "review" && displayedSelectedEvidence ? (
           <form className="miniForm" action={assessmentActionPath} method="post" aria-label="Check evidence reuse">
             <input type="hidden" name="intent" value="checkEvidenceReuse" />
@@ -1025,7 +1108,6 @@ function EvidenceWorkflow({
             <button type="submit">Check reuse</button>
           </form>
         ) : null}
-      </div>
     </section>
   );
 }
@@ -1716,9 +1798,8 @@ function responseTypeLabel(value: AssessmentQuestionOption["responseType"]): str
   return value === "multi_select" ? "Multi-select" : value[0].toUpperCase() + value.slice(1);
 }
 
-function canCreateAssessment(session: Awaited<ReturnType<typeof requireSession>>): boolean {
-  const roles = session.roles.map((role) => role.toLowerCase());
-  return session.scopes.includes("assessment:write") || roles.includes("platform_admin") || roles.includes("compliance_manager");
+function canCreateAssessment(session: any): boolean {
+  return checkCanCreateAssessment(session);
 }
 
 function assessmentMatchesFilters(
@@ -1783,8 +1864,8 @@ function assessmentHasReviewableSubmission(assessment: Assessment): boolean {
   );
 }
 
-function canEditAssessmentItem(item: AssessmentItem): boolean {
-  return item.status === "not_started" || item.status === "in_progress" || item.status === "needs_changes";
+function canEditAssessmentItem(item: AssessmentItem, canAnswer = true): boolean {
+  return canAnswer && (item.status === "not_started" || item.status === "in_progress" || item.status === "needs_changes");
 }
 
 function frameworkLabelsFromQuestion(question: AssessmentQuestionOption | null, item: AssessmentItem): string[] {

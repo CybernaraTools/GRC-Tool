@@ -9,6 +9,9 @@ import { requireSession } from "../../src/lib/protected-session";
 import { AiComposerTabs } from "./composer-tabs";
 import { AiSubmitButton } from "./submit-button";
 
+import { redirect } from "next/navigation";
+import { canGenerateAiQuestions } from "../../src/lib/authorization";
+
 type AiPageProps = {
   searchParams?: Promise<SearchParamsRecord>;
 };
@@ -18,6 +21,9 @@ const aiActionPath = "/ai/actions";
 export default async function AiPage({ searchParams }: AiPageProps) {
   const params = searchParams ? await searchParams : {};
   const session = await requireSession(`/ai${serializeSearchParams(params)}`);
+  if (!canGenerateAiQuestions(session)) {
+    redirect("/dashboard");
+  }
   const api = createServerApiClient(session);
   let pendingQuestions: AiQuestionVersion[] = [];
   let approvedQuestions: AiQuestionVersion[] = [];

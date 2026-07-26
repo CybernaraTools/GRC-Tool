@@ -7,6 +7,8 @@ import type { Assessment, UnifiedQuestion } from "../../src/lib/api/generated";
 import { loginPath } from "../../src/lib/auth";
 import { readSessionContext } from "../../src/lib/session";
 
+import { canCreateAssessment, isOnlyViewer } from "../../src/lib/authorization";
+
 function complianceStatusLabel(percent: number): string {
   if (percent >= 100) return "Fully Compliant";
   if (percent >= 75) return "Good Progress";
@@ -136,6 +138,8 @@ export default async function DashboardPage() {
   // 4. Recent Activity: Latest assessments created or updated
   const recentAssessments = assessments.slice(0, 5);
 
+  const isViewer = isOnlyViewer(session);
+
   return (
     <AppShell session={session} title="Compliance Dashboard">
       <section className="workspace" aria-labelledby="dashboard-heading">
@@ -144,7 +148,7 @@ export default async function DashboardPage() {
             <p className="eyebrow">Compliance Dashboard</p>
             <h2 id="dashboard-heading">Overall Assessment Progress</h2>
           </div>
-          <Link href="/questions" className="inlineSerifLink">Go to Questions</Link>
+          {isViewer ? null : <Link href="/questions" className="inlineSerifLink">Go to Questions</Link>}
         </div>
 
         {apiError ? <ErrorState title="Dashboard could not be loaded" detail={apiError} /> : null}
@@ -242,97 +246,117 @@ export default async function DashboardPage() {
             </div>
 
             {/* Recent Activity & Pending Work Widgets Grid */}
-            <div className="workflowGrid" style={{ marginTop: "32px" }}>
-              {/* Widget 1: Pending Work */}
-              <div className="miniForm">
-                <div className="sectionHeader" style={{ borderBottom: "none", padding: 0 }}>
-                  <div>
-                    <p className="eyebrow">Pending Work</p>
-                    <h2>Questions Awaiting Assessment</h2>
+            {isViewer ? (
+              <div className="constraintNote" style={{ marginTop: "32px" }}>
+                Your role has read-only access to compliance progress metrics and framework breakdown. Pending work items and assessment records are restricted to Control Owners, Compliance Managers, and Auditors.
+              </div>
+            ) : (
+              <div className="workflowGrid" style={{ marginTop: "32px" }}>
+                {/* Widget 1: Pending Work */}
+                <div className="miniForm">
+                  <div className="sectionHeader" style={{ borderBottom: "none", padding: 0 }}>
+                    <div>
+                      <p className="eyebrow">Pending Work</p>
+                      <h2>Questions Awaiting Assessment</h2>
+                    </div>
+                    <Link href="/questions" className="inlineSerifLink">View all</Link>
                   </div>
-                  <Link href="/questions" className="inlineSerifLink">View all</Link>
-                </div>
 
-                {pendingQuestions.length === 0 ? (
-                  <p style={{ color: "var(--ink-muted)", fontSize: "13px" }}>All assessment questions have been completed!</p>
-                ) : (
-                  <div className="dashboardWidgetList">
-                    {pendingQuestions.map((q) => (
-                      <div key={q.id} className="dashboardWidgetItem">
-                        <div className="dashboardWidgetMain">
-                          <p>{q.questionText}</p>
-                          <div className="dashboardWidgetMeta">
-                            {q.frameworkKeys.slice(0, 3).map((key) => (
-                              <span key={key} className="badge internal" style={{ fontSize: "10px", padding: "2px 8px" }}>
-                                {formatFrameworkName(key)}
+                  {pendingQuestions.length === 0 ? (
+                    <p style={{ color: "var(--ink-muted)", fontSize: "13px" }}>All assessment questions have been completed!</p>
+                  ) : (
+                    <div className="dashboardWidgetList">
+                      {pendingQuestions.map((q) => (
+                        <div key={q.id} className="dashboardWidgetItem">
+                          <div className="dashboardWidgetMain">
+                            <p>{q.questionText}</p>
+                            <div className="dashboardWidgetMeta">
+                              {q.frameworkKeys.slice(0, 3).map((key) => (
+                                <span key={key} className="badge internal" style={{ fontSize: "10px", padding: "2px 8px" }}>
+                                  {formatFrameworkName(key)}
+                                </span>
+                              ))}
+                              {q.frameworkKeys.length > 3 ? (
+                                <span className="badge public" style={{ fontSize: "10px", padding: "2px 8px" }}>
+                                  +{q.frameworkKeys.length - 3} more
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div style={{ flexShrink: 0 }}>
+                            {q.assessmentId ? (
+                              <Link
+                                className="button-primary"
+                                style={{ minHeight: "36px", fontSize: "12px", padding: "6px 16px" }}
+                                href={`/assessments?assessmentId=${q.assessmentId}`}
+                              >
+                                View Assessment
+                              </Link>
+                            ) : canCreateAssessment(session) ? (
+                              <Link
+                                className="button-primary"
+                                style={{ minHeight: "36px", fontSize: "12px", padding: "6px 16px" }}
+                                href={`/assessments?questionVersionId=${q.questionVersionId}`}
+                              >
+                                Create Assessment
+                              </Link>
+                            ) : (
+                              <span className="badge public" style={{ fontSize: "11px", padding: "6px 12px" }}>
+                                Unassessed
                               </span>
-                            ))}
-                            {q.frameworkKeys.length > 3 ? (
-                              <span className="badge public" style={{ fontSize: "10px", padding: "2px 8px" }}>
-                                +{q.frameworkKeys.length - 3} more
-                              </span>
-                            ) : null}
+                            )}
                           </div>
                         </div>
-
-                        <div style={{ flexShrink: 0 }}>
-                          <Link
-                            className="button-primary"
-                            style={{ minHeight: "36px", fontSize: "12px", padding: "6px 16px" }}
-                            href={q.assessmentId ? `/assessments?assessmentId=${q.assessmentId}` : `/assessments?questionVersionId=${q.questionVersionId}`}
-                          >
-                            {q.assessmentId ? "View Assessment" : "Create Assessment"}
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Widget 2: Recent Activity */}
-              <div className="miniForm">
-                <div className="sectionHeader" style={{ borderBottom: "none", padding: 0 }}>
-                  <div>
-                    <p className="eyebrow">Recent Activity</p>
-                    <h2>Latest Assessment Records</h2>
-                  </div>
-                  <Link href="/assessments" className="inlineSerifLink">View all</Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {recentAssessments.length === 0 ? (
-                  <p style={{ color: "var(--ink-muted)", fontSize: "13px" }}>No assessments created yet.</p>
-                ) : (
-                  <div className="dashboardWidgetList">
-                    {recentAssessments.map((a) => (
-                      <div key={a.id} className="dashboardWidgetItem">
-                        <div className="dashboardWidgetMain">
-                          <strong style={{ fontSize: "14px", color: "var(--ink)" }}>{a.scopeName}</strong>
-                          <div className="dashboardWidgetMeta">
-                            <span className={`badge ${assessmentStatusBadgeClass(a.status)}`} style={{ fontSize: "10px", padding: "2px 8px" }}>
-                              {a.status.replaceAll("_", " ").toUpperCase()}
-                            </span>
-                            <small style={{ color: "var(--ink-muted)", fontSize: "11px" }}>
-                              {a.items.length} question item(s)
-                            </small>
+                {/* Widget 2: Recent Activity */}
+                <div className="miniForm">
+                  <div className="sectionHeader" style={{ borderBottom: "none", padding: 0 }}>
+                    <div>
+                      <p className="eyebrow">Recent Activity</p>
+                      <h2>Latest Assessment Records</h2>
+                    </div>
+                    <Link href="/assessments" className="inlineSerifLink">View all</Link>
+                  </div>
+
+                  {recentAssessments.length === 0 ? (
+                    <p style={{ color: "var(--ink-muted)", fontSize: "13px" }}>No assessments created yet.</p>
+                  ) : (
+                    <div className="dashboardWidgetList">
+                      {recentAssessments.map((a) => (
+                        <div key={a.id} className="dashboardWidgetItem">
+                          <div className="dashboardWidgetMain">
+                            <strong style={{ fontSize: "14px", color: "var(--ink)" }}>{a.scopeName}</strong>
+                            <div className="dashboardWidgetMeta">
+                              <span className={`badge ${assessmentStatusBadgeClass(a.status)}`} style={{ fontSize: "10px", padding: "2px 8px" }}>
+                                {a.status.replaceAll("_", " ").toUpperCase()}
+                              </span>
+                              <small style={{ color: "var(--ink-muted)", fontSize: "11px" }}>
+                                {a.items.length} question item(s)
+                              </small>
+                            </div>
+                          </div>
+
+                          <div style={{ flexShrink: 0 }}>
+                            <Link
+                              className="reviewLink"
+                              style={{ minHeight: "36px", fontSize: "12px", padding: "6px 16px" }}
+                              href={`/assessments?assessmentId=${a.id}`}
+                            >
+                              Open Record
+                            </Link>
                           </div>
                         </div>
-
-                        <div style={{ flexShrink: 0 }}>
-                          <Link
-                            className="reviewLink"
-                            style={{ minHeight: "36px", fontSize: "12px", padding: "6px 16px" }}
-                            href={`/assessments?assessmentId=${a.id}`}
-                          >
-                            Open Record
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </>
         ) : null}
       </section>

@@ -21,7 +21,7 @@ import type {
   RiskModel,
   RiskTreatment
 } from "../../src/lib/api/generated";
-import { canPerform } from "../../src/lib/authorization";
+import { canCreateRisk, canPerform, canReviewAssessment } from "../../src/lib/authorization";
 import { firstValue, formatDateTime, type SearchParamsRecord } from "../../src/lib/listing";
 import { requireSession } from "../../src/lib/protected-session";
 import { isTenantSession } from "../../src/lib/session";
@@ -68,7 +68,7 @@ export default async function RisksPage({ searchParams }: RisksPageProps) {
   }
 
   const canReadRiskWorkflow = canPerform(session, ["finding:read", "remediation_task:read", "risk:read"]);
-  const canWriteRisk = canPerform(session, "risk:write");
+  const canWriteRisk = canCreateRisk(session);
   const canWriteRemediation = canPerform(session, "remediation_task:write");
   if (!canReadRiskWorkflow) {
     return (
@@ -195,6 +195,7 @@ export default async function RisksPage({ searchParams }: RisksPageProps) {
                 currentUserId={session.userId}
                 canWriteRisk={canWriteRisk}
                 canWriteRemediation={canWriteRemediation}
+                canReview={canReviewAssessment(session)}
                 workflowMode={workflowMode}
                 workflowChoice={workflowChoice}
               />
@@ -422,6 +423,7 @@ function RiskDecisionWorkspace({
   currentUserId,
   canWriteRisk,
   canWriteRemediation,
+  canReview,
   workflowMode,
   workflowChoice
 }: {
@@ -441,6 +443,7 @@ function RiskDecisionWorkspace({
   currentUserId: string;
   canWriteRisk: boolean;
   canWriteRemediation: boolean;
+  canReview: boolean;
   workflowMode: string;
   workflowChoice: string;
 }) {
@@ -538,6 +541,7 @@ function RiskDecisionWorkspace({
               reviews={taskReviews}
               acceptance={selectedAcceptance}
               canWriteRemediation={canWriteRemediation}
+              canReview={canReview}
             />
           ) : null}
         </div>
@@ -879,7 +883,7 @@ function RemediationSubmissionForm({
         Due date
         <input type="date" name="dueAt" defaultValue={dateInputValue(task.dueAt)} />
       </label>
-      <div className="constraintNote">You can select previously submitted evidence files, upload new files, or both. Classification defaults to restricted.</div>
+      <div className="constraintNote">Providing additional evidence files is optional. You can select previously submitted files, upload new files, or submit answer text only.</div>
       <button type="submit">Submit remediation for review</button>
     </form>
   );
@@ -897,7 +901,8 @@ function RemediationReviewFlow({
   linkedEvidence,
   reviews,
   acceptance,
-  canWriteRemediation
+  canWriteRemediation,
+  canReview
 }: {
   finding: Finding;
   assessment: Assessment | null;
@@ -911,6 +916,7 @@ function RemediationReviewFlow({
   reviews: RemediationTaskReview[];
   acceptance: RiskAcceptance | null;
   canWriteRemediation: boolean;
+  canReview: boolean;
 }) {
   return (
     <div className="reviewFlowContainer">
@@ -924,7 +930,7 @@ function RemediationReviewFlow({
         treatment={treatment}
         originalEvidence={originalEvidence}
       />
-      {acceptance ? <RiskAcceptanceSummary task={task} risk={risk} acceptance={acceptance} canWriteRemediation={canWriteRemediation} /> : null}
+      {acceptance ? <RiskAcceptanceSummary task={task} risk={risk} acceptance={acceptance} canReview={canReview} /> : null}
       <section className="subWorkspace" aria-labelledby="remediation-evidence-review-heading">
         <div className="sectionHeader">
           <div>
@@ -935,7 +941,7 @@ function RemediationReviewFlow({
         </div>
         <EvidenceTable title="New remediation evidence" evidence={linkedEvidence} emptyText="No remediation evidence has been submitted for this task." />
       </section>
-      {task.status !== "verified" && task.status !== "risk_accepted" ? (
+      {canReview && task.status !== "verified" && task.status !== "risk_accepted" ? (
         <RemediationReviewAiAssistForm
           assessmentName={assessment?.scopeName ?? "Assessment context unavailable"}
           itemId={item.id}
@@ -968,15 +974,17 @@ function RemediationReviewFlow({
           remediationEvidenceNames={linkedEvidence.map((entry) => entry.object.fileName)}
         />
       ) : null}
-      <RemediationReviewWorkspace
-        finding={finding}
-        risk={risk}
-        task={task}
-        linkedEvidence={linkedEvidence}
-        reviews={reviews}
-        canWriteRemediation={canWriteRemediation && task.status !== "verified" && task.status !== "risk_accepted" && linkedEvidence.length > 0}
-      />
-      <ClosureReadiness task={task} risk={risk} acceptance={acceptance} assessment={assessment} />
+      {canReview ? (
+        <RemediationReviewWorkspace
+          finding={finding}
+          risk={risk}
+          task={task}
+          linkedEvidence={linkedEvidence}
+          reviews={reviews}
+          canReview={canReview && task.status !== "verified" && task.status !== "risk_accepted" && linkedEvidence.length > 0}
+        />
+      ) : null}
+      <ClosureReadiness task={task} risk={risk} acceptance={acceptance} assessment={assessment} canReview={canReview} />
     </div>
   );
 }
@@ -1093,12 +1101,12 @@ function RiskAcceptanceSummary({
   task,
   risk,
   acceptance,
-  canWriteRemediation
+  canReview
 }: {
   task: RemediationTask;
   risk: Risk;
   acceptance: RiskAcceptance;
-  canWriteRemediation: boolean;
+  canReview: boolean;
 }) {
   return (
     <section className="subWorkspace" aria-labelledby="risk-acceptance-summary-heading">
@@ -1124,7 +1132,7 @@ function RiskAcceptanceSummary({
           <p>{acceptance.compensatingControls ?? "No compensating controls recorded."}</p>
         </article>
       </div>
-      {canWriteRemediation && task.status !== "verified" ? (
+      {canReview && task.status !== "verified" ? (
         <form className="miniForm" action={risksActionPath} method="post" aria-label="Review risk acceptance">
           <input type="hidden" name="intent" value="reviewAcceptance" />
           <input type="hidden" name="findingId" value={task.findingId} />
@@ -1200,14 +1208,14 @@ function RemediationReviewWorkspace({
   task,
   linkedEvidence,
   reviews,
-  canWriteRemediation
+  canReview
 }: {
   finding: Finding;
   risk: Risk | null;
   task: RemediationTask;
   linkedEvidence: EvidenceContext[];
   reviews: RemediationTaskReview[];
-  canWriteRemediation: boolean;
+  canReview: boolean;
 }) {
   const linkedVersionIds = linkedEvidence.map((entry) => entry.version?.id).filter((value): value is string => Boolean(value));
   return (
@@ -1248,7 +1256,7 @@ function RemediationReviewWorkspace({
           </tbody>
         </table>
       </div>
-      {canWriteRemediation ? (
+      {canReview ? (
         <div className="workflowGrid">
           <form className="miniForm" action={risksActionPath} method="post" aria-label="Approve remediation">
             <input type="hidden" name="intent" value="reviewRemediationTask" />
@@ -1284,7 +1292,7 @@ function RemediationReviewWorkspace({
           </form>
         </div>
       ) : (
-        <div className="constraintNote">Your role can view review decisions but cannot approve or reject remediation work.</div>
+        <div className="constraintNote">Remediation verification and review decisions are reserved for Auditors and Platform Admins.</div>
       )}
     </section>
   );
@@ -1294,14 +1302,18 @@ function ClosureReadiness({
   task,
   risk,
   acceptance,
-  assessment
+  assessment,
+  canReview
 }: {
   task: RemediationTask;
   risk: Risk | null;
   acceptance: RiskAcceptance | null;
   assessment: Assessment | null;
+  canReview: boolean;
 }) {
-  const ready = task.status === "verified" || task.status === "risk_accepted";
+  const remediationApproved = task.status === "verified";
+  const riskAcceptanceApproved = task.status === "risk_accepted" && Boolean(acceptance?.active);
+  const ready = remediationApproved || riskAcceptanceApproved;
   return (
     <section className="subWorkspace" aria-labelledby="closure-readiness-heading">
       <div className="sectionHeader">
@@ -1320,7 +1332,7 @@ function ClosureReadiness({
         <article className="closureCard">
           <span className="label">Mitigation task</span>
           <strong>{task.status.replaceAll("_", " ")}</strong>
-          <small>{ready ? "Reviewer has verified remediation or accepted residual risk." : "Awaiting remediation evidence, review, or risk acceptance."}</small>
+          <small>{ready ? "Reviewer has verified remediation or approved risk acceptance." : "Awaiting remediation review approval or risk acceptance approval."}</small>
         </article>
         <article className="closureCard">
           <span className="label">Risk acceptance</span>
@@ -1329,9 +1341,9 @@ function ClosureReadiness({
         </article>
         <article className="closureCard">
           <span className="label">Assessment closure</span>
-          {ready && assessment ? (
+          {ready && assessment && canReview ? (
             <>
-              <p>Remediation is verified. Go to Assessment Review to approve all items and close the assessment.</p>
+              <p>Remediation or risk acceptance is approved. Go to Assessment Review to approve all items and close the assessment.</p>
               <Link
                 className="reviewLink"
                 href={`/assessments/review?assessmentId=${assessment.id}`}
@@ -1339,8 +1351,10 @@ function ClosureReadiness({
                 Go to Assessment Review
               </Link>
             </>
+          ) : ready ? (
+            <p>Remediation or risk acceptance is approved. An auditor or platform admin can now review and close the assessment.</p>
           ) : (
-            <p>Close the assessment from Assessment Review after all assessment items are approved and any required risk/remediation path is verified or formally accepted.</p>
+            <p>Assessment closure is available after remediation is approved by a reviewer or risk acceptance is approved.</p>
           )}
         </article>
       </div>

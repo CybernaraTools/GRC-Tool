@@ -5,8 +5,14 @@ import { requireSession } from "../../../src/lib/protected-session";
 import { AdminUsersConsole } from "./admin-users-console";
 import type { AdminRole, AdminUser } from "../../../src/lib/api/generated";
 
+import { redirect } from "next/navigation";
+import { canManageUsers } from "../../../src/lib/authorization";
+
 export default async function AdminUsersPage() {
   const session = await requireSession("/admin/users");
+  if (!canManageUsers(session)) {
+    redirect("/dashboard");
+  }
   const api = createServerApiClient(session);
   let users: AdminUser[] = [];
   let roles: AdminRole[] = [];

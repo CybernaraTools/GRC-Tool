@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     if (session.kind === "platform") {
       redirect(platformOperatorPath(nextPath) ? nextPath : "/platform/tenants");
     }
-    redirect(nextPath.startsWith("/platform") ? "/" : nextPath);
+    redirect(nextPath === "/" || nextPath.startsWith("/platform") ? "/dashboard" : nextPath);
   }
 
   return (

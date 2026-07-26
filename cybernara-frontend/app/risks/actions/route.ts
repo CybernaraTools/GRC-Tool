@@ -260,13 +260,6 @@ export async function POST(request: NextRequest) {
       .getAll("files")
       .filter((value): value is File => value instanceof File && value.size > 0);
 
-    if (files.length === 0 && existingVersionIds.length === 0) {
-      return NextResponse.json(
-        { error: "Provide at least one evidence file (either upload new files or select from previously submitted evidence)." },
-        { status: 400 }
-      );
-    }
-
     for (const [index, versionId] of existingVersionIds.entries()) {
       await api
         .createEvidenceLink(

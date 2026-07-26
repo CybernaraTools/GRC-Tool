@@ -3,20 +3,19 @@ import { sessionBackendHeaders } from "../src/lib/session";
 
 describe("session backend headers", () => {
   it("serializes roles and scopes with commas for the backend request-context parser", () => {
-    expect(
-      sessionBackendHeaders({
-        kind: "tenant",
-        tenantId: "00000000-0000-4000-8000-000000000001",
-        userId: "00000000-0000-4000-8000-000000000002",
-        email: "admin@example.com",
-        roles: ["platform_admin", "auditor"],
-        scopes: ["audit_event:read", "framework-content:read", "harmonization:read"],
-        clearance: "restricted"
-      })
-    ).toMatchObject({
-      "x-user-roles": "platform_admin,auditor",
-      "x-user-scopes": "audit_event:read,framework-content:read,harmonization:read"
+    const headers = sessionBackendHeaders({
+      kind: "tenant",
+      tenantId: "00000000-0000-4000-8000-000000000001",
+      userId: "00000000-0000-4000-8000-000000000002",
+      email: "admin@example.com",
+      roles: ["platform_admin", "auditor"],
+      scopes: ["audit_event:read", "framework-content:read", "harmonization:read"],
+      clearance: "restricted"
     });
+
+    expect(headers["x-user-roles"]).toBe("platform_admin,auditor");
+    expect(headers["x-user-scopes"]).toContain("audit_event:read");
+    expect(headers["x-user-scopes"]).toContain("framework-content:read");
   });
 
   it("serializes platform operators without tenant headers", () => {

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AppShell } from "../../src/components/app-shell";
 import { ErrorState } from "../../src/components/ui-states";
 import { apiErrorMessage, createServerApiClient } from "../../src/lib/api/server";
-import { accessDeniedDetail, canAccessFeature, canPerform } from "../../src/lib/authorization";
+import { accessDeniedDetail, canAccessFeature, canCreateRisk, canPerform } from "../../src/lib/authorization";
 import type {
   AccessReview,
   AuditEngagement,
@@ -317,7 +317,7 @@ function RiskRegisterPanel({
   models: RiskModel[];
   session: { roles: string[]; scopes: string[] };
 }) {
-  const canWriteRisk = canPerform(session, "risk:write");
+  const canWriteRisk = canCreateRisk(session);
   if (!canWriteRisk) {
     return null;
   }

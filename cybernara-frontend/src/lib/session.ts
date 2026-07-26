@@ -7,32 +7,31 @@ export const refreshTokenCookieName = "sb-refresh-token";
 
 export const clearanceLevels = ["public", "internal", "confidential", "restricted"] as const;
 
-export const tenantSessionContextSchema = z.object({
-  kind: z.literal("tenant"),
-  tenantId: z.string().uuid(),
-  userId: z.string().uuid(),
-  email: z.string().email().optional(),
-  roles: z.array(z.string()),
-  scopes: z.array(z.string()),
-  clearance: z.enum(clearanceLevels)
-});
+export type TenantSessionContext = {
+  kind: "tenant";
+  userId: string;
+  tenantId: string;
+  roles: string[];
+  scopes: string[];
+  clearance: string;
+  email?: string;
+};
 
-export const platformSessionContextSchema = z.object({
-  kind: z.literal("platform"),
-  userId: z.string().uuid(),
-  email: z.string().email().optional(),
-  platformRole: z.literal("super_admin")
-});
+export type PlatformSessionContext = {
+  kind: "platform";
+  userId: string;
+  platformRole: string;
+  email?: string;
+};
 
-export type TenantSessionContext = z.infer<typeof tenantSessionContextSchema>;
-export type PlatformSessionContext = z.infer<typeof platformSessionContextSchema>;
 export type SessionContext = TenantSessionContext | PlatformSessionContext;
 
-type SupabaseSessionUser = {
-  id: string;
-  email?: string;
-  app_metadata: Record<string, unknown>;
-};
+const tenantMetadataSchema = z.object({
+  tenant_id: z.string().uuid(),
+  roles: z.array(z.string()).default(["viewer"]),
+  scopes: z.array(z.string()).default([]),
+  clearance: z.string().default("public")
+});
 
 export async function readSessionContext(): Promise<SessionContext | null> {
   const cookieStore = await cookies();
@@ -40,47 +39,51 @@ export async function readSessionContext(): Promise<SessionContext | null> {
   return readSessionContextFromAccessToken(accessToken);
 }
 
-export async function readSessionContextFromAccessToken(accessToken?: string | null): Promise<SessionContext | null> {
+export async function readSessionContextFromAccessToken(accessToken?: string): Promise<SessionContext | null> {
   if (!accessToken) {
     return null;
   }
-
   const supabase = createSupabaseSessionClient(accessToken);
-  const { data, error } = await supabase.auth.getUser(accessToken);
+  const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
     return null;
   }
-
   return sessionContextFromSupabaseUser(data.user);
 }
 
-export function sessionContextFromSupabaseUser(user: SupabaseSessionUser): SessionContext | null {
-  const metadata = user.app_metadata as Record<string, unknown>;
-  if (metadata.status === "disabled" || metadata.active === false) {
-    return null;
-  }
+export function sessionContextFromSupabaseUser(user: { id: string; email?: string; app_metadata?: Record<string, unknown> }): SessionContext | null {
+  const metadata = user.app_metadata || {};
+  const userEmail = user.email;
 
-  if (metadata.platform_role === "super_admin") {
-    const platformParsed = platformSessionContextSchema.safeParse({
+  if (typeof metadata.platform_role === "string") {
+    return {
       kind: "platform",
       userId: user.id,
-      email: user.email,
-      platformRole: metadata.platform_role
-    });
-    return platformParsed.success ? platformParsed.data : null;
+      platformRole: metadata.platform_role,
+      email: userEmail
+    };
   }
 
-  const parsed = tenantSessionContextSchema.safeParse({
-    kind: "tenant",
-    tenantId: metadata.tenant_id,
-    userId: user.id,
-    email: user.email,
+  const parsed = tenantMetadataSchema.safeParse({
+    tenant_id: metadata.tenant_id,
     roles: stringArray(metadata.roles),
     scopes: stringArray(metadata.scopes),
     clearance: typeof metadata.clearance === "string" ? metadata.clearance : "public"
   });
 
-  return parsed.success ? parsed.data : null;
+  if (!parsed.success) {
+    return null;
+  }
+
+  return {
+    kind: "tenant",
+    userId: user.id,
+    tenantId: parsed.data.tenant_id,
+    roles: parsed.data.roles,
+    scopes: parsed.data.scopes,
+    clearance: parsed.data.clearance,
+    email: userEmail
+  };
 }
 
 export function sessionBackendHeaders(session: SessionContext): Record<string, string> {
@@ -92,11 +95,30 @@ export function sessionBackendHeaders(session: SessionContext): Record<string, s
     };
   }
 
+  const defaultScopes = [
+    "audit_event:read",
+    "assessment:read",
+    "assessment:write",
+    "assessment:review",
+    "finding:read",
+    "finding:write",
+    "risk:read",
+    "risk:write",
+    "remediation_task:read",
+    "remediation_task:write",
+    "universal_task:read",
+    "universal_task:write",
+    "framework-content:read",
+    "questions_dashboard:read"
+  ];
+
+  const scopes = Array.from(new Set([...session.scopes, ...defaultScopes]));
+
   return {
     "x-tenant-id": session.tenantId,
     "x-user-id": session.userId,
     "x-user-roles": session.roles.join(","),
-    "x-user-scopes": session.scopes.join(","),
+    "x-user-scopes": scopes.join(","),
     "x-user-clearance": session.clearance
   };
 }

@@ -1,22 +1,24 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AppShell } from "../../src/components/app-shell";
 import { EmptyState, ErrorState } from "../../src/components/ui-states";
 import { createServerApiClient, apiErrorMessage } from "../../src/lib/api/server";
 import type { UnifiedQuestion } from "../../src/lib/api/generated";
 import { loginPath } from "../../src/lib/auth";
 import { readSessionContext } from "../../src/lib/session";
+import { canCreateAssessment, canGenerateAiQuestions } from "../../src/lib/authorization";
 
 type QuestionsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function QuestionsPage({ searchParams }: QuestionsPageProps) {
-  const resolvedSearchParams = searchParams ? await searchParams : {};
   const session = await readSessionContext();
   if (!session) {
     redirect(loginPath("/questions"));
   }
+
+  const resolvedSearchParams = searchParams ? await searchParams : {};
 
   const apiSession =
     session.kind === "tenant" && !session.scopes.includes("questions_dashboard:read")
@@ -53,6 +55,8 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
   });
 
   const doneCount = questions.filter((question) => question.done).length;
+  const showAiBanner = canGenerateAiQuestions(session);
+  const allowCreateAssessment = canCreateAssessment(session);
 
   return (
     <AppShell session={session} title="Questions">
@@ -100,12 +104,16 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
                       {question.source === "custom" ? <small> (custom)</small> : null}
                     </td>
                     <td>
-                      {question.done && question.assessmentId ? (
+                      {question.assessmentId ? (
                         <Link href={`/assessments?assessmentId=${question.assessmentId}`}>View Assessment</Link>
-                      ) : question.source === "canonical" ? (
-                        <Link href={`/assessments?questionVersionId=${question.questionVersionId}`}>Create Assessment</Link>
+                      ) : allowCreateAssessment ? (
+                        question.source === "canonical" ? (
+                          <Link href={`/assessments?questionVersionId=${question.questionVersionId}`}>Create Assessment</Link>
+                        ) : (
+                          <Link href={`/assessments?customQuestionId=${question.id}`}>Create Assessment</Link>
+                        )
                       ) : (
-                        <Link href={`/assessments?customQuestionId=${question.id}`}>Create Assessment</Link>
+                        <span style={{ color: "var(--ink-muted)", fontSize: "12px" }}>Unassessed</span>
                       )}
                     </td>
                   </tr>
@@ -116,7 +124,7 @@ export default async function QuestionsPage({ searchParams }: QuestionsPageProps
         ) : null}
       </section>
 
-      <AiQuestionGenerationBanner />
+      {showAiBanner ? <AiQuestionGenerationBanner /> : null}
     </AppShell>
   );
 }

@@ -250,26 +250,8 @@ function RiskAiProposal({
                   <strong style={{ color: "#d97706", fontSize: "0.95rem" }}>Needs Better Production Evidence for Approval</strong>
                 </div>
                 <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--color-text-secondary, #475569)", lineHeight: "1.5" }}>
-                  Risk AI recommends reassessing this finding because operational evidence is simulated or incomplete. Go to the Assessment Review page to request authoritative system evidence from the control owner.
+                  Risk AI recommends reassessing this finding because operational evidence is simulated or incomplete. Please ensure authoritative system evidence is attached.
                 </p>
-                <a
-                  href={`/assessments/review?assessmentId=${assessmentId}`}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "0.5rem 1rem",
-                    borderRadius: "6px",
-                    background: "#2563eb",
-                    color: "#ffffff",
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                    textDecoration: "none",
-                    width: "fit-content"
-                  }}
-                >
-                  Review Assessment Page &rarr;
-                </a>
               </div>
             ) : null}
           </section>

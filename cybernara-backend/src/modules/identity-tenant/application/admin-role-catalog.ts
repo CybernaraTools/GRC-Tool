@@ -410,6 +410,7 @@ export const adminRoleCatalog: AdminRoleDefinition[] = [
       "question_version:read",
       "report_export:read",
       "audit_report:read",
+      "audit_report:write",
       "policy_version:read",
       "access_review:read",
       "vendor:read",

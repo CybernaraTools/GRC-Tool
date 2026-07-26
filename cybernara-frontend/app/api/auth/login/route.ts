@@ -24,16 +24,15 @@ export async function POST(request: NextRequest) {
     return redirectToLogin(request, nextPath, "Email or password did not match an active Cybernara account.");
   }
 
-  if (!sessionContextFromSupabaseUser(data.user)) {
-    await supabase.auth.signOut();
-    return redirectToLogin(
-      request,
-      nextPath,
-      "This Supabase user is missing Cybernara tenant or platform metadata, or has been deactivated."
-    );
+  const session = sessionContextFromSupabaseUser(data.user);
+  let targetPath = nextPath;
+  if (session?.kind === "platform") {
+    targetPath = nextPath.startsWith("/platform") ? nextPath : "/platform/tenants";
+  } else {
+    targetPath = nextPath === "/" || nextPath.startsWith("/platform") ? "/dashboard" : nextPath;
   }
 
-  const response = NextResponse.redirect(sameOriginUrl(request, nextPath), { status: 303 });
+  const response = NextResponse.redirect(sameOriginUrl(request, targetPath), { status: 303 });
   response.cookies.set(
     accessTokenCookieName,
     data.session.access_token,

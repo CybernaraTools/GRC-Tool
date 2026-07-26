@@ -14,6 +14,9 @@ import { firstValue, formatDateTime, type SearchParamsRecord } from "../../src/l
 import { requireSession } from "../../src/lib/protected-session";
 import { FindingAiAssistForm } from "./finding-ai-assist-form";
 
+import { redirect } from "next/navigation";
+import { canRaiseFinding, canReviewAssessment } from "../../src/lib/authorization";
+
 type FindingsPageProps = {
   searchParams?: Promise<SearchParamsRecord>;
 };
@@ -24,6 +27,9 @@ export default async function FindingsPage({ searchParams }: FindingsPageProps) 
   const params = searchParams ? await searchParams : {};
   const nextPath = `/findings${serializeSearchParams(params)}`;
   const session = await requireSession(nextPath);
+  if (!canRaiseFinding(session)) {
+    redirect("/dashboard");
+  }
   const api = createServerApiClient(session);
   let assessments: Assessment[] = [];
   let assessment: Assessment | null = null;
@@ -110,7 +116,7 @@ export default async function FindingsPage({ searchParams }: FindingsPageProps) 
             <EmptyState
               title="No approved assessment selected"
               detail="Findings are opened from approved assessments. Approve the assessment first, then use its Findings action."
-              action={<Link href="/assessments/review">Open assessment review</Link>}
+              action={canReviewAssessment(session) ? <Link href="/assessments/review">Open assessment review</Link> : undefined}
             />
           )}
         </>

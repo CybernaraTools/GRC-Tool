@@ -3,12 +3,17 @@ import { revalidatePath } from "next/cache";
 import { loginPath } from "../../../src/lib/auth";
 import { createServerApiClient } from "../../../src/lib/api/server";
 import { accessTokenCookieName, readSessionContextFromAccessToken } from "../../../src/lib/session";
+import { isOnlyViewer } from "../../../src/lib/authorization";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const session = await readSessionContextFromAccessToken(request.cookies.get(accessTokenCookieName)?.value);
   if (!session || session.kind !== "tenant") {
     return redirectTo(request, loginPath("/frameworks"));
+  }
+
+  if (isOnlyViewer(session)) {
+    return NextResponse.json({ error: "Viewers are not allowed to enable or disable frameworks." }, { status: 403 });
   }
 
   const api = createServerApiClient(session);

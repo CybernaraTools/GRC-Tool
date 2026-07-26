@@ -20,6 +20,7 @@ import {
 } from "../../src/lib/listing";
 import { requireAnySession } from "../../src/lib/protected-session";
 import { isPlatformSession } from "../../src/lib/session";
+import { isOnlyViewer } from "../../src/lib/authorization";
 
 type FrameworksPageProps = {
   searchParams?: Promise<SearchParamsRecord>;
@@ -30,6 +31,7 @@ export default async function FrameworksPage({ searchParams }: FrameworksPagePro
   const nextPath = `/frameworks${serializeSearchParams(params)}`;
   const session = await requireAnySession(nextPath);
   const isPlatform = isPlatformSession(session);
+  const isViewer = isOnlyViewer(session);
   const api = createServerApiClient(session);
   const packsPage = parsePage(params, "packs", 25);
   const requirementsPage = parsePage(params, "requirements", 25);
@@ -75,10 +77,10 @@ export default async function FrameworksPage({ searchParams }: FrameworksPagePro
       <section className="workspace" aria-labelledby="frameworks-heading">
         <div className="sectionHeader">
           <div>
-            <p className="eyebrow">FrameworkContent</p>
-            <h2 id="frameworks-heading">Published content packs</h2>
+            <p className="eyebrow">Canonical catalog</p>
+            <h1 id="frameworks-heading">Framework Library</h1>
           </div>
-          <span>Immutable versions and source lineage</span>
+          <span>{packs.length} content packs</span>
         </div>
 
         <form className="filterForm" method="get" aria-label="Framework requirement filters">
@@ -96,7 +98,8 @@ export default async function FrameworksPage({ searchParams }: FrameworksPagePro
           </div>
         </form>
 
-        {apiError ? <ErrorState title="Framework content could not be loaded" detail={apiError} /> : null}
+        {apiError ? <ErrorState title="Framework catalog could not be loaded" detail={apiError} /> : null}
+
         {!apiError ? (
           <>
             <p className="constraintNote">
@@ -106,7 +109,7 @@ export default async function FrameworksPage({ searchParams }: FrameworksPagePro
             {isPlatform ? (
               <p className="constraintNote">Platform super-admin view: global catalog content only. Tenant enablement and assessment execution data are not shown here.</p>
             ) : null}
-            <ContentPackTable packs={packs} params={params} enabledFrameworks={enabledFrameworks} isPlatform={isPlatform} />
+            <ContentPackTable packs={packs} params={params} enabledFrameworks={enabledFrameworks} isPlatform={isPlatform} isViewer={isViewer} />
             <PaginationControls
               pathname="/frameworks"
               params={params}
@@ -119,7 +122,7 @@ export default async function FrameworksPage({ searchParams }: FrameworksPagePro
         ) : null}
       </section>
 
-      {!apiError && !isPlatform ? <EnabledFrameworks frameworks={enabledFrameworks} /> : null}
+      {!apiError && !isPlatform ? <EnabledFrameworks frameworks={enabledFrameworks} isViewer={isViewer} /> : null}
 
       {!apiError ? (
         <section className="workspace" aria-labelledby="requirements-heading">
@@ -151,12 +154,14 @@ function ContentPackTable({
   packs,
   params,
   enabledFrameworks,
-  isPlatform
+  isPlatform,
+  isViewer
 }: {
   packs: FrameworkContentPack[];
   params: SearchParamsRecord;
   enabledFrameworks: FrameworkEnablement[];
   isPlatform: boolean;
+  isViewer?: boolean;
 }) {
   if (packs.length === 0) {
     return <EmptyState title="No content packs found" detail="The selected tenant has no published content packs in this page." />;
@@ -203,6 +208,8 @@ function ContentPackTable({
                   <Link href={frameworkHref(params, pack.frameworkKey)}>View requirements</Link>
                   {isPlatform ? (
                     <span className="badge global">Global content</span>
+                  ) : isViewer ? (
+                    <span className="badge internal">{enabledVersionIds.has(pack.id) ? "Enabled" : "Disabled"}</span>
                   ) : enabledVersionIds.has(pack.id) ? (
                     <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
                       <span className="badge internal">Enabled</span>
@@ -231,7 +238,7 @@ function ContentPackTable({
   );
 }
 
-function EnabledFrameworks({ frameworks }: { frameworks: FrameworkEnablement[] }) {
+function EnabledFrameworks({ frameworks, isViewer }: { frameworks: FrameworkEnablement[]; isViewer?: boolean }) {
   return (
     <section className="workspace" aria-labelledby="enabled-frameworks-heading">
       <div className="sectionHeader">
@@ -267,13 +274,17 @@ function EnabledFrameworks({ frameworks }: { frameworks: FrameworkEnablement[] }
                   <td><span className="badge internal">{framework.status}</span></td>
                   <td>{formatDateTime(framework.subscribedAt)}</td>
                   <td>
-                    <form action="/frameworks/actions" method="post" style={{ margin: 0 }}>
-                      <input type="hidden" name="intent" value="disableFramework" />
-                      <input type="hidden" name="frameworkVersionId" value={framework.frameworkVersionId} />
-                      <button type="submit" className="secondaryButton">
-                        Disable framework
-                      </button>
-                    </form>
+                    {isViewer ? (
+                      <span className="badge internal">Enabled</span>
+                    ) : (
+                      <form action="/frameworks/actions" method="post" style={{ margin: 0 }}>
+                        <input type="hidden" name="intent" value="disableFramework" />
+                        <input type="hidden" name="frameworkVersionId" value={framework.frameworkVersionId} />
+                        <button type="submit" className="secondaryButton">
+                          Disable framework
+                        </button>
+                      </form>
+                    )}
                   </td>
                 </tr>
               ))}
