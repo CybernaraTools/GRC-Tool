@@ -8,6 +8,11 @@ export interface AuditReportPdfInput {
   report: AuditReportJson;
 }
 
+// Mirrors app/reports/[reportId]/page.tsx section-for-section, field-for-field:
+// same header content, same "no AI" note, the same 7 numbered sections in the
+// same order, the same summary breakdowns, the same table columns. Nothing
+// shown here that isn't on the website, and nothing on the website omitted
+// here.
 export async function renderAuditReportPdf(input: AuditReportPdfInput): Promise<Buffer> {
   return new Promise<Buffer>((resolve) => {
     const chunks: Buffer[] = [];
@@ -20,88 +25,101 @@ export async function renderAuditReportPdf(input: AuditReportPdfInput): Promise<
     doc.on("end", () => resolve(Buffer.concat(chunks)));
 
     const report = input.report;
+    const shortId = `report-${input.reportId.slice(0, 8)}`;
 
-    doc.fontSize(20).text("Cybernara GRC Platform", { align: "center" });
-    doc.fontSize(16).text("Assessment Audit Report", { align: "center" });
-    doc.moveDown(2);
-    doc.fontSize(11);
-    doc.text(`Assessment: ${report.assessment.scopeName}`);
-    doc.text(`Assessment ID: ${report.assessment.id}`);
-    doc.text(`Status: ${report.assessment.status}`);
-    doc.text(`Assessment Period: ${toDate(report.assessment.periodStart)} to ${toDate(report.assessment.periodEnd)}`);
-    doc.text(`Closed: ${report.assessment.closedAt ? `${toDate(report.assessment.closedAt)} by ${report.assessment.closedBy}` : "Unknown"}`);
-    doc.text(`Report ID: ${input.reportId}`);
-    doc.text(`Report Generated: ${input.generatedAt.toISOString()}`);
+    doc.fontSize(9).fillColor("gray").text("Closed Assessment Audit Report");
+    doc.fillColor("black").fontSize(18).text(report.assessment.scopeName);
+    doc.moveDown(0.3);
+    doc.fontSize(10).text(`Assessment ID: ${report.assessment.id}  ·  Report ${shortId}  ·  Generated ${input.generatedAt.toLocaleString()}`);
+    doc
+      .fontSize(10)
+      .fillColor("gray")
+      .text(
+        `Period ${toDate(report.assessment.periodStart)} - ${toDate(report.assessment.periodEnd)}  ·  Closed ${report.assessment.closedAt ? `${toDate(report.assessment.closedAt)} by ${report.assessment.closedBy}` : "Unknown"}  ·  Frameworks: ${report.assessment.frameworkKeys.join(", ") || "None"}`
+      );
+    doc.fillColor("black");
     doc.moveDown();
     doc
       .fontSize(9)
       .fillColor("gray")
-      .text("Every figure in this report is read directly from live platform data for this assessment and computed by deterministic rules. No AI model was used to generate this report.");
+      .text("Every figure below is read directly from live data for this assessment and computed by deterministic rules. No AI model was used to generate this report.");
     doc.fillColor("black").fontSize(11);
 
-    section(doc, "1. Frameworks Evaluated");
-    doc.text(report.assessment.frameworkKeys.join(", ") || "None");
-
-    section(doc, "2. Framework Compliance Scorecards");
+    section(doc, "1. Framework Compliance Scorecards");
     for (const framework of report.compliance.frameworks) {
       doc.text(`${framework.frameworkKey}: ${framework.displayPercentage}`);
       doc.fontSize(9).fillColor("gray").text(`  ${framework.formula}`);
+      doc
+        .text(
+          `  Satisfied: ${framework.satisfiedCount}  Remediated: ${framework.remediatedCount}  Accepted Risk: ${framework.acceptedRiskCount}  Unresolved: ${framework.unresolvedCount}  Not Applicable: ${framework.notApplicableCount}`
+        );
+      doc.fillColor("black").fontSize(11);
+    }
+    if (report.compliance.frameworks.length === 0) {
+      doc.fontSize(10).fillColor("gray").text("No framework-linked items on this assessment.");
       doc.fillColor("black").fontSize(11);
     }
 
-    section(doc, "3. Control Evaluation Matrix");
+    section(doc, "2. Control Evaluation Matrix");
     for (const disposition of report.compliance.dispositions) {
       doc
         .fontSize(9)
         .text(
-          `${disposition.frameworkKey} | ${disposition.controlId} | ${disposition.harmonizedControlId} | ${disposition.disposition} | findings: ${disposition.findingIds.length}`
+          `${disposition.frameworkKey} | ${disposition.controlId} | ${disposition.harmonizedControlId} | ${disposition.disposition} | ${disposition.reason}`
         );
     }
     doc.fontSize(11);
 
-    section(doc, "4. Evidence Matrix");
-    doc.text(`Total evidence objects: ${report.evidence.total}`);
+    section(doc, "3. Evidence Matrix");
+    doc
+      .fontSize(10)
+      .text(`Total: ${report.evidence.total}  ·  ${Object.entries(report.evidence.byState).map(([state, count]) => `${state}: ${count}`).join("  ·  ")}`);
+    doc.fontSize(11);
     for (const evidence of report.evidence.items) {
-      doc.fontSize(9).text(`${evidence.fileName} | state: ${evidence.state} | linked items: ${evidence.linkedItemIds.length}`);
+      doc.fontSize(9).text(`${evidence.fileName} | ${evidence.state} | linked items: ${evidence.linkedItemIds.length}`);
     }
     doc.fontSize(11);
 
-    section(doc, "5. Findings Register");
-    doc.text(`Total findings: ${report.findings.total}`);
+    section(doc, "4. Findings Register");
+    doc
+      .fontSize(10)
+      .text(`Total: ${report.findings.total}  ·  ${Object.entries(report.findings.bySeverity).map(([severity, count]) => `${severity}: ${count}`).join("  ·  ")}`);
+    doc.fontSize(11);
     for (const finding of report.findings.items) {
-      doc.fontSize(9).text(`${finding.id} | severity: ${finding.severity} | ${finding.description}`);
+      doc.fontSize(9).text(`${finding.severity} | ${finding.description} | due: ${finding.dueAt ? toDate(finding.dueAt) : "—"}`);
     }
     doc.fontSize(11);
 
-    section(doc, "6. Remediation Register");
-    doc.text(`Total remediation tasks: ${report.remediationTasks.total}`);
+    section(doc, "5. Remediation Register");
+    doc
+      .fontSize(10)
+      .text(`Total: ${report.remediationTasks.total}  ·  ${Object.entries(report.remediationTasks.byStatus).map(([status, count]) => `${status}: ${count}`).join("  ·  ")}`);
+    doc.fontSize(11);
     for (const task of report.remediationTasks.items) {
-      doc.fontSize(9).text(`${task.id} | finding ${task.findingId} | status: ${task.status} | due: ${toDate(task.dueAt)}`);
+      doc.fontSize(9).text(`${truncateId(task.id)} | finding ${truncateId(task.findingId)} | status: ${task.status} | due: ${toDate(task.dueAt)}`);
     }
     doc.fontSize(11);
 
-    section(doc, "7. Accepted Residual Risks");
-    doc.text(`Total risk acceptances: ${report.riskAcceptances.total} (${report.riskAcceptances.active} currently active)`);
+    section(doc, "6. Accepted Residual Risks");
+    doc.fontSize(10).text(`Total: ${report.riskAcceptances.total}  ·  Currently active: ${report.riskAcceptances.active}`);
+    doc.fontSize(11);
     for (const acceptance of report.riskAcceptances.items) {
       doc
         .fontSize(9)
-        .text(`${acceptance.id} | finding ${acceptance.findingId} | active: ${acceptance.active} | expires: ${toDate(acceptance.expiresAt)}`);
+        .text(`finding ${truncateId(acceptance.findingId)} | ${acceptance.rationale} | active: ${acceptance.active ? "Yes" : "No"} | expires: ${toDate(acceptance.expiresAt)}`);
     }
     doc.fontSize(11);
 
-    section(doc, "8. Reviewer Decisions");
-    for (const signoff of report.signoffs) {
-      doc.fontSize(9).text(`${signoff.scopeType} | ${signoff.decision} | by ${signoff.signerId} at ${signoff.signedAt}`);
+    section(doc, "7. Reviewer Decisions");
+    if (report.signoffs.length === 0) {
+      doc.fontSize(10).fillColor("gray").text("No reviewer decisions recorded.");
+      doc.fillColor("black").fontSize(11);
+    } else {
+      for (const signoff of report.signoffs) {
+        doc.fontSize(9).text(`${signoff.scopeType} | ${signoff.decision} | ${truncateId(signoff.signerId)} | ${new Date(signoff.signedAt).toLocaleString()}`);
+      }
+      doc.fontSize(11);
     }
-    doc.fontSize(11);
-
-    section(doc, "9. Report Accuracy Statement");
-    doc
-      .fontSize(10)
-      .text(
-        "Every figure in this report is read directly from live platform data for this assessment and computed by deterministic rules. No AI model was called to generate, summarize, or interpret any part of this report."
-      );
-    doc.fontSize(11);
 
     doc.end();
   });
@@ -119,5 +137,9 @@ function section(doc: PDFKit.PDFDocument, title: string): void {
 }
 
 function toDate(value: Date | string): string {
-  return new Date(value).toISOString().slice(0, 10);
+  return new Date(value).toLocaleDateString();
+}
+
+function truncateId(value: string): string {
+  return value.slice(0, 8);
 }
