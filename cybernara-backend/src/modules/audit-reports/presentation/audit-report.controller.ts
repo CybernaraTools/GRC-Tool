@@ -16,14 +16,14 @@ export class AuditReportController {
   @RequirePolicy({ resourceType: "audit_report", action: "read" })
   async listClosedAssessments(@Req() req: Request, @Query() pagination: PaginationQueryDto) {
     const context = readRequestContext(req);
-    return this.service.listClosedAssessments(context.tenantId, context.userId, toPagination(pagination));
+    return this.service.listClosedAssessments(context.tenantId, toPagination(pagination));
   }
 
   @Get("assessments/:assessmentId")
   @RequirePolicy({ resourceType: "audit_report", action: "read", resourceIdParam: "assessmentId" })
   async listReportsForAssessment(@Req() req: Request, @Param("assessmentId") assessmentId: string) {
     const context = readRequestContext(req);
-    return this.service.listReportsForAssessment(context.tenantId, context.userId, assessmentId);
+    return this.service.listReportsForAssessment(context.tenantId, assessmentId);
   }
 
   @Post("assessments/:assessmentId/generate")
@@ -49,24 +49,17 @@ export class AuditReportController {
   @RequirePolicy({ resourceType: "audit_report", action: "read", resourceIdParam: "reportId" })
   async getReport(@Req() req: Request, @Param("reportId") reportId: string) {
     const context = readRequestContext(req);
-    return this.service.getReport(context.tenantId, context.userId, reportId);
+    return this.service.getReport(context.tenantId, reportId);
   }
 
   @Get(":reportId/download")
   @RequirePolicy({ resourceType: "audit_report", action: "read", resourceIdParam: "reportId" })
   async download(@Req() req: Request, @Param("reportId") reportId: string): Promise<StreamableFile> {
     const context = readRequestContext(req);
-    const bytes = await this.service.downloadArtifact(context.tenantId, context.userId, reportId);
+    const bytes = await this.service.downloadArtifact(context.tenantId, reportId);
     return new StreamableFile(bytes, {
       type: "application/pdf",
       disposition: `attachment; filename="audit-report-${reportId}.pdf"`
     });
-  }
-
-  @Post(":reportId/publish")
-  @RequirePolicy({ resourceType: "audit_report", action: "write", resourceIdParam: "reportId" })
-  async publish(@Req() req: Request, @Param("reportId") reportId: string) {
-    const context = readRequestContext(req);
-    return this.service.publish(context.tenantId, context.userId, reportId);
   }
 }

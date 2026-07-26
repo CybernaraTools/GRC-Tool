@@ -387,6 +387,22 @@ export class PostgresRiskWorkflowRepository implements RiskWorkflowRepository {
     });
   }
 
+  async listRiskAcceptances(input: { tenantId: string; pagination: { limit: number; offset: number } }): Promise<RiskAcceptanceRecord[]> {
+    return this.db.withTenant(input.tenantId, undefined, async (client) => {
+      const result = await client.query(
+        `
+          select ${acceptanceColumns()}
+          from risk_acceptances
+          where tenant_id = $1
+          order by approved_at desc
+          limit $2 offset $3
+        `,
+        [input.tenantId, input.pagination.limit, input.pagination.offset]
+      );
+      return result.rows.map(mapAcceptance);
+    });
+  }
+
   async createRiskAcceptanceReview(input: {
     tenantId: string;
     review: RiskAcceptanceReview;

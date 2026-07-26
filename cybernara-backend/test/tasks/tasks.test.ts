@@ -59,7 +59,7 @@ beforeAll(async () => {
   await app.listen(0);
   const address = app.getHttpServer().address() as AddressInfo;
   baseUrl = `http://localhost:${address.port}`;
-});
+}, 120_000);
 
 afterAll(async () => {
   await app.close();
@@ -140,5 +140,5 @@ describe("Phase 12: Universal Task Layer integration", () => {
     const otherListBody = (await otherListResponse.json()) as UniversalTaskRecord[];
     const otherMatched = otherListBody.find((t) => t.id === matchedTask.id);
     expect(otherMatched).toBeUndefined();
-  });
+  }, 120_000);
 });

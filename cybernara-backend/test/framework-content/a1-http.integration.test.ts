@@ -124,6 +124,12 @@ describe("A1 FrameworkContent/Harmonization HTTP exposure", () => {
     const rejected = await getJson<unknown[]>("/v1/framework-content/rejected-records", "framework-content:read");
     expect(rejected.length).toBeGreaterThan(0);
 
+    // Harmonization reads are gated on tenant_catalog_subscriptions (a tenant
+    // only sees harmonized controls/mappings for frameworks it has actively
+    // enabled) - subscribe this tenant to CCPA before asserting on
+    // harmonization endpoints below.
+    await enableFrameworkForTenant(tenantId, "CCPA");
+
     const controls = await getJson<unknown[]>("/v1/harmonization/controls", "harmonization:read");
     expect(controls.length).toBeGreaterThan(0);
 
@@ -137,6 +143,7 @@ describe("A1 FrameworkContent/Harmonization HTTP exposure", () => {
     expect(Array.isArray(uniqueControls)).toBe(true);
 
     const customerTenantId = randomUUID();
+    await enableFrameworkForTenant(customerTenantId, "SOC2");
     const customerPacks = await getJson<IdentifiedRecord[]>(
       "/v1/framework-content/content-packs?limit=25",
       "framework-content:read",
@@ -179,6 +186,32 @@ function requestHeaders(scopes: string, requestTenantId = tenantId): Record<stri
     "x-user-clearance": "restricted",
     "x-user-scopes": scopes
   };
+}
+
+async function enableFrameworkForTenant(subscriberTenantId: string, frameworkKey: string): Promise<void> {
+  const versionRow = await pool.query<{ id: string }>(
+    `
+      select fv.id
+      from framework_versions fv
+      join frameworks f on f.id = fv.framework_id and f.tenant_id = fv.tenant_id
+      where fv.tenant_id = $1 and fv.status = 'published' and f.framework_key = $2
+      order by fv.published_at desc nulls last, fv.created_at desc
+      limit 1
+    `,
+    [CANONICAL_CONTENT_TENANT_ID, frameworkKey]
+  );
+  const frameworkVersionId = versionRow.rows[0]?.id;
+  if (!frameworkVersionId) {
+    throw new Error(`${frameworkKey} published framework version fixture is required.`);
+  }
+  const response = await fetch(`${baseUrl}/v1/framework-content/enabled-frameworks`, {
+    method: "POST",
+    headers: requestHeaders("framework-content:write", subscriberTenantId),
+    body: JSON.stringify({ frameworkVersionId })
+  });
+  if (response.status !== 201) {
+    throw new Error(`enabling ${frameworkKey} for ${subscriberTenantId} failed: ${response.status} ${await response.text()}`);
+  }
 }
 
 async function postIngestion(): Promise<Response> {

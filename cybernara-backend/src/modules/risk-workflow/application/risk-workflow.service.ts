@@ -406,6 +406,11 @@ export class RiskWorkflowService {
     return { ...acceptance, active: isRiskAcceptanceActive(acceptance) };
   }
 
+  async listRiskAcceptances(tenantId: string, pagination: Pagination): Promise<(RiskAcceptanceRecord & { active: boolean })[]> {
+    const acceptances = await this.repository.listRiskAcceptances({ tenantId, pagination });
+    return acceptances.map((acceptance) => ({ ...acceptance, active: isRiskAcceptanceActive(acceptance) }));
+  }
+
   async reviewRiskAcceptance(input: {
     tenantId: string;
     actorId: string;
