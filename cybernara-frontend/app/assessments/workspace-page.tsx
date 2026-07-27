@@ -960,6 +960,17 @@ function ReviewerActions({ assessment, item }: { assessment: Assessment; item: A
   );
 }
 
+function formatEvidenceOptionLabel(raw: string): string {
+  if (!raw) return "Evidence Option";
+  let cleaned = raw.replace(/^EV[-_]/i, "");
+  cleaned = cleaned.replace(/[-_]+/g, " ");
+  return cleaned
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 function QuestionAnswerInput({
   question,
   currentAnswer
@@ -993,20 +1004,57 @@ function QuestionAnswerInput({
       </label>
     );
   }
+
   if (responseType === "multi_select") {
     const defaults = new Set((currentAnswer ?? "").split(",").map((entry) => entry.trim()).filter(Boolean));
-    const options = question?.evidenceExpectationIds.length
+    const rawOptions = question?.evidenceExpectationIds.length
       ? question.evidenceExpectationIds
-      : ["Policy", "Procedure", "Implementation evidence", "Review record"];
+      : ["Policy Document", "Standard Operating Procedure", "Implementation Evidence", "Audit Review Record"];
+
     return (
-      <fieldset>
-        <legend>Multi-select answer</legend>
-        {options.map((option) => (
-          <label key={option}>
-            <input type="checkbox" name="answerChoice" value={option} defaultChecked={defaults.has(option)} />
-            {option}
-          </label>
-        ))}
+      <fieldset style={{ border: "1px solid var(--border)", borderRadius: "12px", padding: "16px 20px", background: "var(--surface)", margin: "8px 0 16px" }}>
+        <legend style={{ padding: "0 8px", fontSize: "12px", fontWeight: 600, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: "0.96px" }}>
+          Multi-select answer choices
+        </legend>
+        <div style={{ display: "grid", gap: "10px", marginTop: "8px" }}>
+          {rawOptions.map((rawOption) => {
+            const labelText = formatEvidenceOptionLabel(rawOption);
+            const isChecked = defaults.has(rawOption) || defaults.has(labelText);
+            return (
+              <label
+                key={rawOption}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-strong)",
+                  background: isChecked ? "var(--surface-strong)" : "var(--surface-muted)",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: 400,
+                  color: "var(--ink)",
+                  transition: "background-color 0.15s ease"
+                }}
+              >
+                <input
+                  type="checkbox"
+                  name="answerChoice"
+                  value={labelText}
+                  defaultChecked={isChecked}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    accentColor: "var(--color-primary, #3b82f6)",
+                    cursor: "pointer"
+                  }}
+                />
+                <span>{labelText}</span>
+              </label>
+            );
+          })}
+        </div>
       </fieldset>
     );
   }
