@@ -204,17 +204,21 @@ export function RiskAiAssistForm({
         </label>
         <button type="submit">Create and link risk</button>
       </form>
-      <RiskAiProposal recommendation={recommendation} loading={status === "loading"} />
+      <RiskAiProposal recommendation={recommendation} loading={status === "loading"} assessmentId={assessmentId} itemId={item.id} />
     </>
   );
 }
 
 function RiskAiProposal({
   recommendation,
-  loading
+  loading,
+  assessmentId,
+  itemId
 }: {
   recommendation: RiskAssistRecommendation | null;
   loading: boolean;
+  assessmentId: string;
+  itemId: string;
 }) {
   return (
     <aside className="miniForm" aria-label="AI risk proposal">
@@ -232,24 +236,60 @@ function RiskAiProposal({
             {recommendation.findingReassessmentRecommended || recommendation.escalationDecision === "no_escalation" ? (
               <div
                 style={{
-                  marginTop: "1rem",
-                  marginBottom: "1rem",
-                  padding: "1rem 1.25rem",
-                  borderRadius: "10px",
-                  background: "rgba(245, 158, 11, 0.08)",
-                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  marginTop: "1.25rem",
+                  marginBottom: "1.25rem",
+                  padding: "1.25rem 1.5rem",
+                  borderRadius: "12px",
+                  background: "linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.06) 100%)",
+                  border: "1px solid rgba(245, 158, 11, 0.35)",
+                  boxShadow: "0 4px 12px rgba(245, 158, 11, 0.05)",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "0.75rem"
+                  gap: "1rem"
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <span style={{ fontSize: "1.2rem" }}>⚠️</span>
-                  <strong style={{ color: "#d97706", fontSize: "0.95rem" }}>Needs Better Production Evidence for Approval</strong>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                    <span style={{ fontSize: "1.25rem" }}>⚠️</span>
+                    <strong style={{ color: "#f59e0b", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "-0.01em" }}>
+                      Needs Better Production Evidence for Approval
+                    </strong>
+                  </div>
+                  <span className="badge internal" style={{ background: "rgba(245, 158, 11, 0.2)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.4)", fontSize: "11px" }}>
+                    Reassessment Recommended
+                  </span>
                 </div>
-                <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--color-text-secondary, #475569)", lineHeight: "1.5" }}>
+
+                <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--ink-muted, #94a3b8)", lineHeight: "1.55" }}>
                   Risk AI recommends reassessing this finding because operational evidence is simulated or incomplete. Please ensure authoritative system evidence is attached.
                 </p>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", paddingTop: "0.25rem" }}>
+                  <a
+                    href={`/assessments/review?assessmentId=${assessmentId}&itemId=${itemId}`}
+                    className="secondaryButton"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      background: "var(--surface, #18181b)",
+                      borderColor: "rgba(245, 158, 11, 0.5)",
+                      color: "#fbbf24",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      textDecoration: "none",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 4v6h6" />
+                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                    </svg>
+                    Reopen Assessment Review to Request Evidence
+                  </a>
+                </div>
               </div>
             ) : null}
           </section>
