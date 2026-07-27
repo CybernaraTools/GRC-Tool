@@ -204,19 +204,17 @@ export function RiskAiAssistForm({
         </label>
         <button type="submit">Create and link risk</button>
       </form>
-      <RiskAiProposal recommendation={recommendation} loading={status === "loading"} assessmentId={assessmentId} />
+      <RiskAiProposal recommendation={recommendation} loading={status === "loading"} />
     </>
   );
 }
 
 function RiskAiProposal({
   recommendation,
-  loading,
-  assessmentId
+  loading
 }: {
   recommendation: RiskAssistRecommendation | null;
   loading: boolean;
-  assessmentId: string;
 }) {
   return (
     <aside className="miniForm" aria-label="AI risk proposal">

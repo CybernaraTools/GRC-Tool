@@ -26,7 +26,7 @@ import type {
 } from "../../src/lib/api/generated";
 import { formatDateTime, firstValue, type SearchParamsRecord } from "../../src/lib/listing";
 import { requireSession } from "../../src/lib/protected-session";
-import { canCreateAssessment as checkCanCreateAssessment, canReviewAssessment, canRaiseFinding, canAnswerQuestion, isOnlyViewer } from "../../src/lib/authorization";
+import { canCreateAssessment as checkCanCreateAssessment, canReviewAssessment, canRaiseFinding, canAnswerQuestion, isOnlyViewer, type SessionClaims } from "../../src/lib/authorization";
 
 type AssessmentsPageProps = {
   searchParams?: Promise<SearchParamsRecord>;
@@ -1798,7 +1798,7 @@ function responseTypeLabel(value: AssessmentQuestionOption["responseType"]): str
   return value === "multi_select" ? "Multi-select" : value[0].toUpperCase() + value.slice(1);
 }
 
-function canCreateAssessment(session: any): boolean {
+function canCreateAssessment(session: SessionClaims | null): boolean {
   return checkCanCreateAssessment(session);
 }
 

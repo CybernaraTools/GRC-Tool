@@ -2096,6 +2096,18 @@ export function buildOpenApiSpec() {
           }
         }
       },
+      "/v1/notifications": {
+        get: {
+          operationId: "listNotifications",
+          tags: ["Notifications"],
+          parameters: [...requestContextHeaders()],
+          responses: {
+            "200": jsonResponse("Live, role-aware notification feed. Nothing is stored - a notification exists only while its underlying condition is true.", "NotificationFeed"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
       "/v1/audit-reports/closed-assessments": {
         get: {
           operationId: "listClosedAssessmentsForAudit",
@@ -5346,6 +5358,26 @@ export function buildOpenApiSpec() {
               }
             },
             signoffs: { type: "array", items: { $ref: "#/components/schemas/SignoffRow" } }
+          }
+        },
+        NotificationItem: {
+          type: "object",
+          required: ["id", "category", "title", "description", "link", "createdAt"],
+          properties: {
+            id: { type: "string" },
+            category: { enum: ["pending_answer", "pending_remediation", "review_item", "verify_remediation", "ready_to_close"] },
+            title: { type: "string" },
+            description: { type: "string" },
+            link: { type: "string" },
+            createdAt: { type: "string", format: "date-time" }
+          }
+        },
+        NotificationFeed: {
+          type: "object",
+          required: ["role", "items"],
+          properties: {
+            role: { enum: ["platform_admin", "auditor", "compliance_manager", "viewer"] },
+            items: { type: "array", items: { $ref: "#/components/schemas/NotificationItem" } }
           }
         },
         ClosedAssessmentSummary: {

@@ -155,7 +155,10 @@ const resourceTypeClassification: Record<string, Classification> = {
   // table's own `classification cybernara_classification not null default
   // 'confidential'` baseline (0052_tenant_custom_questions.sql).
   tenant_question: "confidential",
-  questions_dashboard: "confidential"
+  questions_dashboard: "confidential",
+  // Task & Notification Hub - purely derived from existing confidential
+  // assessment/finding/remediation state, no table of its own.
+  notification: "confidential"
 };
 
 export function classificationForResourceType(resourceType: string): Classification {

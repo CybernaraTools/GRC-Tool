@@ -31,10 +31,10 @@ export const operationalNavItems: NavItem[] = [
     requiredScopes: []
   },
   {
-    label: "My Tasks",
+    label: "Tasks & Notifications",
     href: "/tasks",
     icon: "task",
-    roles: ["platform_admin", "compliance_manager"],
+    roles: ["platform_admin", "auditor", "compliance_manager", "viewer"],
     savedViews: true,
     bulkActions: false,
     publicPreview: true,
