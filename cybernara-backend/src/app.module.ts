@@ -19,6 +19,7 @@ import { TasksModule } from "./modules/tasks/tasks.module.js";
 import { FrameworkUpdateModule } from "./modules/framework-update/framework-update.module.js";
 import { TenantQuestionsModule } from "./modules/tenant-questions/tenant-questions.module.js";
 import { QuestionsDashboardModule } from "./modules/questions-dashboard/questions-dashboard.module.js";
+import { NotificationHubModule } from "./modules/notification-hub/notification-hub.module.js";
 import { HealthController } from "./health.controller.js";
 import { RootController } from "./root.controller.js";
 import { RootStatusService } from "./root-status.service.js";
@@ -44,7 +45,8 @@ import { RootStatusService } from "./root-status.service.js";
     ReportingAnalyticsModule,
     AuditReportsModule,
     TenantQuestionsModule,
-    QuestionsDashboardModule
+    QuestionsDashboardModule,
+    NotificationHubModule
   ],
   controllers: [RootController, HealthController],
   providers: [RootStatusService]

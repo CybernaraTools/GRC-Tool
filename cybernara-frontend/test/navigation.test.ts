@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccessFeature, canPerform } from "../src/lib/authorization";
+import { canAccessFeature } from "../src/lib/authorization";
 import {
   operationalNavItems,
   visibleNavForRole,
@@ -36,7 +36,7 @@ describe("operational shell hardening helpers", () => {
     const adminItems = visibleNavForRole("platform_admin").map((item) => item.label);
     const auditorItems = visibleNavForRole("auditor").map((item) => item.label);
 
-    expect(viewerItems).toEqual(["Framework Library", "Harmonization", "Dashboard", "Audit Reports"]);
+    expect(viewerItems).toEqual(["Tasks & Notifications", "Framework Library", "Harmonization", "Dashboard", "Audit Reports"]);
     expect(auditorItems).toContain("Audit Log");
     expect(auditorItems).toContain("Assessments");
     expect(auditorItems).toContain("Assessment Review");

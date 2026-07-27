@@ -540,7 +540,6 @@ function RiskDecisionWorkspace({
               linkedEvidence={selectedTaskEvidence}
               reviews={taskReviews}
               acceptance={selectedAcceptance}
-              canWriteRemediation={canWriteRemediation}
               canReview={canReview}
             />
           ) : null}
@@ -901,7 +900,6 @@ function RemediationReviewFlow({
   linkedEvidence,
   reviews,
   acceptance,
-  canWriteRemediation,
   canReview
 }: {
   finding: Finding;
@@ -915,7 +913,6 @@ function RemediationReviewFlow({
   linkedEvidence: EvidenceContext[];
   reviews: RemediationTaskReview[];
   acceptance: RiskAcceptance | null;
-  canWriteRemediation: boolean;
   canReview: boolean;
 }) {
   return (
