@@ -363,7 +363,7 @@ export const adminRoleCatalog: AdminRoleDefinition[] = [
   {
     roleKey: "auditor",
     displayName: "Auditor",
-    description: "Read-focused access for evidence, audit trail, assessments, and reporting.",
+    description: "Creates and reviews assessment scopes, raises findings, and reports on evidence and audit trail.",
     defaultClearance: "confidential",
     scopes: [
       "audit_event:read",
@@ -372,6 +372,7 @@ export const adminRoleCatalog: AdminRoleDefinition[] = [
       "framework_diff:read",
       "framework_update_impact:read",
       "harmonization:read",
+      "assessment:write",
       "assessment:read",
       "assessment:review",
       "evidence_object:read",

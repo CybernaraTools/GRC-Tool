@@ -38,6 +38,19 @@ export class AdminUsersService {
     return users.map(enrichScopes);
   }
 
+  /**
+   * A deliberately minimal projection of listUsers() - just enough to build
+   * an "assign to" picker (id/email/display name/role) - exposed to anyone
+   * who can create or manage assessment work, not gated behind full
+   * admin_user:read. Never returns scopes, clearance, or status.
+   */
+  async listAssignableUsers(tenantId: string): Promise<Array<{ id: string; email: string; displayName?: string; roleKeys: string[] }>> {
+    const users = await this.repository.listUsers(tenantId);
+    return users
+      .filter((user) => user.status === "active")
+      .map((user) => ({ id: user.id, email: user.email, displayName: user.displayName, roleKeys: user.roleKeys }));
+  }
+
   async inviteUser(input: {
     tenantId: string;
     actorId: string;

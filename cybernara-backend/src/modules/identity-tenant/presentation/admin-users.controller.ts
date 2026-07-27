@@ -72,6 +72,15 @@ export class AdminUsersController {
     return this.service.listUsers(context.tenantId);
   }
 
+  @Get("users/assignable")
+  @RequirePolicy({ resourceType: "assessment", action: "write" })
+  @ApiOperation({ summary: "Minimal user list (id/email/display name/roles) for assigning ownership of new work - no admin_user:read required." })
+  @ApiOkResponse({ description: "Assignable tenant users." })
+  async listAssignableUsers(@Req() request: Request) {
+    const context = readRequestContext(request);
+    return this.service.listAssignableUsers(context.tenantId);
+  }
+
   @Post("users/invite")
   @RequirePolicy({ resourceType: "admin_user", action: "write" })
   @ApiOperation({ summary: "Invite a tenant user and seed Cybernara role metadata." })

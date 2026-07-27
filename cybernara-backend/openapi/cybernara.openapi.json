@@ -244,6 +244,72 @@
         }
       }
     },
+    "/v1/admin/users/assignable": {
+      "get": {
+        "operationId": "listAssignableUsers",
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Minimal user list (id/email/display name/roles) for assigning ownership of new work - no admin_user:read required.",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-user-scopes",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-clearance",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Classification"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assignable tenant users.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssignableUser"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
     "/v1/admin/users/invite": {
       "post": {
         "operationId": "inviteAdminUser",
@@ -28452,6 +28518,33 @@
           },
           "clearance": {
             "$ref": "#/components/schemas/Classification"
+          }
+        }
+      },
+      "AssignableUser": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "roleKeys"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "roleKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
