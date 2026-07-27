@@ -11,6 +11,7 @@ import type {
   Assessment,
   AssessmentItem,
   AssessmentQuestionOption,
+  AssignableUser,
   EvidenceUploadPolicy,
   AssessmentSignoff,
   EvidenceObject,
@@ -71,11 +72,13 @@ export async function AssessmentWorkspacePage({
   let apiError: string | null = null;
   let preselectedCanonical: AssessmentQuestionOption | null = null;
   let preselectedCustom: TenantQuestion | null = null;
+  let assignableUsers: AssignableUser[] = [];
 
   try {
-    [assessments, questionOptions] = await Promise.all([
+    [assessments, questionOptions, assignableUsers] = await Promise.all([
       api.listAssessments({ limit: 100, offset: 0 }),
-      api.listAssessmentQuestionOptions({ limit: 100, offset: 0 })
+      api.listAssessmentQuestionOptions({ limit: 100, offset: 0 }),
+      mode === "owner" ? api.listAssignableUsers().catch(() => []) : Promise.resolve([])
     ]);
     const editAssessmentId = mode === "owner" ? textParam(params, "editAssessmentId") : "";
     if (editAssessmentId) {
@@ -191,6 +194,7 @@ export async function AssessmentWorkspacePage({
           {!apiError ? (
             <CreateAssessmentForm
               ownerId={session.userId}
+              assignableUsers={assignableUsers}
               questionOptions={questionOptions}
               canCreate={canCreateAssessment(session)}
               editingAssessment={editingAssessment}
@@ -466,6 +470,7 @@ function AssessmentCardGroup({
 
 function CreateAssessmentForm({
   ownerId,
+  assignableUsers,
   questionOptions,
   canCreate,
   editingAssessment,
@@ -473,6 +478,7 @@ function CreateAssessmentForm({
   preselectedCustom
 }: {
   ownerId: string;
+  assignableUsers: AssignableUser[];
   questionOptions: AssessmentQuestionOption[];
   canCreate: boolean;
   editingAssessment: Assessment | null;
@@ -482,8 +488,8 @@ function CreateAssessmentForm({
   if (!canCreate) {
     return (
       <div className="constraintNote">
-        Assessment creation is available to Platform Admin and Compliance Manager roles. This session can review
-        existing assessment content but cannot create new scopes.
+        Assessment creation is available to Platform Admin and Auditor roles. This session can review existing
+        assessment content but cannot create new scopes.
       </div>
     );
   }
@@ -542,8 +548,20 @@ function CreateAssessmentForm({
         <input type="hidden" name="questionVersionId" value={preselectedCanonical.questionVersionId} />
       ) : null}
       {!isEditing && preselectedCustom ? <input type="hidden" name="customQuestionId" value={preselectedCustom.id} /> : null}
-      <input type="hidden" name="ownerId" value={ownerId} />
       <HiddenIdempotency />
+      <label>
+        Assign to
+        <select name="ownerId" defaultValue={editingAssessment?.items[0]?.ownerId ?? ownerId}>
+          <option value={ownerId}>Myself</option>
+          {assignableUsers
+            .filter((user) => user.id !== ownerId)
+            .map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.displayName || user.email} ({user.roleKeys.join(", ") || "no role"})
+              </option>
+            ))}
+        </select>
+      </label>
       <label>
         Scope name
         <input name="scopeName" defaultValue={editingAssessment?.scopeName ?? "FY26 readiness"} required />

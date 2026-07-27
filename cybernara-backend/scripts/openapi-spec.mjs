@@ -115,6 +115,19 @@ export function buildOpenApiSpec() {
           }
         }
       },
+      "/v1/admin/users/assignable": {
+        get: {
+          operationId: "listAssignableUsers",
+          tags: ["Admin"],
+          summary: "Minimal user list (id/email/display name/roles) for assigning ownership of new work - no admin_user:read required.",
+          parameters: [...requestContextHeaders()],
+          responses: {
+            "200": jsonArrayResponse("Assignable tenant users.", "AssignableUser"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
       "/v1/admin/users/invite": {
         post: {
           operationId: "inviteAdminUser",
@@ -2844,6 +2857,16 @@ export function buildOpenApiSpec() {
             status: { $ref: "#/components/schemas/AdminUserStatus" },
             roleKey: { enum: ["platform_admin", "compliance_manager", "auditor", "viewer"] },
             clearance: { $ref: "#/components/schemas/Classification" }
+          }
+        },
+        AssignableUser: {
+          type: "object",
+          required: ["id", "email", "roleKeys"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            email: { type: "string", format: "email" },
+            displayName: { type: "string" },
+            roleKeys: { type: "array", items: { type: "string" } }
           }
         },
         AdminUser: {
