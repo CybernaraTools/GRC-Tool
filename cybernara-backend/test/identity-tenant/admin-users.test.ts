@@ -107,6 +107,40 @@ describe("Admin user and role API", () => {
     expect(crossTenantPatch.status).toBe(404);
   }, 60_000);
 
+  it("returns only active Compliance Managers from the assignable-user endpoint", async () => {
+    const manager = await inviteUser(tenantA, {
+      email: uniqueEmail("assignable-manager"),
+      roleKey: "compliance_manager",
+      clearance: "confidential"
+    });
+    authUserIds.push(manager.supabaseUserId);
+
+    const auditor = await inviteUser(tenantA, {
+      email: uniqueEmail("assignable-auditor"),
+      roleKey: "auditor",
+      clearance: "confidential"
+    });
+    authUserIds.push(auditor.supabaseUserId);
+
+    const response = await fetch(`${baseUrl}/v1/admin/users/assignable`, {
+      headers: requestHeaders(tenantA, "assessment:write")
+    });
+    expect(response.status).toBe(200);
+    const users = (await response.json()) as Array<{
+      id: string;
+      supabaseUserId: string;
+      email: string;
+      roleKeys: string[];
+    }>;
+
+    const assignableManager = users.find((user) => user.email === manager.email);
+    expect(assignableManager).toBeDefined();
+    expect(assignableManager?.id).toBe(manager.id);
+    expect(assignableManager?.supabaseUserId).toBe(manager.supabaseUserId);
+    expect(assignableManager?.roleKeys).toEqual(["compliance_manager"]);
+    expect(users.some((user) => user.email === auditor.email)).toBe(false);
+  }, 60_000);
+
   it("updates Supabase metadata so policy.guard clearance decisions change without re-login", async () => {
     const invited = await inviteUser(tenantA, {
       email: uniqueEmail("clearance"),

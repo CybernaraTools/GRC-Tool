@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { AuditLogService } from "../../audit-security/public.js";
 import { ClosureSnapshotService } from "../../closure-snapshot/public.js";
+import { AdminUsersService } from "../../identity-tenant/public.js";
 import { OutboxService } from "../../outbox/public.js";
 import {
   approveApplicability,
@@ -45,7 +46,8 @@ export class AssessmentService {
     @Inject(OutboxService) private readonly outbox: OutboxService,
     @Inject(AuditLogService) private readonly auditLog: AuditLogService,
     @Inject(QuestionRepositoryService) private readonly questionRepository: QuestionRepositoryService,
-    @Inject(ClosureSnapshotService) private readonly closureSnapshot: ClosureSnapshotService
+    @Inject(ClosureSnapshotService) private readonly closureSnapshot: ClosureSnapshotService,
+    @Inject(AdminUsersService) private readonly adminUsers: AdminUsersService
   ) {}
 
   async create(input: AssessmentCreateInput): Promise<AssessmentRecord> {
@@ -58,12 +60,13 @@ export class AssessmentService {
       tenantId: input.tenantId,
       selections: input.controls
     });
+    const ownerId = await this.adminUsers.normalizeAssessmentOwnerId(input.tenantId, input.ownerId);
     const assessment = createAssessment({
       tenantId: input.tenantId,
       scopeName: input.scopeName,
       controls,
       createdBy: input.actorId,
-      ownerId: input.ownerId
+      ownerId
     });
     const persisted = await this.repository.createAssessment({
       assessment,
@@ -109,12 +112,13 @@ export class AssessmentService {
       return replay;
     }
 
+    const ownerId = await this.adminUsers.normalizeAssessmentOwnerId(input.tenantId, input.ownerId);
     const assessment = createAssessment({
       tenantId: input.tenantId,
       scopeName: input.scopeName,
       controls: input.controls,
       createdBy: input.actorId,
-      ownerId: input.ownerId
+      ownerId
     });
     const persisted = await this.repository.createAssessment({
       assessment,
@@ -146,13 +150,14 @@ export class AssessmentService {
       tenantId: input.tenantId,
       selections: input.controls
     });
+    const ownerId = await this.adminUsers.normalizeAssessmentOwnerId(input.tenantId, input.ownerId);
     const assessment = reviseDraftAssessment({
       assessmentId: input.assessmentId,
       tenantId: input.tenantId,
       scopeName: input.scopeName,
       controls,
       updatedBy: input.actorId,
-      ownerId: input.ownerId
+      ownerId
     });
     const persisted = await this.repository.updateDraftAssessment({
       assessment,

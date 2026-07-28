@@ -28525,11 +28525,16 @@
         "type": "object",
         "required": [
           "id",
+          "supabaseUserId",
           "email",
           "roleKeys"
         ],
         "properties": {
           "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "supabaseUserId": {
             "type": "string",
             "format": "uuid"
           },

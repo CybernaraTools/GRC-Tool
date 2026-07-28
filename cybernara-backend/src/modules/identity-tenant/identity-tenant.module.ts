@@ -34,6 +34,6 @@ import { PlatformOnboardingController } from "./presentation/platform-onboarding
       useClass: PostgresPlatformOnboardingRepository
     }
   ],
-  exports: [IdentityTenantService, PlatformOnboardingService, PlatformOperatorGuard]
+  exports: [IdentityTenantService, AdminUsersService, PlatformOnboardingService, PlatformOperatorGuard]
 })
 export class IdentityTenantModule {}

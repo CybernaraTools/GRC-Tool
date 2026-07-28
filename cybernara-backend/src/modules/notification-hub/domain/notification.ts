@@ -58,6 +58,7 @@ export interface AssessmentCloseReadinessFact {
 export interface NotificationInput {
   role: UserRole;
   actorId: string;
+  actorIds?: string[];
   items: AssessmentItemFact[];
   remediations: RemediationFact[];
   assessments: AssessmentCloseReadinessFact[];
@@ -66,26 +67,36 @@ export interface NotificationInput {
 export function computeNotifications(input: NotificationInput): NotificationItem[] {
   const notifications: NotificationItem[] = [];
   const includeEveryone = input.role === "platform_admin";
-  const mine = (ownerId: string) => includeEveryone || ownerId === input.actorId;
+  const actorIds = new Set([input.actorId, ...(input.actorIds ?? [])]);
+  const mine = (ownerId: string) => includeEveryone || actorIds.has(ownerId);
 
   if (input.role === "compliance_manager" || includeEveryone) {
+    const pendingAnswersByAssessment = new Map<string, AssessmentItemFact[]>();
     for (const item of input.items) {
       if (item.assessmentStatus === "closed" || !item.applicable || !mine(item.ownerId)) {
         continue;
       }
       if (item.itemStatus === "not_started" || item.itemStatus === "needs_changes") {
-        notifications.push({
-          id: `pending_answer:${item.itemId}`,
-          category: "pending_answer",
-          title: `Submit answer & evidence for ${item.scopeName} (${item.controlId})`,
-          description:
-            item.itemStatus === "needs_changes"
-              ? `Reviewer requested changes on ${item.frameworkKey} ${item.controlId}.`
-              : `Awaiting your answer for ${item.frameworkKey} ${item.controlId}.`,
-          link: `/assessments?assessmentId=${item.assessmentId}&itemId=${item.itemId}`,
-          createdAt: item.referenceAt
-        });
+        const existing = pendingAnswersByAssessment.get(item.assessmentId) ?? [];
+        existing.push(item);
+        pendingAnswersByAssessment.set(item.assessmentId, existing);
       }
+    }
+    for (const items of pendingAnswersByAssessment.values()) {
+      const firstItem = items[0];
+      const references = Array.from(new Set(items.map((item) => `${item.frameworkKey} ${item.controlId}`)));
+      const hasChangesRequested = items.some((item) => item.itemStatus === "needs_changes");
+      const referenceText = references.join("; ");
+      notifications.push({
+        id: `pending_answer:${firstItem.assessmentId}`,
+        category: "pending_answer",
+        title: `Submit answer & evidence for ${firstItem.scopeName}`,
+        description: hasChangesRequested
+          ? `Reviewer requested changes across ${references.length} framework mapping${references.length === 1 ? "" : "s"}: ${referenceText}.`
+          : `Awaiting your answer across ${references.length} framework mapping${references.length === 1 ? "" : "s"}: ${referenceText}.`,
+        link: `/assessments?assessmentId=${firstItem.assessmentId}&itemId=${firstItem.itemId}`,
+        createdAt: newestReferenceAt(items)
+      });
     }
     for (const task of input.remediations) {
       if (task.status !== "open" || !mine(task.ownerId)) {
@@ -103,20 +114,28 @@ export function computeNotifications(input: NotificationInput): NotificationItem
   }
 
   if (input.role === "auditor" || includeEveryone) {
+    const reviewItemsByAssessment = new Map<string, AssessmentItemFact[]>();
     for (const item of input.items) {
       if (item.assessmentStatus === "closed") {
         continue;
       }
       if (item.itemStatus === "submitted") {
-        notifications.push({
-          id: `review_item:${item.itemId}`,
-          category: "review_item",
-          title: `Review required: answer submitted for ${item.scopeName} (${item.controlId})`,
-          description: `${item.frameworkKey} ${item.controlId} is awaiting your review.`,
-          link: `/assessments/review?assessmentId=${item.assessmentId}&itemId=${item.itemId}`,
-          createdAt: item.referenceAt
-        });
+        const existing = reviewItemsByAssessment.get(item.assessmentId) ?? [];
+        existing.push(item);
+        reviewItemsByAssessment.set(item.assessmentId, existing);
       }
+    }
+    for (const items of reviewItemsByAssessment.values()) {
+      const firstItem = items[0];
+      const references = Array.from(new Set(items.map((item) => `${item.frameworkKey} ${item.controlId}`)));
+      notifications.push({
+        id: `review_item:${firstItem.assessmentId}`,
+        category: "review_item",
+        title: `Review required: answer submitted for ${firstItem.scopeName}`,
+        description: `${references.length} framework mapping${references.length === 1 ? "" : "s"} awaiting your review: ${references.join("; ")}.`,
+        link: `/assessments/review?assessmentId=${firstItem.assessmentId}&itemId=${firstItem.itemId}`,
+        createdAt: newestReferenceAt(items)
+      });
     }
     for (const task of input.remediations) {
       if (task.status === "in_progress") {
@@ -145,4 +164,8 @@ export function computeNotifications(input: NotificationInput): NotificationItem
   }
 
   return notifications.sort((left, right) => (left.createdAt < right.createdAt ? 1 : -1));
+}
+
+function newestReferenceAt(items: AssessmentItemFact[]): string {
+  return items.reduce((newest, item) => (item.referenceAt > newest ? item.referenceAt : newest), items[0].referenceAt);
 }

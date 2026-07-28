@@ -193,7 +193,6 @@ export async function AssessmentWorkspacePage({
           {apiError ? <ErrorState title="Assessment workspace could not be loaded" detail={apiError} /> : null}
           {!apiError ? (
             <CreateAssessmentForm
-              ownerId={session.userId}
               assignableUsers={assignableUsers}
               questionOptions={questionOptions}
               canCreate={canCreateAssessment(session)}
@@ -469,7 +468,6 @@ function AssessmentCardGroup({
 }
 
 function CreateAssessmentForm({
-  ownerId,
   assignableUsers,
   questionOptions,
   canCreate,
@@ -477,7 +475,6 @@ function CreateAssessmentForm({
   preselectedCanonical,
   preselectedCustom
 }: {
-  ownerId: string;
   assignableUsers: AssignableUser[];
   questionOptions: AssessmentQuestionOption[];
   canCreate: boolean;
@@ -534,6 +531,13 @@ function CreateAssessmentForm({
 
   const isCustom = !isEditing && Boolean(preselectedCustom);
   const intent = isEditing ? "updateAssessment" : isCustom ? "createAssessmentFromCustomQuestion" : "createAssessment";
+  const complianceManagerUsers = assignableUsers.filter(isComplianceManagerAssignable);
+  const currentOwnerId = editingAssessment?.items[0]?.ownerId;
+  const currentOwner = currentOwnerId
+    ? complianceManagerUsers.find((user) => user.id === currentOwnerId || user.supabaseUserId === currentOwnerId)
+    : undefined;
+  const defaultOwnerId = currentOwner?.supabaseUserId ?? complianceManagerUsers[0]?.supabaseUserId ?? "";
+  const hasAssignableComplianceManagers = complianceManagerUsers.length > 0;
 
   return (
     <form
@@ -551,17 +555,19 @@ function CreateAssessmentForm({
       <HiddenIdempotency />
       <label>
         Assign to
-        <select name="ownerId" defaultValue={editingAssessment?.items[0]?.ownerId ?? ownerId}>
-          <option value={ownerId}>Myself</option>
-          {assignableUsers
-            .filter((user) => user.id !== ownerId)
-            .map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.displayName || user.email} ({user.roleKeys.join(", ") || "no role"})
-              </option>
-            ))}
+        <select name="ownerId" defaultValue={defaultOwnerId} required disabled={!hasAssignableComplianceManagers}>
+          {hasAssignableComplianceManagers ? null : <option value="">No active Compliance Managers</option>}
+          {complianceManagerUsers.map((user) => (
+            <option key={user.id} value={user.supabaseUserId}>
+              {user.displayName || user.email} (Compliance Manager)
+            </option>
+          ))}
         </select>
       </label>
+      <p className="constraintNote">
+        Assessments can be assigned only to active Compliance Managers. Platform Admins retain access to every
+        assessment.
+      </p>
       <label>
         Scope name
         <input name="scopeName" defaultValue={editingAssessment?.scopeName ?? "FY26 readiness"} required />
@@ -602,12 +608,18 @@ function CreateAssessmentForm({
           : "This question was selected on the Questions page. To assess a different question, go back and choose it there."}
       </p>
       <div className="formActions">
-        <button type="submit">{isEditing ? "Save draft assessment" : "Create assessment"}</button>
+        <button type="submit" disabled={!hasAssignableComplianceManagers}>
+          {isEditing ? "Save draft assessment" : "Create assessment"}
+        </button>
         {isEditing ? <Link href="/assessments" className="secondary">Cancel edit</Link> : null}
         {!isEditing ? <Link href="/questions" className="secondary">Choose a different question</Link> : null}
       </div>
     </form>
   );
+}
+
+function isComplianceManagerAssignable(user: AssignableUser): boolean {
+  return user.roleKeys.length === 1 && user.roleKeys[0] === "compliance_manager";
 }
 
 function AssessmentSummary({ assessment, assessments }: { assessment: Assessment; assessments: Assessment[] }) {

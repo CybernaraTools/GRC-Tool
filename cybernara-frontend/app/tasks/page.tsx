@@ -49,17 +49,21 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
 
   const filterStatus = (textParam(params, "status") || undefined) as UniversalTaskStatus | undefined;
   const filterPriority = (textParam(params, "priority") || undefined) as UniversalTaskPriority | undefined;
+  const isPlatformAdmin = session.roles.some((role) => role.toLowerCase() === "platform_admin");
+  const showAssignmentQueue = primaryRole !== "viewer" && primaryRole !== "compliance_manager";
 
-  try {
-    tasks = await api.listUniversalTasks({
-      status: filterStatus,
-      priority: filterPriority,
-      ownerId: session.userId,
-      limit: 50,
-      offset: 0
-    });
-  } catch (error) {
-    tasksError = apiErrorMessage(error);
+  if (showAssignmentQueue) {
+    try {
+      tasks = await api.listUniversalTasks({
+        status: filterStatus,
+        priority: filterPriority,
+        ownerId: isPlatformAdmin ? undefined : session.userId,
+        limit: 50,
+        offset: 0
+      });
+    } catch (error) {
+      tasksError = apiErrorMessage(error);
+    }
   }
 
   return (
@@ -94,7 +98,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
         ) : null}
       </section>
 
-      {primaryRole !== "viewer" ? (
+      {showAssignmentQueue ? (
         <section className="workspace" aria-labelledby="task-queue-heading">
           <div className="sectionHeader">
             <div>

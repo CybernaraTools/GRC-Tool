@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { AssessmentService } from "../../assessment/public.js";
+import { AdminUsersService } from "../../identity-tenant/public.js";
 import { RiskWorkflowService, type FindingRecord } from "../../risk-workflow/public.js";
 import {
   computeNotifications,
@@ -16,17 +17,21 @@ const PAGE_SIZE = 200;
 export class NotificationHubService {
   constructor(
     @Inject(AssessmentService) private readonly assessments: AssessmentService,
+    @Inject(AdminUsersService) private readonly adminUsers: AdminUsersService,
     @Inject(RiskWorkflowService) private readonly riskWorkflow: RiskWorkflowService
   ) {}
 
   async list(tenantId: string, actorId: string, role: UserRole): Promise<NotificationItem[]> {
-    const [allAssessments, allFindings, allRemediationTasks] = await Promise.all([
+    const [allAssessments, allFindings, allRemediationTasks, allUsers] = await Promise.all([
       fetchAllPages((pagination) => this.assessments.list(tenantId, pagination)),
       fetchAllPages((pagination) => this.riskWorkflow.listFindings({ tenantId, pagination })),
-      fetchAllPages((pagination) => this.riskWorkflow.listRemediationTasks({ tenantId, pagination }))
+      fetchAllPages((pagination) => this.riskWorkflow.listRemediationTasks({ tenantId, pagination })),
+      this.adminUsers.listUsers(tenantId)
     ]);
 
     const findingById = new Map<string, FindingRecord>(allFindings.map((finding) => [finding.id, finding]));
+    const actorUser = allUsers.find((user) => user.id === actorId || user.supabaseUserId === actorId);
+    const actorIds = actorUser ? [actorUser.id, actorUser.supabaseUserId] : [actorId];
 
     const items: AssessmentItemFact[] = allAssessments.flatMap((assessment) =>
       assessment.items.map((item) => ({
@@ -69,6 +74,7 @@ export class NotificationHubService {
     return computeNotifications({
       role,
       actorId,
+      actorIds,
       items,
       remediations,
       assessments: assessmentReadiness

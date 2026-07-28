@@ -2861,9 +2861,10 @@ export function buildOpenApiSpec() {
         },
         AssignableUser: {
           type: "object",
-          required: ["id", "email", "roleKeys"],
+          required: ["id", "supabaseUserId", "email", "roleKeys"],
           properties: {
             id: { type: "string", format: "uuid" },
+            supabaseUserId: { type: "string", format: "uuid" },
             email: { type: "string", format: "email" },
             displayName: { type: "string" },
             roleKeys: { type: "array", items: { type: "string" } }
