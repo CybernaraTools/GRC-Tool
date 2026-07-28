@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE_SERVICE_CLIENT } from "../../../platform/supabase/supabase.module.js";
 import type { Classification } from "../../platform-hardening/public.js";
+import type { TenantStatus } from "../domain/identity-tenant.js";
 import {
   adminRoleCatalog,
   clearanceLevels,
@@ -96,7 +97,8 @@ export class AdminUsersService {
       tenantId: input.tenantId,
       roleKeys: [role.roleKey],
       clearance: input.clearance,
-      status: "active"
+      status: "active",
+      tenantStatus: "active"
     });
 
     const created = await this.supabase.auth.admin.createUser({
@@ -167,9 +169,29 @@ export class AdminUsersService {
     return enrichScopes(updated);
   }
 
+  async syncTenantAccessMetadata(input: { tenantId: string; tenantStatus: TenantStatus }): Promise<number> {
+    const users = await this.repository.listUsers(input.tenantId);
+    for (const user of users) {
+      await this.updateSupabaseMetadata(user.supabaseUserId, {
+        tenantId: input.tenantId,
+        roleKeys: user.roleKeys,
+        clearance: user.clearance,
+        status: user.status,
+        tenantStatus: input.tenantStatus
+      });
+    }
+    return users.length;
+  }
+
   private async updateSupabaseMetadata(
     supabaseUserId: string,
-    input: { tenantId: string; roleKeys: string[]; clearance: Classification; status: AdminUserStatus }
+    input: {
+      tenantId: string;
+      roleKeys: string[];
+      clearance: Classification;
+      status: AdminUserStatus;
+      tenantStatus?: TenantStatus;
+    }
   ): Promise<void> {
     const current = await this.supabase.auth.admin.getUserById(supabaseUserId);
     if (current.error || !current.data.user) {
@@ -207,13 +229,15 @@ function appMetadataFor(input: {
   roleKeys: string[];
   clearance: Classification;
   status: AdminUserStatus;
+  tenantStatus?: TenantStatus;
 }): Record<string, unknown> {
   return {
     tenant_id: input.tenantId,
     roles: input.roleKeys,
     scopes: scopesForRoleKeys(input.roleKeys),
     clearance: input.clearance,
-    status: input.status
+    status: input.status,
+    ...(input.tenantStatus ? { tenant_status: input.tenantStatus } : {})
   };
 }
 

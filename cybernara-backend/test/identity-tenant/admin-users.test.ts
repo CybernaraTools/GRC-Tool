@@ -5,6 +5,7 @@ import type { AddressInfo } from "node:net";
 import { ValidationPipe, type INestApplication } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AppModule } from "../../src/app.module.js";
 import { ProblemDetailsFilter } from "../../src/shared/problem-details.filter.js";
@@ -21,6 +22,7 @@ describe("Admin user and role API", () => {
   let baseUrl: string;
   let supabaseAdmin: SupabaseClient;
   let supabaseAnon: SupabaseClient;
+  let adminPool: pg.Pool;
 
   const authUserIds: string[] = [];
   const tenantA = randomUUID();
@@ -40,6 +42,7 @@ describe("Admin user and role API", () => {
     supabaseAnon = createClient(requiredEnv("SUPABASE_URL"), requiredEnv("SUPABASE_ANON_KEY"), {
       auth: { persistSession: false }
     });
+    adminPool = new pg.Pool({ connectionString: requiredEnv("SUPABASE_DB_URL") });
 
     await registerTenant(tenantA, "Admin Tenant A");
     await registerTenant(tenantB, "Admin Tenant B");
@@ -49,6 +52,9 @@ describe("Admin user and role API", () => {
     for (const userId of authUserIds) {
       await supabaseAdmin.auth.admin.deleteUser(userId).catch(() => undefined);
     }
+    await cleanupTenant(adminPool, tenantB).catch(() => undefined);
+    await cleanupTenant(adminPool, tenantA).catch(() => undefined);
+    await adminPool.end().catch(() => undefined);
     await app.close();
   });
 
@@ -181,6 +187,53 @@ describe("Admin user and role API", () => {
     expect(allowed.status).toBe(200);
   }, 60_000);
 
+  it("syncs user deactivation status to Supabase metadata until the user is reactivated", async () => {
+    const invited = await inviteUser(tenantA, {
+      email: uniqueEmail("status-toggle"),
+      roleKey: "auditor",
+      clearance: "internal"
+    });
+    authUserIds.push(invited.supabaseUserId);
+
+    const signedIn = await supabaseAnon.auth.signInWithPassword({
+      email: invited.email,
+      password: invited.temporaryPassword
+    });
+    expect(signedIn.error).toBeNull();
+    const accessToken = signedIn.data.session?.access_token;
+    expect(accessToken).toBeTruthy();
+
+    const beforeUser = await supabaseAnon.auth.getUser(accessToken);
+    expect(beforeUser.data.user?.app_metadata.status).toBe("active");
+    expect(beforeUser.data.user?.app_metadata.tenant_status).toBe("active");
+
+    const disabled = await fetch(`${baseUrl}/v1/admin/users/${invited.id}`, {
+      method: "PATCH",
+      headers: { ...requestHeaders(tenantA, adminScopes), "content-type": "application/json" },
+      body: JSON.stringify({ status: "disabled" })
+    });
+    expect(disabled.status).toBe(200);
+    const disabledBody = (await disabled.json()) as { status: string };
+    expect(disabledBody.status).toBe("disabled");
+
+    const disabledUser = await supabaseAnon.auth.getUser(accessToken);
+    expect(disabledUser.data.user?.app_metadata.status).toBe("disabled");
+    expect(disabledUser.data.user?.app_metadata.tenant_status).toBe("active");
+
+    const reactivated = await fetch(`${baseUrl}/v1/admin/users/${invited.id}`, {
+      method: "PATCH",
+      headers: { ...requestHeaders(tenantA, adminScopes), "content-type": "application/json" },
+      body: JSON.stringify({ status: "active" })
+    });
+    expect(reactivated.status).toBe(200);
+    const reactivatedBody = (await reactivated.json()) as { status: string };
+    expect(reactivatedBody.status).toBe("active");
+
+    const activeUser = await supabaseAnon.auth.getUser(accessToken);
+    expect(activeUser.data.user?.app_metadata.status).toBe("active");
+    expect(activeUser.data.user?.app_metadata.tenant_status).toBe("active");
+  }, 60_000);
+
   async function registerTenant(tenantId: string, name: string) {
     const response = await fetch(`${baseUrl}/v1/identity/tenants`, {
       method: "POST",
@@ -242,6 +295,13 @@ function headersFromSupabaseUser(user: { id: string; app_metadata: Record<string
 
 function uniqueEmail(prefix: string): string {
   return `cybernara-admin-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
+}
+
+async function cleanupTenant(pool: pg.Pool, tenantId: string): Promise<void> {
+  await pool.query("delete from identity_role_grants where tenant_id = $1", [tenantId]);
+  await pool.query("delete from identity_users where tenant_id = $1", [tenantId]);
+  await pool.query("delete from identity_roles where tenant_id = $1", [tenantId]);
+  await pool.query("delete from identity_tenants where id = $1", [tenantId]);
 }
 
 function requiredEnv(name: string): string {

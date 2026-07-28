@@ -8,7 +8,7 @@ export default async function Home() {
     redirect(loginPath("/"));
   }
   if (session.kind === "platform") {
-    redirect("/platform/tenants");
+    redirect("/platform/dashboard");
   }
 
   redirect("/dashboard");

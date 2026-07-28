@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { canAccessFeature } from "../src/lib/authorization";
+import { platformOperatorPath } from "../src/lib/auth";
 import {
   operationalNavItems,
+  platformNavItems,
   visibleNavForRole,
   visibleNavForSession
 } from "../src/lib/navigation";
@@ -27,7 +29,10 @@ const realFrontendRoutes = [
   "/integrations",
   "/privacy",
   "/privacy/retention",
-  "/enterprise"
+  "/enterprise",
+  "/platform/dashboard",
+  "/platform/tenants",
+  "/platform/questions"
 ];
 
 describe("operational shell hardening helpers", () => {
@@ -44,7 +49,9 @@ describe("operational shell hardening helpers", () => {
   });
 
   it("never declares a nav item whose href has no backing page route", () => {
-    const danglingHrefs = operationalNavItems.map((item) => item.href).filter((href) => !realFrontendRoutes.includes(href));
+    const danglingHrefs = [...operationalNavItems, ...platformNavItems]
+      .map((item) => item.href)
+      .filter((href) => !realFrontendRoutes.includes(href));
     expect(danglingHrefs).toEqual([]);
   });
 
@@ -55,6 +62,32 @@ describe("operational shell hardening helpers", () => {
         scopes: []
       }).length
     ).toBeGreaterThan(0);
+  });
+
+  it("shows global platform workspaces to platform super-admin sessions", () => {
+    expect(
+      visibleNavForSession({
+        kind: "platform",
+        platformRole: "super_admin",
+        scopes: []
+      }).map((item) => item.label)
+    ).toEqual([
+      "Dashboard",
+      "Client Onboarding",
+      "Question Repository",
+      "Framework Library",
+      "Framework Updates",
+      "Harmonization"
+    ]);
+  });
+
+  it("preserves platform-safe global routes through login redirects", () => {
+    expect(platformOperatorPath("/platform/dashboard")).toBe(true);
+    expect(platformOperatorPath("/platform/questions")).toBe(true);
+    expect(platformOperatorPath("/frameworks")).toBe(true);
+    expect(platformOperatorPath("/frameworks/updates")).toBe(true);
+    expect(platformOperatorPath("/harmonization?frameworkKey=SOC2")).toBe(true);
+    expect(platformOperatorPath("/dashboard")).toBe(false);
   });
 
   it("requires role for feature access", () => {

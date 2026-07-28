@@ -184,6 +184,16 @@ export const operationalNavItems: NavItem[] = [
 
 export const platformNavItems: NavItem[] = [
   {
+    label: "Dashboard",
+    href: "/platform/dashboard",
+    icon: "dashboard",
+    roles: ["platform_admin"],
+    savedViews: false,
+    bulkActions: false,
+    publicPreview: false,
+    requiredScopes: []
+  },
+  {
     label: "Client Onboarding",
     href: "/platform/tenants",
     icon: "corporate_fare",
@@ -192,6 +202,46 @@ export const platformNavItems: NavItem[] = [
     bulkActions: false,
     publicPreview: false,
     requiredScopes: ["tenant:write"]
+  },
+  {
+    label: "Question Repository",
+    href: "/platform/questions",
+    icon: "quiz",
+    roles: ["platform_admin"],
+    savedViews: false,
+    bulkActions: false,
+    publicPreview: false,
+    requiredScopes: []
+  },
+  {
+    label: "Framework Library",
+    href: "/frameworks",
+    icon: "policy",
+    roles: ["platform_admin"],
+    savedViews: true,
+    bulkActions: false,
+    publicPreview: false,
+    requiredScopes: []
+  },
+  {
+    label: "Framework Updates",
+    href: "/frameworks/updates",
+    icon: "upgrade",
+    roles: ["platform_admin"],
+    savedViews: false,
+    bulkActions: false,
+    publicPreview: false,
+    requiredScopes: []
+  },
+  {
+    label: "Harmonization",
+    href: "/harmonization",
+    icon: "hub",
+    roles: ["platform_admin"],
+    savedViews: true,
+    bulkActions: false,
+    publicPreview: false,
+    requiredScopes: []
   }
 ];
 

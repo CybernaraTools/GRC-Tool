@@ -31,6 +31,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ user: invited, temporaryPassword: invited.temporaryPassword });
     }
 
+    if (intent === "deactivateTenant") {
+      const tenant = await api.deactivatePlatformTenant(text(formData, "tenantId"));
+      return NextResponse.json({ tenant });
+    }
+
+    if (intent === "activateTenant") {
+      const tenant = await api.activatePlatformTenant(text(formData, "tenantId"));
+      return NextResponse.json({ tenant });
+    }
+
     return NextResponse.json({ error: "Unsupported platform onboarding action." }, { status: 400 });
   } catch (error) {
     return NextResponse.json({ error: apiErrorMessage(error) }, { status: 400 });
@@ -53,4 +63,3 @@ function clearance(
   }
   return fallback;
 }
-

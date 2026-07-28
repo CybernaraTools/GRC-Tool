@@ -29,9 +29,14 @@ export function AdminUsersConsole({
 
   async function submit(form: HTMLFormElement, workingMessage: string) {
     setState({ kind: "working", message: workingMessage });
+    const formData = new FormData(form);
+    const intentValue = formData.get("intent");
+    const statusValue = formData.get("status");
+    const intent = typeof intentValue === "string" ? intentValue : "";
+    const requestedStatus = typeof statusValue === "string" ? statusValue : "";
     const response = await fetch("/admin/users/actions", {
       method: "POST",
-      body: new FormData(form),
+      body: formData,
       headers: { accept: "application/json" }
     });
     const body = (await response.json()) as { user?: AdminUser; temporaryPassword?: string; error?: string };
@@ -49,9 +54,11 @@ export function AdminUsersConsole({
     });
     setState({
       kind: "success",
-      message: body.temporaryPassword
-        ? `Invited ${body.user.email}. Share the temporary password through an approved channel.`
-        : `Updated ${body.user.email}.`,
+      message: adminUserSuccessMessage(body.user, {
+        temporaryPassword: body.temporaryPassword,
+        intent,
+        requestedStatus
+      }),
       temporaryPassword: body.temporaryPassword
     });
     form.reset();
@@ -167,7 +174,9 @@ export function AdminUsersConsole({
                           onSubmit={submit}
                           ready={ready}
                         />
-                        <StatusButton user={user} onSubmit={submit} ready={ready} />
+                        {canShowStatusButton(user) ? (
+                          <StatusButton user={user} onSubmit={submit} ready={ready} />
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -179,6 +188,26 @@ export function AdminUsersConsole({
       </section>
     </>
   );
+}
+
+function adminUserSuccessMessage(
+  user: AdminUser,
+  input: { temporaryPassword?: string; intent: string; requestedStatus: string }
+): string {
+  if (input.temporaryPassword) {
+    return `Invited ${user.email}. Share the temporary password through an approved channel.`;
+  }
+  if (input.intent === "setStatus" && input.requestedStatus === "disabled") {
+    return `Deactivated ${user.email}. Their Cybernara login access is suspended.`;
+  }
+  if (input.intent === "setStatus" && input.requestedStatus === "active") {
+    return `Reactivated ${user.email}. Their Cybernara login access is restored.`;
+  }
+  return `Updated ${user.email}.`;
+}
+
+function canShowStatusButton(user: AdminUser): boolean {
+  return user.status === "disabled" || !user.roleKeys.includes("platform_admin");
 }
 
 function AssignmentForm({

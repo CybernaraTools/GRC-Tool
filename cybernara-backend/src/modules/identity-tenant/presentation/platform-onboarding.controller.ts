@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Req, UseGuards } from "@nestjs/common";
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
@@ -58,6 +58,13 @@ export class PlatformOnboardingController {
     return this.service.listTenants();
   }
 
+  @Get("dashboard")
+  @ApiOperation({ summary: "Platform super-admin dashboard across all client tenants." })
+  @ApiOkResponse({ description: "Platform dashboard aggregate." })
+  getDashboard() {
+    return this.service.getDashboard();
+  }
+
   @Post("tenants")
   @ApiOperation({ summary: "Create a new client tenant." })
   @ApiCreatedResponse({ description: "Client tenant created." })
@@ -68,6 +75,32 @@ export class PlatformOnboardingController {
       operatorUserId: context.userId,
       name: body.name,
       classification: body.classification
+    });
+  }
+
+  @Post("tenants/:tenantId/deactivate")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Suspend a client tenant and revoke tenant-user login access." })
+  @ApiOkResponse({ description: "Client tenant suspended." })
+  @ApiNotFoundResponse({ description: "Tenant not found." })
+  async deactivateTenant(@Req() request: Request, @Param("tenantId") tenantId: string) {
+    const context = readPlatformRequestContext(request);
+    return this.service.deactivateTenant({
+      operatorUserId: context.userId,
+      tenantId
+    });
+  }
+
+  @Post("tenants/:tenantId/activate")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Reactivate a suspended client tenant and restore tenant-user login access." })
+  @ApiOkResponse({ description: "Client tenant activated." })
+  @ApiNotFoundResponse({ description: "Tenant not found." })
+  async activateTenant(@Req() request: Request, @Param("tenantId") tenantId: string) {
+    const context = readPlatformRequestContext(request);
+    return this.service.activateTenant({
+      operatorUserId: context.userId,
+      tenantId
     });
   }
 

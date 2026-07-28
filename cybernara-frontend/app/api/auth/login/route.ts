@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { safeRedirectPath, sessionCookieOptions } from "../../../../src/lib/auth";
+import { platformOperatorPath, safeRedirectPath, sessionCookieOptions } from "../../../../src/lib/auth";
 import {
   accessTokenCookieName,
   refreshTokenCookieName,
@@ -25,9 +25,13 @@ export async function POST(request: NextRequest) {
   }
 
   const session = sessionContextFromSupabaseUser(data.user);
+  if (!session) {
+    return redirectToLogin(request, nextPath, "Email or password did not match an active Cybernara account.");
+  }
+
   let targetPath = nextPath;
   if (session?.kind === "platform") {
-    targetPath = nextPath.startsWith("/platform") ? nextPath : "/platform/tenants";
+    targetPath = platformOperatorPath(nextPath) ? nextPath : "/platform/dashboard";
   } else {
     targetPath = nextPath === "/" || nextPath.startsWith("/platform") ? "/dashboard" : nextPath;
   }

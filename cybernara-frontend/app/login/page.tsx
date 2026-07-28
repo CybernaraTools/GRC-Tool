@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { safeRedirectPath } from "../../src/lib/auth";
+import { platformOperatorPath, safeRedirectPath } from "../../src/lib/auth";
 import { readSessionContext } from "../../src/lib/session";
 
 type LoginPageProps = {
@@ -14,7 +14,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   if (session) {
     if (session.kind === "platform") {
-      redirect(platformOperatorPath(nextPath) ? nextPath : "/platform/tenants");
+      redirect(platformOperatorPath(nextPath) ? nextPath : "/platform/dashboard");
     }
     redirect(nextPath === "/" || nextPath.startsWith("/platform") ? "/dashboard" : nextPath);
   }
@@ -65,13 +65,3 @@ function value(input: string | string[] | undefined): string {
   return Array.isArray(input) ? input[0] ?? "" : input ?? "";
 }
 
-function platformOperatorPath(path: string): boolean {
-  return (
-    path.startsWith("/platform") ||
-    path === "/frameworks" ||
-    path.startsWith("/frameworks?") ||
-    path.startsWith("/frameworks/updates") ||
-    path === "/harmonization" ||
-    path.startsWith("/harmonization?")
-  );
-}

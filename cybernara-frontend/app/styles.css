@@ -3735,3 +3735,579 @@ a.inlineSerifLink:hover {
   font-size: 13px;
   font-weight: 600;
 }
+
+/* Platform Super-Admin Dashboard */
+.platformDashboardPage {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.platformDashboardHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.platformHeroCopy,
+.platformScoreRingPanel,
+.platformBentoTile,
+.tenantDetailPanel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.platformHeroCopy {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  padding: 30px 32px;
+}
+
+.platformHeroTop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  align-items: start;
+  gap: 24px;
+}
+
+.platformHeroCopy h2 {
+  max-width: 720px;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 40px;
+  font-weight: 300;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.platformHeroCopy p {
+  max-width: 780px;
+  color: var(--ink-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.platformHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.tenantSwitcher {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+}
+
+.tenantSwitcher label {
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tenantSwitcherControls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.tenantSwitcher select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tenantSwitcher button {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.platformScoreRingPanel {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 16px;
+  padding: 28px;
+  text-align: center;
+}
+
+.platformScoreRingPanel p {
+  margin-top: 10px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.scoreRing {
+  --score: 0%;
+  --score-rest: var(--surface-strong);
+  display: grid;
+  place-items: center;
+  width: 92px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, var(--surface) 0 58%, transparent 59%),
+    conic-gradient(#a7e5d3 var(--score), var(--score-rest) 0);
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.02);
+}
+
+.largeScoreRing {
+  width: 148px;
+}
+
+.scoreRing span {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0;
+}
+
+.largeScoreRing span {
+  font-size: 32px;
+}
+
+.platformBentoGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.platformBentoTile {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 160px;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.platformBentoTile:hover,
+.tenantDetailPanel:hover {
+  border-color: var(--border-strong);
+}
+
+.metricTile {
+  min-height: 170px;
+}
+
+.metricTile strong,
+.insightTile strong {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.metricTile p,
+.insightTile p,
+.mutedText {
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.platformTileIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+  color: var(--ink);
+  font-size: 21px;
+}
+
+.wideTile {
+  grid-column: span 2;
+}
+
+.platformTileHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+}
+
+.platformTileHeader h3 {
+  margin-top: 4px;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.platformTileHeader > span,
+.platformDashboardPage .label {
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tenantRankList,
+.countBarList,
+.tenantFrameworkList,
+.recentAssessmentList {
+  display: grid;
+  gap: 12px;
+}
+
+.tenantRankItem {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(160px, 1.1fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+}
+
+.tenantRankItem strong,
+.recentAssessmentRow strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.tenantRankItem small,
+.recentAssessmentRow small,
+.tenantDetailHeader small,
+.tenantMetricPill small {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--ink-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.tenantRankProgress {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.tenantRankProgress span {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.platformDashboardPage .progressBarTrack {
+  height: 10px !important;
+  margin: 0 !important;
+  border-color: var(--border) !important;
+}
+
+.platformDashboardPage .progressBarTrack:hover,
+.platformDashboardPage .frameworkCard:hover .progressBarTrack {
+  height: 10px !important;
+}
+
+.platformDashboardPage .progressBarFill {
+  background: linear-gradient(90deg, #a7e5d3 0%, #a8c8e8 55%, #f4c5a8 100%);
+}
+
+.countBarItem {
+  display: grid;
+  gap: 7px;
+}
+
+.countBarLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.countBarLabel span {
+  overflow-wrap: anywhere;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.countBarLabel strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.countBarTrack {
+  position: relative;
+  height: 9px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-strong);
+}
+
+.countBarTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #c8b8e0 0%, #a7e5d3 100%);
+}
+
+.frameworkProgressGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.frameworkProgressItem {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+}
+
+.frameworkProgressItem .frameworkCardStats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.insightTile {
+  align-content: center;
+}
+
+.tenantDetailSection {
+  display: grid;
+  gap: 16px;
+}
+
+.compactPlatformHeader {
+  margin: 0;
+  border: 1px solid var(--border);
+}
+
+.tenantDetailGrid {
+  display: grid;
+  gap: 18px;
+}
+
+.tenantDetailPanel {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.tenantDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  min-width: 0;
+}
+
+.tenantDetailHeader h3 {
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.tenantDetailScore {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.tenantMetricStrip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tenantMetricPill {
+  display: grid;
+  gap: 4px;
+  min-height: 82px;
+  align-content: center;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+}
+
+.tenantMetricPill span {
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tenantMetricPill strong {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.tenantPanelColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+  gap: 18px;
+}
+
+.compactTileHeader {
+  min-height: 22px;
+  margin-bottom: 10px;
+}
+
+.tenantFrameworkRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.tenantFrameworkRow span {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tenantFrameworkRow strong {
+  color: var(--ink-muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+.tenantFrameworkRow .progressBarTrack {
+  grid-column: 1 / -1;
+}
+
+.tenantRecentAssessments {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.recentAssessmentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.recentAssessmentRow:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 1280px) {
+  .platformBentoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tenantMetricStrip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tenantPanelColumns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .platformDashboardHero {
+    grid-template-columns: 1fr;
+  }
+
+  .platformHeroTop {
+    grid-template-columns: 1fr;
+  }
+
+  .platformBentoGrid,
+  .frameworkProgressGrid,
+  .tenantRankItem {
+    grid-template-columns: 1fr;
+  }
+
+  .wideTile {
+    grid-column: auto;
+  }
+
+  .tenantRankProgress {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .tenantDetailHeader {
+    display: grid;
+  }
+
+  .tenantDetailScore {
+    justify-items: start;
+  }
+
+  .tenantMetricStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .platformHeroCopy,
+  .platformScoreRingPanel,
+  .platformBentoTile,
+  .tenantDetailPanel {
+    padding: 16px;
+  }
+
+  .platformHeroCopy h2 {
+    font-size: 30px;
+  }
+
+  .platformHeroActions,
+  .tenantSwitcherControls,
+  .recentAssessmentRow {
+    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tenantMetricStrip {
+    grid-template-columns: 1fr;
+  }
+}

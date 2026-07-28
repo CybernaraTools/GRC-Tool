@@ -30,7 +30,9 @@ const tenantMetadataSchema = z.object({
   tenant_id: z.string().uuid(),
   roles: z.array(z.string()).default(["viewer"]),
   scopes: z.array(z.string()).default([]),
-  clearance: z.string().default("public")
+  clearance: z.string().default("public"),
+  status: z.enum(["active", "invited", "disabled"]).default("active"),
+  tenant_status: z.enum(["active", "suspended", "archived"]).optional()
 });
 
 export async function readSessionContext(): Promise<SessionContext | null> {
@@ -68,10 +70,16 @@ export function sessionContextFromSupabaseUser(user: { id: string; email?: strin
     tenant_id: metadata.tenant_id,
     roles: stringArray(metadata.roles),
     scopes: stringArray(metadata.scopes),
-    clearance: typeof metadata.clearance === "string" ? metadata.clearance : "public"
+    clearance: typeof metadata.clearance === "string" ? metadata.clearance : "public",
+    status: typeof metadata.status === "string" ? metadata.status : "active",
+    tenant_status: typeof metadata.tenant_status === "string" ? metadata.tenant_status : undefined
   });
 
   if (!parsed.success) {
+    return null;
+  }
+
+  if (parsed.data.status !== "active" || parsed.data.tenant_status === "suspended" || parsed.data.tenant_status === "archived") {
     return null;
   }
 

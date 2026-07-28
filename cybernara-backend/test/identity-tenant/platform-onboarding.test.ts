@@ -91,10 +91,20 @@ describe("Platform super-admin onboarding API", () => {
       headers: { ...spoofedPlatformHeaders, "content-type": "application/json" },
       body: JSON.stringify({ email: uniqueEmail("should-not-invite") })
     });
+    const deactivate = await fetch(`${baseUrl}/v1/platform/tenants/${tenantId}/deactivate`, {
+      method: "POST",
+      headers: spoofedPlatformHeaders
+    });
+    const activate = await fetch(`${baseUrl}/v1/platform/tenants/${tenantId}/activate`, {
+      method: "POST",
+      headers: spoofedPlatformHeaders
+    });
 
     await expectStatus(list, 403);
     await expectStatus(create, 403);
     await expectStatus(invite, 403);
+    await expectStatus(deactivate, 403);
+    await expectStatus(activate, 403);
   }, 60_000);
 
   it("creates a tenant, invites its first tenant admin, and keeps that admin tenant-scoped", async () => {
@@ -127,6 +137,35 @@ describe("Platform super-admin onboarding API", () => {
       headers: platformHeaders(invited.supabaseUserId, invited.email)
     });
     await expectStatus(tenantAdminPlatformAttempt, 403);
+  }, 60_000);
+
+  it("suspends and reactivates tenant login access from the platform console", async () => {
+    const tenant = await platformCreateTenant("Tenant Access Toggle Co");
+    tenantIds.push(tenant.id);
+    const invited = await platformInviteTenantAdmin(tenant.id, uniqueEmail("access-toggle-admin"));
+    authUserIds.push(invited.supabaseUserId);
+
+    const suspended = await platformSetTenantAccess(tenant.id, "deactivate");
+    expect(suspended.status).toBe("suspended");
+
+    const suspendedUser = await supabaseAdmin.auth.admin.getUserById(invited.supabaseUserId);
+    expect(suspendedUser.error).toBeNull();
+    expect(suspendedUser.data.user?.app_metadata.tenant_status).toBe("suspended");
+    expect(suspendedUser.data.user?.app_metadata.status).toBe("active");
+
+    const suspendedInvite = await fetch(`${baseUrl}/v1/platform/tenants/${tenant.id}/admin-invite`, {
+      method: "POST",
+      headers: { ...platformHeaders(), "content-type": "application/json" },
+      body: JSON.stringify({ email: uniqueEmail("blocked-admin") })
+    });
+    await expectStatus(suspendedInvite, 400);
+
+    const activated = await platformSetTenantAccess(tenant.id, "activate");
+    expect(activated.status).toBe("active");
+
+    const activeUser = await supabaseAdmin.auth.admin.getUserById(invited.supabaseUserId);
+    expect(activeUser.error).toBeNull();
+    expect(activeUser.data.user?.app_metadata.tenant_status).toBe("active");
   }, 60_000);
 
   async function createTenantThroughLegacyEndpoint(name: string): Promise<string> {
@@ -181,6 +220,18 @@ describe("Platform super-admin onboarding API", () => {
     });
     expect(response.status).toBe(201);
     return (await response.json()) as { id: string; tenantId: string; supabaseUserId: string; email: string };
+  }
+
+  async function platformSetTenantAccess(
+    tenantId: string,
+    action: "activate" | "deactivate"
+  ): Promise<{ id: string; status: string }> {
+    const response = await fetch(`${baseUrl}/v1/platform/tenants/${tenantId}/${action}`, {
+      method: "POST",
+      headers: platformHeaders()
+    });
+    await expectStatus(response, 200);
+    return (await response.json()) as { id: string; status: string };
   }
 
   function platformHeaders(userId: string = platformOperatorUserId, email: string = platformOperatorEmail): Record<string, string> {

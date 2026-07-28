@@ -6,11 +6,14 @@ import type { NavItem } from "../lib/navigation";
 
 export function SidebarNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+  const activeHref = items
+    .filter((item) => pathname === item.href || (item.href !== "/" && pathname?.startsWith(`${item.href}/`)))
+    .sort((left, right) => right.href.length - left.href.length)[0]?.href;
 
   return (
     <nav className="sidebarNav" aria-label="Primary navigation">
       {items.map((item) => {
-        const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(`${item.href}/`));
+        const active = item.href === activeHref;
         return (
           <Link
             href={item.href}

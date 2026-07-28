@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sessionBackendHeaders } from "../src/lib/session";
+import { sessionBackendHeaders, sessionContextFromSupabaseUser } from "../src/lib/session";
 
 describe("session backend headers", () => {
   it("serializes roles and scopes with commas for the backend request-context parser", () => {
@@ -31,5 +31,30 @@ describe("session backend headers", () => {
       "x-platform-role": "super_admin",
       "x-user-email": "operator@example.com"
     });
+  });
+
+  it("rejects disabled tenant users and users from suspended tenants", () => {
+    const tenantMetadata = {
+      tenant_id: "00000000-0000-4000-8000-000000000001",
+      roles: ["auditor"],
+      scopes: ["assessment:read"],
+      clearance: "internal"
+    };
+
+    expect(
+      sessionContextFromSupabaseUser({
+        id: "00000000-0000-4000-8000-000000000004",
+        email: "disabled@example.com",
+        app_metadata: { ...tenantMetadata, status: "disabled", tenant_status: "active" }
+      })
+    ).toBeNull();
+
+    expect(
+      sessionContextFromSupabaseUser({
+        id: "00000000-0000-4000-8000-000000000005",
+        email: "suspended@example.com",
+        app_metadata: { ...tenantMetadata, status: "active", tenant_status: "suspended" }
+      })
+    ).toBeNull();
   });
 });

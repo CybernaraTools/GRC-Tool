@@ -15,6 +15,7 @@ export function PlatformTenantsConsole({ tenants }: { tenants: PlatformTenant[] 
   const [rows, setRows] = useState(tenants);
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
   const [ready, setReady] = useState(false);
+  const activeRows = rows.filter((tenant) => tenant.status === "active");
 
   useEffect(() => {
     setReady(true);
@@ -22,9 +23,12 @@ export function PlatformTenantsConsole({ tenants }: { tenants: PlatformTenant[] 
 
   async function submit(form: HTMLFormElement, workingMessage: string) {
     setState({ kind: "working", message: workingMessage });
+    const formData = new FormData(form);
+    const intentValue = formData.get("intent");
+    const intent = typeof intentValue === "string" ? intentValue : "";
     const response = await fetch("/platform/tenants/actions", {
       method: "POST",
-      body: new FormData(form),
+      body: formData,
       headers: { accept: "application/json" }
     });
     const body = (await response.json()) as {
@@ -39,9 +43,17 @@ export function PlatformTenantsConsole({ tenants }: { tenants: PlatformTenant[] 
     }
 
     if (body.tenant) {
-      setRows((current) => [body.tenant, ...current].filter((entry): entry is PlatformTenant => Boolean(entry)));
-      setState({ kind: "success", message: `Created client tenant ${body.tenant.name}.` });
-      form.reset();
+      setRows((current) => {
+        const existing = current.some((tenant) => tenant.id === body.tenant?.id);
+        if (!existing) {
+          return [body.tenant, ...current].filter((entry): entry is PlatformTenant => Boolean(entry));
+        }
+        return current.map((tenant) => (tenant.id === body.tenant?.id ? body.tenant : tenant));
+      });
+      setState({ kind: "success", message: tenantSuccessMessage(body.tenant, intent) });
+      if (intent === "createTenant") {
+        form.reset();
+      }
       return;
     }
 
@@ -121,8 +133,8 @@ export function PlatformTenantsConsole({ tenants }: { tenants: PlatformTenant[] 
           <input type="hidden" name="intent" value="inviteFirstAdmin" />
           <label>
             Client tenant
-            <select name="tenantId" required disabled={rows.length === 0}>
-              {rows.map((tenant) => (
+            <select name="tenantId" required disabled={activeRows.length === 0}>
+              {activeRows.map((tenant) => (
                 <option key={tenant.id} value={tenant.id}>
                   {tenant.name}
                 </option>
@@ -148,7 +160,7 @@ export function PlatformTenantsConsole({ tenants }: { tenants: PlatformTenant[] 
             </select>
           </label>
           <div className="formActions">
-            <button type="submit" disabled={!ready || rows.length === 0}>
+            <button type="submit" disabled={!ready || activeRows.length === 0}>
               Create first admin
             </button>
           </div>
@@ -174,12 +186,13 @@ export function PlatformTenantsConsole({ tenants }: { tenants: PlatformTenant[] 
                 <th scope="col">Status</th>
                 <th scope="col">Classification</th>
                 <th scope="col">Created</th>
+                <th scope="col">Access</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={4}>No client tenants exist yet.</td>
+                  <td colSpan={5}>No client tenants exist yet.</td>
                 </tr>
               ) : (
                 rows.map((tenant) => (
@@ -189,10 +202,13 @@ export function PlatformTenantsConsole({ tenants }: { tenants: PlatformTenant[] 
                       <small>{tenant.id}</small>
                     </td>
                     <td>
-                      <span className="badge internal">{tenant.status}</span>
+                      <span className={`badge ${tenantBadgeClass(tenant.status)}`}>{tenant.status}</span>
                     </td>
                     <td>{tenant.classification}</td>
                     <td>{new Date(tenant.createdAt).toLocaleString()}</td>
+                    <td>
+                      <TenantAccessButton tenant={tenant} onSubmit={submit} ready={ready} />
+                    </td>
                   </tr>
                 ))
               )}
@@ -202,6 +218,62 @@ export function PlatformTenantsConsole({ tenants }: { tenants: PlatformTenant[] 
       </section>
     </>
   );
+}
+
+function TenantAccessButton({
+  tenant,
+  onSubmit,
+  ready
+}: {
+  tenant: PlatformTenant;
+  onSubmit: (form: HTMLFormElement, workingMessage: string) => Promise<void>;
+  ready: boolean;
+}) {
+  const activating = tenant.status !== "active";
+  const intent = activating ? "activateTenant" : "deactivateTenant";
+  const label = activating ? "Activate" : "Deactivate";
+  const icon = activating ? "check_circle" : "block";
+  return (
+    <form
+      className="inlineForm"
+      aria-label={`${label} ${tenant.name}`}
+      method="post"
+      action="/platform/tenants/actions"
+      onSubmit={(event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        void onSubmit(event.currentTarget, `${activating ? "Activating" : "Deactivating"} ${tenant.name}...`);
+      }}
+    >
+      <input type="hidden" name="intent" value={intent} />
+      <input type="hidden" name="tenantId" value={tenant.id} />
+      <button className="buttonWithIcon" type="submit" disabled={!ready}>
+        <span className="material-symbols-outlined" aria-hidden="true">
+          {icon}
+        </span>
+        {label}
+      </button>
+    </form>
+  );
+}
+
+function tenantSuccessMessage(tenant: PlatformTenant, intent: string): string {
+  if (intent === "deactivateTenant") {
+    return `Deactivated ${tenant.name}. Tenant user login access is suspended.`;
+  }
+  if (intent === "activateTenant") {
+    return `Activated ${tenant.name}. Tenant user login access is restored.`;
+  }
+  return `Created client tenant ${tenant.name}.`;
+}
+
+function tenantBadgeClass(status: PlatformTenant["status"]): string {
+  if (status === "active") {
+    return "internal";
+  }
+  if (status === "suspended") {
+    return "restricted";
+  }
+  return "confidential";
 }
 
 function ActionState({ state }: { state: SubmitState }) {
@@ -219,4 +291,3 @@ function ActionState({ state }: { state: SubmitState }) {
     </div>
   );
 }
-

@@ -185,6 +185,49 @@ export function buildOpenApiSpec() {
           }
         }
       },
+      "/v1/platform/dashboard": {
+        get: {
+          operationId: "getPlatformDashboard",
+          tags: ["Platform"],
+          summary: "Platform super-admin dashboard across all client tenants.",
+          parameters: [...platformContextHeaders()],
+          responses: {
+            "200": jsonResponse("Platform dashboard aggregate.", "PlatformDashboardResponse"),
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/platform/tenants/{tenantId}/deactivate": {
+        post: {
+          operationId: "deactivatePlatformTenant",
+          tags: ["Platform"],
+          summary: "Suspend a client tenant and revoke tenant-user login access.",
+          parameters: [pathParameter("tenantId", "uuid"), ...platformContextHeaders()],
+          responses: {
+            "200": jsonResponse("Client tenant suspended.", "PlatformTenant"),
+            "400": { $ref: "#/components/responses/Problem" },
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" },
+            "404": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
+      "/v1/platform/tenants/{tenantId}/activate": {
+        post: {
+          operationId: "activatePlatformTenant",
+          tags: ["Platform"],
+          summary: "Reactivate a suspended client tenant and restore tenant-user login access.",
+          parameters: [pathParameter("tenantId", "uuid"), ...platformContextHeaders()],
+          responses: {
+            "200": jsonResponse("Client tenant activated.", "PlatformTenant"),
+            "400": { $ref: "#/components/responses/Problem" },
+            "401": { $ref: "#/components/responses/Problem" },
+            "403": { $ref: "#/components/responses/Problem" },
+            "404": { $ref: "#/components/responses/Problem" }
+          }
+        }
+      },
       "/v1/platform/tenants/{tenantId}/admin-invite": {
         post: {
           operationId: "invitePlatformTenantAdmin",
@@ -2799,6 +2842,166 @@ export function buildOpenApiSpec() {
             version: { type: "integer", minimum: 1 },
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" }
+          }
+        },
+        PlatformDashboardCount: {
+          type: "object",
+          required: ["key", "label", "count"],
+          properties: {
+            key: { type: "string" },
+            label: { type: "string" },
+            count: { type: "integer" }
+          }
+        },
+        PlatformDashboardFrameworkSummary: {
+          type: "object",
+          required: ["frameworkKey", "totalQuestions", "completedQuestions", "remainingQuestions", "compliancePercent"],
+          properties: {
+            frameworkKey: { type: "string" },
+            totalQuestions: { type: "integer" },
+            completedQuestions: { type: "integer" },
+            remainingQuestions: { type: "integer" },
+            compliancePercent: { type: "number" }
+          }
+        },
+        PlatformDashboardRecentAssessment: {
+          type: "object",
+          required: ["id", "scopeName", "status", "itemCount", "createdAt"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            scopeName: { type: "string" },
+            status: { type: "string" },
+            itemCount: { type: "integer" },
+            createdAt: { type: "string", format: "date-time" }
+          }
+        },
+        PlatformDashboardTenant: {
+          type: "object",
+          required: [
+            "id",
+            "name",
+            "status",
+            "classification",
+            "version",
+            "createdAt",
+            "updatedAt",
+            "userCount",
+            "activeUserCount",
+            "invitedUserCount",
+            "disabledUserCount",
+            "roleCounts",
+            "userStatusCounts",
+            "enabledFrameworkCount",
+            "totalQuestions",
+            "completedQuestions",
+            "remainingQuestions",
+            "compliancePercent",
+            "frameworks",
+            "assessmentCount",
+            "openAssessmentCount",
+            "closedAssessmentCount",
+            "assessmentStatusCounts",
+            "assessmentItemCount",
+            "evidenceObjectCount",
+            "committedEvidenceObjectCount",
+            "findingCount",
+            "openFindingCount",
+            "riskCount",
+            "openRiskCount",
+            "taskCount",
+            "pendingTaskCount",
+            "recentAssessments"
+          ],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            name: { type: "string" },
+            status: { enum: ["active", "suspended", "archived"] },
+            classification: { $ref: "#/components/schemas/Classification" },
+            version: { type: "integer", minimum: 1 },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+            userCount: { type: "integer" },
+            activeUserCount: { type: "integer" },
+            invitedUserCount: { type: "integer" },
+            disabledUserCount: { type: "integer" },
+            roleCounts: { type: "array", items: { $ref: "#/components/schemas/PlatformDashboardCount" } },
+            userStatusCounts: { type: "array", items: { $ref: "#/components/schemas/PlatformDashboardCount" } },
+            enabledFrameworkCount: { type: "integer" },
+            totalQuestions: { type: "integer" },
+            completedQuestions: { type: "integer" },
+            remainingQuestions: { type: "integer" },
+            compliancePercent: { type: "number" },
+            frameworks: { type: "array", items: { $ref: "#/components/schemas/PlatformDashboardFrameworkSummary" } },
+            assessmentCount: { type: "integer" },
+            openAssessmentCount: { type: "integer" },
+            closedAssessmentCount: { type: "integer" },
+            assessmentStatusCounts: { type: "array", items: { $ref: "#/components/schemas/PlatformDashboardCount" } },
+            assessmentItemCount: { type: "integer" },
+            evidenceObjectCount: { type: "integer" },
+            committedEvidenceObjectCount: { type: "integer" },
+            findingCount: { type: "integer" },
+            openFindingCount: { type: "integer" },
+            riskCount: { type: "integer" },
+            openRiskCount: { type: "integer" },
+            taskCount: { type: "integer" },
+            pendingTaskCount: { type: "integer" },
+            recentAssessments: { type: "array", items: { $ref: "#/components/schemas/PlatformDashboardRecentAssessment" } }
+          }
+        },
+        PlatformDashboardTotals: {
+          type: "object",
+          required: [
+            "tenantCount",
+            "activeTenantCount",
+            "userCount",
+            "activeUserCount",
+            "enabledFrameworkCount",
+            "totalQuestions",
+            "completedQuestions",
+            "remainingQuestions",
+            "compliancePercent",
+            "assessmentCount",
+            "openAssessmentCount",
+            "closedAssessmentCount",
+            "evidenceObjectCount",
+            "committedEvidenceObjectCount",
+            "findingCount",
+            "openFindingCount",
+            "riskCount",
+            "openRiskCount",
+            "taskCount",
+            "pendingTaskCount"
+          ],
+          properties: {
+            tenantCount: { type: "integer" },
+            activeTenantCount: { type: "integer" },
+            userCount: { type: "integer" },
+            activeUserCount: { type: "integer" },
+            enabledFrameworkCount: { type: "integer" },
+            totalQuestions: { type: "integer" },
+            completedQuestions: { type: "integer" },
+            remainingQuestions: { type: "integer" },
+            compliancePercent: { type: "number" },
+            assessmentCount: { type: "integer" },
+            openAssessmentCount: { type: "integer" },
+            closedAssessmentCount: { type: "integer" },
+            evidenceObjectCount: { type: "integer" },
+            committedEvidenceObjectCount: { type: "integer" },
+            findingCount: { type: "integer" },
+            openFindingCount: { type: "integer" },
+            riskCount: { type: "integer" },
+            openRiskCount: { type: "integer" },
+            taskCount: { type: "integer" },
+            pendingTaskCount: { type: "integer" }
+          }
+        },
+        PlatformDashboardResponse: {
+          type: "object",
+          required: ["generatedAt", "totals", "tenants"],
+          properties: {
+            generatedAt: { type: "string", format: "date-time" },
+            totals: { $ref: "#/components/schemas/PlatformDashboardTotals" },
+            tenants: { type: "array", items: { $ref: "#/components/schemas/PlatformDashboardTenant" } }
           }
         },
         CreatePlatformTenantRequest: {
